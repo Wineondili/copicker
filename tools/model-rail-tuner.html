@@ -633,6 +633,7 @@
 
       const SCALE = 0.5;
       const OUTER_TOP_PADDING = 12;
+      const EFFORT_TOP_NUDGE = 4;
       const ROW_HEIGHT = 48;
       const ROW_GAP = 16;
       const STAGE_WIDTH = 388;
@@ -710,11 +711,11 @@
           "verticalDotSpacing: 32px",
           `textScale: ${fontScale}`,
           `modelAndStageGap: ${cleanNumber(state.labelGap)}px`,
-          `effortTextTop: ${cleanNumber(state.effortTop)}px`,
+          `effortTextTop: ${cleanNumber(state.effortTop + EFFORT_TOP_NUDGE)}px`,
           `internalStageWidth: ${STAGE_WIDTH}px`,
           `internalColumnStep: ${DOT_SPACING}px`,
           `internalGridGap: ${cleanNumber(state.labelGap / SCALE)}px`,
-          `internalEffortLabelsTop: ${cleanNumber((state.effortTop - OUTER_TOP_PADDING) / SCALE)}px`,
+          `internalEffortLabelsTop: ${cleanNumber((state.effortTop + EFFORT_TOP_NUDGE - OUTER_TOP_PADDING) / SCALE)}px`,
         ].join("\n");
       }
 
@@ -732,7 +733,7 @@
         rail.style.setProperty("--label-gap-base", `${state.labelGap / SCALE}px`);
         rail.style.setProperty(
           "--effort-top-base",
-          `${(state.effortTop - OUTER_TOP_PADDING) / SCALE}px`,
+          `${(state.effortTop + EFFORT_TOP_NUDGE - OUTER_TOP_PADDING) / SCALE}px`,
         );
 
         for (const pair of controlPairs) {

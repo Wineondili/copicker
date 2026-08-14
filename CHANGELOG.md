@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-15 03:00:51 +0800
+
+- Increased the preview-only active effort label's rendered top inset by 4 pixels, from approximately 1 pixel to 5 pixels, without moving the model rows, dot grid, or current-selection footer.
+
 ## 2026-08-15 02:59:15 +0800
 
 - Reduced the hot-reloading tuning page to a centered Model Rail canvas by removing the surrounding header, measurements, control panel, and export surface from view.
