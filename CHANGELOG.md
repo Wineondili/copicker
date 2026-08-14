@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-14 21:49:31 +0800
+
+- Removed the previous custom visual from the running Codex process and added an explicit `remove` command for future rollback.
+- Proved that the first-level model/reasoning popover is anchored by the open intelligence trigger and a menu containing the reasoning slider.
+- Explicitly excluded the full model-list overlay and removed the unsolicited `0.2.0` Shadow DOM visual implementation.
+- Replaced the renderer payload with a non-visual `0.3.0` first-level mount-target observer pending the user's style specification.
+- Added scoped first-level and full-list probe commands and verified that the corrected hook recognizes Figure 1 while creating zero visual hosts in Figure 2.
+
 ## 2026-08-14 21:39:36 +0800
 
 - Adapted renderer injection to all frames in each Codex window and webview.

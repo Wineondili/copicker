@@ -23,11 +23,17 @@ case "$MODE" in
   --inject|inject)
     "$APP_BINARY" inject
     ;;
+  --remove|remove)
+    "$APP_BINARY" remove
+    ;;
   --probe|probe)
     "$APP_BINARY" probe
     ;;
   --probe-picker|probe-picker)
     "$APP_BINARY" probe-picker
+    ;;
+  --probe-primary|probe-primary)
+    "$APP_BINARY" probe-primary
     ;;
   --debug|debug)
     lldb -- "$APP_BINARY"
@@ -44,7 +50,7 @@ case "$MODE" in
     "$APP_BINARY"
     ;;
   *)
-    echo "usage: $0 [run|--inject|--probe|--probe-picker|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|--inject|--remove|--probe|--probe-picker|--probe-primary|--debug|--logs|--telemetry|--verify]" >&2
     exit 2
     ;;
 esac

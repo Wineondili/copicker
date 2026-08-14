@@ -41,6 +41,7 @@ import Testing
     #expect(expression.contains("exactSelectors"))
     #expect(expression.contains("relatedAttributeNames"))
     #expect(expression.contains("overlay.querySelectorAll(\"button\")"))
+    #expect(expression.contains("[data-codex-composer-root] button"))
     #expect(expression.contains("modelRailDescriptors"))
     #expect(!expression.contains("document.body.innerText"))
     #expect(!expression.contains("document.body.textContent"))
@@ -55,4 +56,24 @@ import Testing
     #expect(expression.contains("\"control\", \"shift\""))
     #expect(expression.contains("data-codex-composer-root"))
     #expect(!expression.contains("innerText"))
+}
+
+@Test func removalDisposesRendererStateAndDisablesTheExistingHook() {
+    let expression = InjectionExpressionBuilder.removalExpression
+
+    #expect(expression.contains("current?.dispose?.()"))
+    #expect(expression.contains("state.source = cleanupSource"))
+    #expect(expression.contains("state.disabled = true"))
+    #expect(!expression.contains("innerText"))
+    #expect(!expression.contains("textContent"))
+}
+
+@Test func primaryPickerProbeClicksOnlyTheExactReasoningTrigger() {
+    let expression = InjectionExpressionBuilder.openPrimaryPickerExpression
+
+    #expect(expression.contains("data-codex-intelligence-trigger"))
+    #expect(expression.contains("data-composer-navigation-target=\"reasoning\""))
+    #expect(expression.contains("type: \"mouseDown\""))
+    #expect(!expression.contains("innerText"))
+    #expect(!expression.contains("textContent"))
 }

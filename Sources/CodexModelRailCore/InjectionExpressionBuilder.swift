@@ -26,6 +26,7 @@ public enum InjectionExpressionBuilder {
           };
 
           state.source = payload;
+          state.disabled = false;
           state.inject = async (contents) => {
             if (!contents || contents.isDestroyed()) return false;
             const type = contents.getType();
@@ -78,6 +79,58 @@ public enum InjectionExpressionBuilder {
         })()
         """
     }
+
+    public static let removalExpression = """
+    (async () => {
+      const stateKey = Symbol.for("com.jonas.codex-model-rail.main-state");
+      const globalKey = "__CODEX_MODEL_RAIL__";
+      const hostID = "codex-model-rail-host";
+      const cleanupSource = `
+        (() => {
+          const current = window["${globalKey}"];
+          const hadState = Boolean(current);
+          const hadHost = Boolean(document.getElementById("${hostID}"));
+          current?.dispose?.();
+          document.getElementById("${hostID}")?.remove();
+          return { hadState, hadHost };
+        })()
+      `;
+      const moduleAPI = process.getBuiltinModule("module");
+      const localRequire = typeof require === "function"
+        ? require
+        : moduleAPI.createRequire(process.cwd() + "/.codex-model-rail-remove.cjs");
+      const electron = localRequire("electron");
+      const state = globalThis[stateKey];
+      if (state) {
+        state.source = cleanupSource;
+        state.disabled = true;
+      }
+
+      let cleanedFrameCount = 0;
+      let removedHostCount = 0;
+      for (const contents of electron.webContents.getAllWebContents()) {
+        if (!contents || contents.isDestroyed()) continue;
+        const type = contents.getType();
+        if (type !== "window" && type !== "webview") continue;
+        for (const frame of contents.mainFrame?.framesInSubtree || []) {
+          try {
+            const result = await frame.executeJavaScript(cleanupSource, true);
+            cleanedFrameCount += 1;
+            if (result?.hadHost) removedHostCount += 1;
+          } catch {
+            // Detached frames are ignored.
+          }
+        }
+      }
+
+      return {
+        removed: true,
+        mainHookDisabled: Boolean(state),
+        cleanedFrameCount,
+        removedHostCount
+      };
+    })()
+    """
 
     public static let scheduleInspectorShutdownExpression = """
     (() => {
@@ -145,6 +198,22 @@ public enum InjectionExpressionBuilder {
                   .filter(Boolean)
               )
             ].sort(),
+            composerControlDescriptors: [...document.querySelectorAll("[data-codex-composer-root] button")]
+              .filter((button) => !button.closest("[data-composer-overlay-floating-ui]"))
+              .slice(0, 16)
+              .map((button) => ({
+                controlLabel: String(
+                  button.getAttribute("aria-label") || button.innerText || button.textContent || ""
+                ).replace(/\\s+/g, " ").trim().slice(0, 80),
+                ariaExpanded: button.getAttribute("aria-expanded"),
+                ariaHasPopup: button.getAttribute("aria-haspopup"),
+                navigationTarget: button.getAttribute("data-composer-navigation-target"),
+                selectedReasoningEffort: button.getAttribute("data-selected-reasoning-effort"),
+                dataState: button.getAttribute("data-state"),
+                dataAttributes: button.getAttributeNames()
+                  .filter((name) => name.startsWith("data-"))
+                  .sort()
+              })),
             popupTriggerDescriptors: [...document.querySelectorAll("[aria-haspopup]")]
               .filter((element) => {
                 const style = getComputedStyle(element);
@@ -283,6 +352,68 @@ public enum InjectionExpressionBuilder {
         modifiers: ["control", "shift"]
       });
       return { sent: true, matchedComposer };
+    })()
+    """
+
+    public static let openPrimaryPickerExpression = """
+    (async () => {
+      const moduleAPI = process.getBuiltinModule("module");
+      const localRequire = typeof require === "function"
+        ? require
+        : moduleAPI.createRequire(process.cwd() + "/.codex-model-rail-primary-picker.cjs");
+      const electron = localRequire("electron");
+      for (const contents of electron.webContents.getAllWebContents()) {
+        if (!contents || contents.isDestroyed()) continue;
+        const type = contents.getType();
+        if (type !== "window" && type !== "webview") continue;
+        for (const frame of contents.mainFrame?.framesInSubtree || []) {
+          try {
+            const result = await frame.executeJavaScript(`
+              (() => {
+                const trigger = document.querySelector(
+                  '[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]'
+                );
+                if (!trigger) return { found: false };
+                const rect = trigger.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return { found: true, visible: false };
+                if (trigger.getAttribute("aria-expanded") === "true") {
+                  return { found: true, visible: true, alreadyOpen: true };
+                }
+                return {
+                  found: true,
+                  visible: true,
+                  alreadyOpen: false,
+                  x: Math.round(rect.left + rect.width / 2),
+                  y: Math.round(rect.top + rect.height / 2)
+                };
+              })()
+            `, true);
+            if (!result?.found) continue;
+            if (result.alreadyOpen || !result.visible) {
+              return { ...result, clicked: false };
+            }
+            contents.sendInputEvent({ type: "mouseMove", x: result.x, y: result.y });
+            contents.sendInputEvent({
+              type: "mouseDown",
+              x: result.x,
+              y: result.y,
+              button: "left",
+              clickCount: 1
+            });
+            contents.sendInputEvent({
+              type: "mouseUp",
+              x: result.x,
+              y: result.y,
+              button: "left",
+              clickCount: 1
+            });
+            return { found: true, visible: true, alreadyOpen: false, clicked: true };
+          } catch {
+            // Detached frames are ignored.
+          }
+        }
+      }
+      return { found: false, clicked: false, alreadyOpen: false };
     })()
     """
 

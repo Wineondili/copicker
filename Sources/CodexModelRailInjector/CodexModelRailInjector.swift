@@ -17,8 +17,12 @@ struct CodexModelRailInjectorCLI {
                 try await probe()
             case "probe-picker":
                 try await probePicker()
+            case "probe-primary":
+                try await probePrimaryPicker()
             case "inject":
                 try await inject()
+            case "remove":
+                try await remove()
             case "help", "--help", "-h":
                 printUsage()
             default:
@@ -86,6 +90,22 @@ struct CodexModelRailInjectorCLI {
         }
     }
 
+    private static func remove() async throws {
+        let session = try await openInspector()
+        do {
+            let result = try await session.evaluate(
+                expression: InjectionExpressionBuilder.removalExpression
+            )
+            print("Removal result:")
+            print(result?.prettyPrinted() ?? "null")
+            await shutdownInspector(session)
+            print("Model Rail removed for the current Codex process; the official bundle was not modified.")
+        } catch {
+            await shutdownInspector(session)
+            throw error
+        }
+    }
+
     private static func probePicker() async throws {
         let session = try await openInspector()
         do {
@@ -100,6 +120,28 @@ struct CodexModelRailInjectorCLI {
                 expression: InjectionExpressionBuilder.rendererProbeExpression
             )
             print("Scoped renderer probe after shortcut:")
+            print(result?.prettyPrinted() ?? "null")
+            await shutdownInspector(session)
+        } catch {
+            await shutdownInspector(session)
+            throw error
+        }
+    }
+
+    private static func probePrimaryPicker() async throws {
+        let session = try await openInspector()
+        do {
+            let openResult = try await session.evaluate(
+                expression: InjectionExpressionBuilder.openPrimaryPickerExpression
+            )
+            print("Primary-picker open result:")
+            print(openResult?.prettyPrinted() ?? "null")
+            try await Task.sleep(for: .milliseconds(350))
+
+            let result = try await session.evaluate(
+                expression: InjectionExpressionBuilder.rendererProbeExpression
+            )
+            print("Scoped renderer probe after primary-picker open:")
             print(result?.prettyPrinted() ?? "null")
             await shutdownInspector(session)
         } catch {
@@ -162,13 +204,15 @@ struct CodexModelRailInjectorCLI {
 
     private static func printUsage() {
         print("""
-        Usage: CodexModelRailInjector [status|dry-run|probe|probe-picker|inject|help]
+        Usage: CodexModelRailInjector [status|dry-run|probe|probe-picker|probe-primary|inject|remove|help]
 
           status   Inspect the installed Codex build without changing runtime state.
           dry-run  Alias for status; validates the bundled payload and expression.
           probe    Return selector metadata and labels only for model-picker controls.
           probe-picker  Open the picker shortcut, then run the scoped selector probe.
+          probe-primary  Open the first-level model/reasoning popover, then probe it.
           inject   Explicitly enable a temporary loopback Inspector and inject Model Rail.
+          remove   Remove Model Rail and disable its current-process reinjection hook.
           help     Show this help.
         """)
     }
