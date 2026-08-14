@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-15 03:19:22 +0800
+
+- Moved the Fast-state label from the current-selection footer to the right side of the active effort label in the preview.
+- Kept the active effort centered on its dot while giving the attached `Fast` label the same typography and the existing blue state color.
+- Extended endpoint collision detection across the combined effort-and-Fast bounds so `Faster` or `Smarter` is temporarily hidden when either part overlaps it.
+
 ## 2026-08-15 03:15:55 +0800
 
 - Expanded the preview selector shell by 8 rendered pixels exclusively on the right, increasing its width from 280 to 288 pixels while keeping the left edge and all existing selector content visually anchored.

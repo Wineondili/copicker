@@ -196,6 +196,21 @@
     .effort-label.ultra { color: #a67df2; }
     .effort-label.active { opacity: 1; }
 
+    .effort-fast {
+      position: absolute;
+      left: calc(100% + 7px);
+      bottom: 0;
+      color: #0099ff;
+      font: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .effort-label.fast .effort-fast { opacity: 1; }
+
     .effort-endpoint {
       position: absolute;
       top: calc(3.6px * var(--text-scale));
@@ -314,6 +329,8 @@
       transform: translateY(2px);
       transition: opacity 160ms ease, transform 160ms ease;
     }
+
+    .current-selection .fast-status { display: none; }
 
     .fast-status.active {
       opacity: 1;
@@ -813,11 +830,27 @@
           );
         }
         for (const [index, label] of [...document.querySelectorAll(".effort-label")].entries()) {
-          label.classList.toggle("active", index === dotNumber - 1);
+          const active = index === dotNumber - 1;
+          label.classList.toggle("active", active);
+          label.classList.toggle("fast", active && fastMode);
         }
 
         const activeEffortLabel = document.querySelector(".effort-label.active");
-        const activeEffortRect = activeEffortLabel?.getBoundingClientRect() || null;
+        const activeEffortRects = activeEffortLabel
+          ? [activeEffortLabel.getBoundingClientRect()]
+          : [];
+        const activeFastLabel = activeEffortLabel?.querySelector(".effort-fast") || null;
+        if (fastMode && activeFastLabel) {
+          activeEffortRects.push(activeFastLabel.getBoundingClientRect());
+        }
+        const activeEffortRect = activeEffortRects.length > 0
+          ? {
+              left: Math.min(...activeEffortRects.map((rect) => rect.left)),
+              right: Math.max(...activeEffortRects.map((rect) => rect.right)),
+              top: Math.min(...activeEffortRects.map((rect) => rect.top)),
+              bottom: Math.max(...activeEffortRects.map((rect) => rect.bottom)),
+            }
+          : null;
         for (const endpoint of document.querySelectorAll(".effort-endpoint")) {
           const endpointRect = endpoint.getBoundingClientRect();
           const overlaps = Boolean(activeEffortRect) && !(
@@ -866,7 +899,11 @@
       for (const [index, effort] of efforts.entries()) {
         const label = document.createElement("div");
         label.className = `effort-label${effort === "ultra" ? " ultra" : ""}`;
-        label.textContent = effort;
+        label.append(document.createTextNode(effort));
+        const fastLabel = document.createElement("span");
+        fastLabel.className = "effort-fast";
+        fastLabel.textContent = "Fast";
+        label.append(fastLabel);
         label.style.left = `${centers[index]}px`;
         effortLabels.append(label);
       }
