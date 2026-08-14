@@ -488,11 +488,38 @@
       font-size: 11px;
     }
 
+    .page-header,
+    .controls,
+    .measurements {
+      display: none;
+    }
+
+    .app {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .workspace {
+      display: block;
+      min-height: 100vh;
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .preview-panel {
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .preview-stack { gap: 0; }
+
     @media (max-width: 820px) {
-      .page-header { align-items: flex-start; flex-direction: column; }
-      .workspace { grid-template-columns: 1fr; }
-      .controls { border-top: 1px solid var(--border); border-left: 0; }
-      .preview-panel { min-height: 360px; }
+      .preview-panel { min-height: 100vh; padding: 24px; }
     }
 
     @media (prefers-reduced-motion: reduce) {

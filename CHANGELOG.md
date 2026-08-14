@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 02:59:15 +0800
+
+- Reduced the hot-reloading tuning page to a centered Model Rail canvas by removing the surrounding header, measurements, control panel, and export surface from view.
+- Retained the selector's click and drag interaction, current URL-fragment state, and automatic source refresh for direct code-driven layout iteration.
+
 ## 2026-08-15 02:57:22 +0800
 
 - Switched the Model Rail tuning workflow back to a preview-only iteration loop so intermediate layout edits no longer require live Codex injection or picker probing.
