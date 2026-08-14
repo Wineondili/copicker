@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 03:23:50 +0800
+
+- Extended only the preview selector's right edge by another 1.75 rendered pixels, increasing the total width from 288 to 289.75 pixels while leaving the left edge and all selector content fixed.
+- Moved `Smarter` with the extended edge and live-measured matching 13.5-pixel outer insets for `Faster` and `Smarter`; the `ultra Fast` group now retains a 13.52-pixel right inset.
+
 ## 2026-08-15 03:19:22 +0800
 
 - Moved the Fast-state label from the current-selection footer to the right side of the active effort label in the preview.
