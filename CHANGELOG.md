@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 03:15:55 +0800
+
+- Expanded the preview selector shell by 8 rendered pixels exclusively on the right, increasing its width from 280 to 288 pixels while keeping the left edge and all existing selector content visually anchored.
+- Moved `Smarter` with the extended right edge so its right inset continues to match the unchanged left inset of `Faster`.
+
 ## 2026-08-15 03:13:04 +0800
 
 - Changed the smaller `Faster` and `Smarter` endpoint labels from vertical centering to bottom alignment with the active effort label while preserving their size, color, and horizontal positions.

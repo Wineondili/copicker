@@ -102,7 +102,8 @@
 
     .rail-frame {
       position: relative;
-      width: 280px;
+      left: 4px;
+      width: 288px;
       height: 159px;
       flex: none;
     }
@@ -124,7 +125,7 @@
       --effort-top-base: -8px;
       position: relative;
       top: -4px;
-      width: 560px;
+      width: 576px;
       padding: 40px 26px 22px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
@@ -213,7 +214,7 @@
     }
 
     .effort-endpoint.smarter {
-      right: calc(-28px + var(--label-gap-base));
+      right: calc(-44px + var(--label-gap-base));
     }
 
     .effort-endpoint.obscured { opacity: 0; }
@@ -559,7 +560,7 @@
         <h1>Model Rail 调参台</h1>
         <p class="intro">预览与当前 Codex 组件保持相同尺寸，代码保存后会自动刷新。调整完成后，复制右侧参数并发给我。</p>
       </div>
-      <div class="fixed-size">固定预览尺寸&nbsp; 280 × 159 px</div>
+      <div class="fixed-size">固定预览尺寸&nbsp; 288 × 159 px</div>
     </header>
 
     <section class="workspace">
@@ -731,7 +732,7 @@
         const fontScale = cleanNumber(state.textScale / 100);
         return [
           "MODEL_RAIL_TUNING_V1",
-          "previewWidth: 280px",
+          "previewWidth: 288px",
           "previewHeight: 159px",
           "componentScale: 0.5",
           "horizontalDotSpacing: 32px",
