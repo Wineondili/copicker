@@ -14,15 +14,14 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The first functional implementation is complete:
+The first functional implementation is complete and was live-verified against Codex `26.810.41047` (build `6570`):
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
 - The Inspector is bound to loopback, and shutdown is scheduled immediately after the renderer hook is installed.
-- The renderer payload waits for the official model-picker trigger, prepends a Shadow DOM rail inside the picker, and mirrors the model submenu only after the user requests it.
+- The renderer payload supports the current floating picker as well as the earlier nested-menu shape, prepends a Shadow DOM rail inside the official overlay, and mirrors its live model options.
 - Model selection is proxied through the official menu items; the injector does not call model RPCs or persist account-specific identifiers.
-
-Live injection has not been executed from this active Codex development task because doing so would signal and instrument the host application that is running the task. The offline build, payload syntax, installed-build inspection, and unit-test gates are safe to run at any time.
+- A live probe confirmed one visible `0.2.0` rail with seven buttons matching the seven model controls currently exposed by the official picker.
 
 ## Build and test
 
@@ -43,6 +42,8 @@ Live injection is always an explicit action:
 ./script/build_and_run.sh --inject
 ```
 
+The hook lasts for the current Codex process, so run the command again after every Codex restart. After an app update, run the normal status/test gates first because private DOM anchors may have changed.
+
 The command performs these gates before it sends a signal:
 
 1. Confirm `/Applications/ChatGPT.app` exists and decode its version.
@@ -56,15 +57,16 @@ The command performs these gates before it sends a signal:
 
 After injection:
 
-1. Open the official Codex model picker.
-2. Use **加载模型列表** in the injected rail.
-3. The rail opens the official Model submenu and mirrors only the newly exposed official menu items.
-4. Click a mirrored item or press `1`–`9`.
+1. Open the official Codex model picker or press `Ctrl+Shift+M`.
+2. The injected **快捷模型** rail appears at the top of the same overlay and mirrors the official model buttons.
+3. Click a mirrored item or press `1`–`9` while the picker is open.
+
+On an older picker shape, use **加载模型列表** once so the rail can mirror the official nested Model submenu.
 
 The final selection remains an official menu click, so Codex retains responsibility for model availability, active-thread state, and persistence.
 
 ## Privacy and rollback
 
-The payload contains no network request, storage write, cookie access, or conversation logging. It observes only the private model-picker anchors required for the feature.
+The payload contains no network request, storage write, cookie access, or conversation logging. It observes only the private model-picker anchors and the short labels of buttons inside that picker. The diagnostic probe is likewise scoped to control metadata and picker-button labels; it does not read the conversation body or composer text.
 
 The injected component lasts only for the running Codex process. Quit Codex to remove it, or run the payload's `dispose()` hook from a debugger. The official application bundle is never changed.

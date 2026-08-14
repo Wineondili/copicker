@@ -13,6 +13,10 @@ struct CodexModelRailInjectorCLI {
             switch command {
             case "status", "dry-run":
                 try printStatus()
+            case "probe":
+                try await probe()
+            case "probe-picker":
+                try await probePicker()
             case "inject":
                 try await inject()
             case "help", "--help", "-h":
@@ -52,6 +56,59 @@ struct CodexModelRailInjectorCLI {
     }
 
     private static func inject() async throws {
+        let payload = try loadPayload()
+        let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+        let session = try await openInspector()
+        do {
+            let result = try await session.evaluate(expression: expression)
+            print("Injection result:")
+            print(result?.prettyPrinted() ?? "null")
+            await shutdownInspector(session)
+            print("Inspector shutdown scheduled; the official application bundle was not modified.")
+        } catch {
+            await shutdownInspector(session)
+            throw error
+        }
+    }
+
+    private static func probe() async throws {
+        let session = try await openInspector()
+        do {
+            let result = try await session.evaluate(
+                expression: InjectionExpressionBuilder.rendererProbeExpression
+            )
+            print("Scoped renderer probe:")
+            print(result?.prettyPrinted() ?? "null")
+            await shutdownInspector(session)
+        } catch {
+            await shutdownInspector(session)
+            throw error
+        }
+    }
+
+    private static func probePicker() async throws {
+        let session = try await openInspector()
+        do {
+            let shortcutResult = try await session.evaluate(
+                expression: InjectionExpressionBuilder.openModelPickerShortcutExpression
+            )
+            print("Model-picker shortcut result:")
+            print(shortcutResult?.prettyPrinted() ?? "null")
+            try await Task.sleep(for: .milliseconds(350))
+
+            let result = try await session.evaluate(
+                expression: InjectionExpressionBuilder.rendererProbeExpression
+            )
+            print("Scoped renderer probe after shortcut:")
+            print(result?.prettyPrinted() ?? "null")
+            await shutdownInspector(session)
+        } catch {
+            await shutdownInspector(session)
+            throw error
+        }
+    }
+
+    private static func openInspector() async throws -> InspectorSession {
         let installation = try CodexInstallation.inspect()
         guard installation.fuseReport.nodeCLIInspectionEnabled else {
             throw CLIError.nodeInspectorDisabled
@@ -75,9 +132,6 @@ struct CodexModelRailInjectorCLI {
             throw InspectorError.inspectorPortAlreadyInUse
         }
 
-        let payload = try loadPayload()
-        let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
-
         print("Enabling the loopback Inspector for Codex process \(process.processIdentifier)...")
         try process.enableInspectorWithUserSignal()
         let target = try await discovery.waitForTarget()
@@ -87,22 +141,16 @@ struct CodexModelRailInjectorCLI {
 
         let session = InspectorSession(url: webSocketURL)
         await session.connect()
-        do {
-            let result = try await session.evaluate(expression: expression)
-            print("Injection result:")
-            print(result?.prettyPrinted() ?? "null")
+        return session
+    }
 
-            _ = try await session.evaluate(
-                expression: InjectionExpressionBuilder.scheduleInspectorShutdownExpression,
-                awaitPromise: false
-            )
-            try? await Task.sleep(for: .milliseconds(250))
-            await session.close()
-            print("Inspector shutdown scheduled; the official application bundle was not modified.")
-        } catch {
-            await session.close()
-            throw error
-        }
+    private static func shutdownInspector(_ session: InspectorSession) async {
+        _ = try? await session.evaluate(
+            expression: InjectionExpressionBuilder.scheduleInspectorShutdownExpression,
+            awaitPromise: false
+        )
+        try? await Task.sleep(for: .milliseconds(250))
+        await session.close()
     }
 
     private static func loadPayload() throws -> String {
@@ -114,10 +162,12 @@ struct CodexModelRailInjectorCLI {
 
     private static func printUsage() {
         print("""
-        Usage: CodexModelRailInjector [status|dry-run|inject|help]
+        Usage: CodexModelRailInjector [status|dry-run|probe|probe-picker|inject|help]
 
           status   Inspect the installed Codex build without changing runtime state.
           dry-run  Alias for status; validates the bundled payload and expression.
+          probe    Return selector metadata and labels only for model-picker controls.
+          probe-picker  Open the picker shortcut, then run the scoped selector probe.
           inject   Explicitly enable a temporary loopback Inspector and inject Model Rail.
           help     Show this help.
         """)
@@ -149,4 +199,3 @@ private enum CLIError: LocalizedError {
         }
     }
 }
-

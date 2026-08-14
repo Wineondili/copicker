@@ -1,9 +1,11 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.1.0";
+  const VERSION = "0.2.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const HOST_ID = "codex-model-rail-host";
+  const DIRECT_OVERLAY_SELECTOR = "[data-composer-overlay-floating-ui]";
+  const DIRECT_ITEM_SELECTOR = "button[data-list-navigation-item]";
   const TRIGGER_SELECTOR = "[data-codex-intelligence-trigger]";
   const MODEL_ROW_SELECTOR = "[data-model-picker-model-row]";
   const OFFICIAL_ITEM_SELECTOR = '[role="menuitem"], [role="option"]';
@@ -14,7 +16,7 @@
     return {
       installed: true,
       reused: true,
-      triggerFound: Boolean(document.querySelector(TRIGGER_SELECTOR)),
+      triggerFound: Boolean(previous.hasCompatibleTrigger?.()),
       version: VERSION,
     };
   }
@@ -26,6 +28,7 @@
     shadow: null,
     trigger: null,
     surface: null,
+    mode: null,
     observer: null,
     keyboardHandler: null,
     scheduled: false,
@@ -59,6 +62,37 @@
       .map(cleanLabel)
       .filter(Boolean);
     return (lines[0] ?? "").slice(0, 64);
+  }
+
+  function fullControlLabel(element) {
+    return cleanLabel(element.innerText ?? element.textContent ?? "").slice(0, 240);
+  }
+
+  function directCandidates(surface) {
+    const candidates = [...surface.querySelectorAll(DIRECT_ITEM_SELECTOR)]
+      .filter((element) => !state.host?.contains(element) && isVisible(element))
+      .map((element) => ({
+        element,
+        label: labelFor(element),
+        controlLabel: fullControlLabel(element),
+      }))
+      .filter((candidate) => candidate.label);
+
+    if (candidates.length < 2) return [];
+    const semanticMatches = candidates.filter((candidate) =>
+      /(?:\bmodel\b|模型)/iu.test(candidate.controlLabel),
+    ).length;
+    if (semanticMatches < Math.max(2, Math.ceil(candidates.length * 0.6))) return [];
+    return candidates.slice(0, 12);
+  }
+
+  function findDirectPicker() {
+    for (const surface of document.querySelectorAll(DIRECT_OVERLAY_SELECTOR)) {
+      if (!isVisible(surface)) continue;
+      const candidates = directCandidates(surface);
+      if (candidates.length > 0) return { surface, candidates };
+    }
+    return null;
   }
 
   function isPickerOpen(trigger) {
@@ -103,6 +137,22 @@
     })[0];
   }
 
+  function findModelTrigger() {
+    const exact = [...document.querySelectorAll(TRIGGER_SELECTOR)].find(isVisible);
+    if (exact) return exact;
+
+    const openTriggers = [...document.querySelectorAll('[aria-haspopup="menu"][aria-expanded="true"]')]
+      .filter(isVisible);
+    for (const trigger of openTriggers) {
+      const surface = nearestPickerSurface(trigger);
+      if (!surface) continue;
+      if (surface.querySelector(`${MODEL_ROW_SELECTOR}, [data-reasoning-slider]`)) {
+        return trigger;
+      }
+    }
+    return null;
+  }
+
   function clearTimers() {
     for (const timer of state.timers) clearTimeout(timer);
     state.timers.clear();
@@ -121,6 +171,7 @@
     state.requestedModels = false;
     state.baselineItems = new Set();
     state.candidates = [];
+    state.mode = null;
   }
 
   function createHost(surface) {
@@ -288,11 +339,22 @@
   }
 
   function currentModelLabel() {
+    if (state.mode === "direct") {
+      const selected = state.candidates.find(({ element }) =>
+        element.getAttribute("aria-selected") === "true" ||
+        element.getAttribute("aria-checked") === "true" ||
+        ["checked", "selected"].includes(element.getAttribute("data-state")),
+      );
+      return selected?.label || `${state.candidates.length} 个官方模型`;
+    }
     const value = labelFor(state.trigger);
     return value || "当前模型";
   }
 
   function discoverCandidates() {
+    if (state.mode === "direct" && state.surface) {
+      return directCandidates(state.surface);
+    }
     if (!state.requestedModels) return [];
 
     const candidates = [];
@@ -308,9 +370,16 @@
     return candidates.slice(0, 12);
   }
 
+  function candidatesMatch(left, right) {
+    return left.length === right.length && left.every((candidate, index) =>
+      candidate.element === right[index]?.element && candidate.label === right[index]?.label,
+    );
+  }
+
   function updateCandidates() {
     const candidates = discoverCandidates();
-    if (candidates.length > 0) state.candidates = candidates;
+    if (candidates.length === 0 || candidatesMatch(state.candidates, candidates)) return;
+    state.candidates = candidates;
     render();
   }
 
@@ -382,7 +451,7 @@
     current.textContent = currentModelLabel();
     track.replaceChildren();
 
-    if (state.candidates.length === 0) {
+    if (state.candidates.length === 0 && state.mode !== "direct") {
       const loadButton = document.createElement("button");
       loadButton.className = "action";
       loadButton.type = "button";
@@ -396,7 +465,12 @@
         button.type = "button";
         button.title = `${index + 1} · ${candidate.label}`;
         button.setAttribute("aria-label", `选择模型 ${candidate.label}`);
-        if (currentLabel.includes(candidate.label.toLocaleLowerCase())) {
+        if (
+          candidate.element.getAttribute("aria-selected") === "true" ||
+          candidate.element.getAttribute("aria-checked") === "true" ||
+          ["checked", "selected"].includes(candidate.element.getAttribute("data-state")) ||
+          (state.mode !== "direct" && currentLabel.includes(candidate.label.toLocaleLowerCase()))
+        ) {
           button.classList.add("selected");
         }
 
@@ -413,6 +487,9 @@
     if (statusOverride) {
       status.textContent = statusOverride;
       status.style.color = isError ? "#d85b5b" : "";
+    } else if (state.candidates.length > 0 && state.mode === "direct") {
+      status.textContent = "镜像当前官方列表；点击或按 1–9 选择，切换仍由 Codex 执行。";
+      status.style.color = "";
     } else if (state.candidates.length > 0) {
       status.textContent = "按 1–9 可直接选择；最终切换仍由 Codex 官方菜单执行。";
       status.style.color = "";
@@ -424,7 +501,22 @@
 
   function sync() {
     state.scheduled = false;
-    const trigger = document.querySelector(TRIGGER_SELECTOR);
+    const directPicker = findDirectPicker();
+    if (directPicker) {
+      const candidatesChanged = !candidatesMatch(state.candidates, directPicker.candidates);
+      state.trigger = null;
+      state.mode = "direct";
+      state.requestedModels = true;
+      state.candidates = directPicker.candidates;
+      if (!state.host?.isConnected || state.surface !== directPicker.surface) {
+        createHost(directPicker.surface);
+      } else if (candidatesChanged) {
+        render();
+      }
+      return;
+    }
+
+    const trigger = findModelTrigger();
     state.trigger = trigger;
 
     if (!trigger || !isPickerOpen(trigger)) {
@@ -434,6 +526,7 @@
 
     const surface = nearestPickerSurface(trigger);
     if (!surface) return;
+    state.mode = "legacy";
     if (!state.host?.isConnected || state.surface !== surface) createHost(surface);
     if (state.requestedModels) updateCandidates();
   }
@@ -468,6 +561,7 @@
   window.addEventListener("keydown", state.keyboardHandler, true);
 
   state.sync = scheduleSync;
+  state.hasCompatibleTrigger = () => Boolean(findDirectPicker() || findModelTrigger());
   state.dispose = () => {
     clearTimers();
     state.observer?.disconnect();
@@ -482,7 +576,7 @@
   return {
     installed: true,
     reused: false,
-    triggerFound: Boolean(document.querySelector(TRIGGER_SELECTOR)),
+    triggerFound: Boolean(findDirectPicker() || findModelTrigger()),
     version: VERSION,
   };
 })();

@@ -13,10 +13,14 @@ import Testing
 
     #expect(payload.contains("data-codex-intelligence-trigger"))
     #expect(payload.contains("data-model-picker-model-row"))
+    #expect(payload.contains("data-composer-overlay-floating-ui"))
+    #expect(payload.contains("data-list-navigation-item"))
     #expect(payload.contains("attachShadow"))
     #expect(payload.contains("MutationObserver"))
     #expect(!payload.contains("fetch("))
+    #expect(!payload.contains("XMLHttpRequest"))
     #expect(!payload.contains("localStorage"))
+    #expect(!payload.contains("sessionStorage"))
+    #expect(!payload.contains("indexedDB"))
     #expect(!payload.contains("document.cookie"))
 }
-

@@ -34,3 +34,25 @@ import Testing
     #expect(targets[0].type == "node")
     #expect(targets[0].webSocketDebuggerURL?.host == "127.0.0.1")
 }
+
+@Test func rendererProbeExcludesUserContentSurfaces() {
+    let expression = InjectionExpressionBuilder.rendererProbeExpression
+
+    #expect(expression.contains("exactSelectors"))
+    #expect(expression.contains("relatedAttributeNames"))
+    #expect(expression.contains("overlay.querySelectorAll(\"button\")"))
+    #expect(expression.contains("modelRailDescriptors"))
+    #expect(!expression.contains("document.body.innerText"))
+    #expect(!expression.contains("document.body.textContent"))
+    #expect(!expression.contains("document.title"))
+    #expect(!expression.contains("location.href"))
+}
+
+@Test func modelPickerShortcutUsesTheDocumentedBundleCommand() {
+    let expression = InjectionExpressionBuilder.openModelPickerShortcutExpression
+
+    #expect(expression.contains("keyCode: \"M\""))
+    #expect(expression.contains("\"control\", \"shift\""))
+    #expect(expression.contains("data-codex-composer-root"))
+    #expect(!expression.contains("innerText"))
+}
