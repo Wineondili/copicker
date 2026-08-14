@@ -1,0 +1,39 @@
+# Agent Instructions
+
+## Purpose
+
+This repository builds a local macOS injector that adds a model-selection rail to the official Codex desktop renderer without modifying or re-signing the OpenAI application bundle.
+
+## Safety boundaries
+
+- Never modify, replace, unpack into, or re-sign `/Applications/ChatGPT.app` unless the user explicitly changes the project scope.
+- Never terminate or restart the Codex host application from an active Codex task without explicit approval.
+- Bind Inspector endpoints to `127.0.0.1` only, use the shortest practical lifetime, and close them after injection.
+- Do not log or persist DOM text, conversation content, authentication data, cookies, tokens, task contents, or workspace file contents.
+- Treat private Codex DOM selectors as versioned compatibility points. Abort safely when required anchors are absent.
+- Proxy model selection through the official accessible menu items. Do not call undocumented model RPCs or write account-specific model IDs.
+- Keep live injection explicit. The default CLI action must remain read-only.
+
+## Project layout
+
+- `Sources/CodexModelRailCore/`: Inspector protocol, process discovery, compatibility, and injection planning.
+- `Sources/CodexModelRailInjector/`: CLI entrypoint and bundled DOM payload.
+- `Tests/`: offline unit tests; tests must not signal or attach to the running Codex process.
+- `script/build_and_run.sh`: single build/run/debug entrypoint.
+- `.codex/environments/environment.toml`: Codex Run action.
+
+## Commands
+
+```bash
+swift build
+swift test
+./script/build_and_run.sh
+./script/build_and_run.sh --inject
+```
+
+## Change discipline
+
+- Work in small, coherent commits.
+- Update `CHANGELOG.md` with a timestamp including seconds and timezone for every committed change batch.
+- Keep implementation details and comments in English.
+
