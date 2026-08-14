@@ -9,6 +9,10 @@ cd "$ROOT_DIR"
 
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 
+if command -v node >/dev/null 2>&1; then
+  node --check Sources/CodexModelRailInjector/Resources/model-rail.js
+fi
+
 swift build
 APP_BINARY="$(swift build --show-bin-path)/$APP_NAME"
 
@@ -38,4 +42,3 @@ case "$MODE" in
     exit 2
     ;;
 esac
-
