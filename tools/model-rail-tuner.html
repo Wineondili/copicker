@@ -505,7 +505,7 @@
     <header class="page-header">
       <div>
         <h1>Model Rail 调参台</h1>
-        <p class="intro">预览与当前 Codex 组件保持相同尺寸。调整完成后，复制右侧参数并发给我。</p>
+        <p class="intro">预览与当前 Codex 组件保持相同尺寸，代码保存后会自动刷新。调整完成后，复制右侧参数并发给我。</p>
       </div>
       <div class="fixed-size">固定预览尺寸&nbsp; 280 × 151 px</div>
     </header>
@@ -546,8 +546,8 @@
 
       <aside class="controls">
         <div>
-          <h2>实时控制</h2>
-          <p class="controls-note">下面所有数值都是最终显示尺寸，不是缩放前的内部尺寸。</p>
+          <h2>预览控制</h2>
+          <p class="controls-note">这里只调整预览页。下面所有数值都是最终显示尺寸，不是缩放前的内部尺寸。</p>
         </div>
 
         <div class="control-list">
@@ -885,6 +885,35 @@
       loadHash();
       applyControls({ updateHash: false });
       renderSelection();
+    })();
+  </script>
+  <script>
+    (() => {
+      "use strict";
+
+      let lastSource = null;
+
+      async function checkForSourceUpdate() {
+        const sourceURL = new URL(location.href);
+        sourceURL.hash = "";
+        sourceURL.searchParams.set("__hot_reload__", String(Date.now()));
+
+        try {
+          const response = await fetch(sourceURL, { cache: "no-store" });
+          if (!response.ok) return;
+          const source = await response.text();
+          if (lastSource === null) {
+            lastSource = source;
+            return;
+          }
+          if (source !== lastSource) location.reload();
+        } catch {
+          // The local preview server may be restarting; the next poll retries.
+        }
+      }
+
+      checkForSourceUpdate();
+      window.setInterval(checkForSourceUpdate, 500);
     })();
   </script>
 </body>

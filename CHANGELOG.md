@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-15 02:57:22 +0800
+
+- Switched the Model Rail tuning workflow back to a preview-only iteration loop so intermediate layout edits no longer require live Codex injection or picker probing.
+- Added 500-millisecond source polling and automatic page reload while preserving the current URL-fragment tuning state.
+- Renamed the control area to make its preview-only scope explicit and live-verified that a saved HTML change refreshes the existing Codex in-app browser tab without losing `text`, `gap`, or `top` values.
+
 ## 2026-08-15 02:34:05 +0800
 
 - Applied the approved `MODEL_RAIL_TUNING_V1` values to the injected selector: 280-by-151-pixel preview, 0.5 component scale, 388-pixel internal stage, 64-pixel internal column step, 1.2 text scale, zero model-to-stage gap, and a -22-pixel internal effort-label offset.
