@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-15 02:07:59 +0800
+
+- Scaled the complete detached selector design to 50% while preserving the source geometry and proportional text, controls, gradients, radii, and shadows.
+- Reduced the live popover footprint from 560 by 302 pixels to 280 by 151 pixels and the rendered selector stage from 360 by 176 pixels to 180 by 88 pixels.
+- Updated placement diagnostics for the scaled footprint and retained non-overlap, exact RGB background, model initialization, and trusted pointer targeting at the reduced size.
+
 ## 2026-08-14 22:44:07 +0800
 
 - Replaced the temporary model-button grid with the supplied 560-pixel two-dimensional Sol, Terra, and Luna selector inside the detached Shadow DOM popover.

@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.6.0";
+  const VERSION = "0.6.3";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -454,7 +454,8 @@
         :host {
           all: initial;
           display: block;
-          width: 560px;
+          width: 280px;
+          height: 151px;
           color-scheme: dark;
           --popover: rgb(44, 44, 44);
           --border: #444448;
@@ -491,6 +492,8 @@
           box-shadow:
             0 24px 70px rgba(0, 0, 0, 0.42),
             inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          transform: scale(0.5);
+          transform-origin: top left;
           user-select: none;
         }
 

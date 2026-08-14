@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). Version `0.6.0` ports the supplied `preview.html` two-dimensional selector into the detached popover for visual and interaction review:
+The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). Version `0.6.3` ports the supplied `preview.html` two-dimensional selector into the detached popover for visual and interaction review:
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -25,7 +25,7 @@ The injection transport and first-level mount-target lifecycle are live-verified
 - The scaffold uses the official popover rectangle only for positioning. It prefers left, then right, bottom, and top, with a 12-pixel gap and viewport padding.
 - Every placement candidate must fit the viewport and must not overlap the official popover. If none fits, the custom popover remains hidden.
 - The full model-list overlay identified by `[data-composer-overlay-floating-ui]` and multiple `button[data-list-navigation-item]` controls globally suppresses and removes the custom popover, even if the first-level menu remains mounted in the DOM.
-- The custom popover preserves the supplied 560-pixel two-dimensional geometry, three model rows, effort columns, gradients, draggable thumb, and Fast toggle. Its base background is `rgb(44, 44, 44)`.
+- The custom popover preserves the supplied 560-pixel two-dimensional geometry internally, then renders the entire design at 50% scale for an actual footprint of approximately 280 by 151 pixels. All text, rows, effort columns, gradients, the draggable thumb, the Fast toggle, radii, and shadows scale together. Its base background is `rgb(44, 44, 44)`.
 - Only Sol and Terra's six effort levels (`low` through `ultra`) and Luna's five levels (`low` through `max`) exist in the selector. No other model is offered as a switch target.
 - When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty selector state: the footer reads `Other`, and no fill, thumb, active effort label, or Fast state is shown until the user selects a valid cell.
 - This visual-review build keeps selector changes local to renderer memory. It does not click official model controls, call model APIs, or change the current Codex task model.

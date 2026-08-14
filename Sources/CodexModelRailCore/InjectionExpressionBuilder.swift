@@ -185,8 +185,8 @@ public enum InjectionExpressionBuilder {
             left.top >= right.bottom
           );
           const runtimeState = window.__CODEX_MODEL_RAIL__;
-          const previewWidth = 560;
-          const previewHeight = 300;
+          const previewWidth = 280;
+          const previewHeight = 151;
           const placementPreview = runtimeState?.previewPlacement?.(previewWidth, previewHeight) || null;
           const previewRect = placementPreview ? {
             left: placementPreview.x,
