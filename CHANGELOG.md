@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-15 03:13:04 +0800
+
+- Changed the smaller `Faster` and `Smarter` endpoint labels from vertical centering to bottom alignment with the active effort label while preserving their size, color, and horizontal positions.
+
 ## 2026-08-15 03:12:05 +0800
 
 - Added `Faster` and `Smarter` endpoint labels to the preview effort row, aligned to equal left and right shell insets and vertically centered against the active effort label.
