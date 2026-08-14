@@ -68,6 +68,18 @@ The command performs these gates before it sends a signal:
 5. Send `SIGUSR1`, connect to the Electron main process, and inject through `webContents.executeJavaScript`.
 6. Schedule `inspector.close()` and disconnect the local client.
 
+## Visual tuning page
+
+[`tools/model-rail-tuner.html`](tools/model-rail-tuner.html) is a standalone local tuning page for the selector geometry. It does not inject into Codex or change the runtime payload.
+
+The page keeps the preview at the current 280-by-151-pixel footprint and sets both horizontal and vertical dot spacing to 32 pixels. It provides synchronized sliders and numeric inputs for:
+
+- the global text scale covering model, effort, and current-selection labels;
+- the visible gap between the Sol/Terra/Luna column and the selector stage;
+- the visible distance from the top effort labels to the popover's top edge.
+
+The current values are encoded in the page URL fragment and exported by the `复制参数` button as a `MODEL_RAIL_TUNING_V1` text block. Paste that block into the task before applying the geometry to the injected component.
+
 ## Mount contract
 
 The intended lifecycle is:

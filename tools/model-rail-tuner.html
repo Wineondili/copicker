@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Model Rail 调参台</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #18181a;
+      --surface: #232326;
+      --surface-raised: #2a2a2e;
+      --border: #3d3d42;
+      --text: #f3f3f4;
+      --muted: #9a9aa0;
+      --blue: #359dff;
+      --blue-soft: rgba(53, 157, 255, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.055), transparent 34rem),
+        var(--page);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+        "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    .app {
+      width: min(1040px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 54px 0 64px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 38px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .intro {
+      max-width: 470px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .fixed-size {
+      flex: none;
+      color: #c7c7cc;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      min-height: 550px;
+      overflow: hidden;
+      background: rgba(35, 35, 38, 0.86);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(18px);
+    }
+
+    .preview-panel {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      padding: 54px 40px;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        #1d1d20;
+      background-size: 20px 20px;
+    }
+
+    .preview-stack {
+      display: grid;
+      justify-items: center;
+      gap: 22px;
+    }
+
+    .rail-frame {
+      position: relative;
+      width: 280px;
+      height: 151px;
+      flex: none;
+    }
+
+    .rail {
+      --popover: rgb(44, 44, 44);
+      --rail-border: #444448;
+      --rail-text: #f3f3f4;
+      --dot: #7e7e83;
+      --dot-active: rgba(255, 255, 255, 0.36);
+      --thumb: #f5f5f6;
+      --row-h: 48px;
+      --row-gap: 16px;
+      --thumb-size: 56px;
+      --stage-w: 388px;
+      --start-inset: 6px;
+      --text-scale: 1;
+      --label-gap-base: 12px;
+      --effort-top-base: -8px;
+      width: 560px;
+      padding: 24px 26px 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+        var(--popover);
+      border: 1px solid var(--rail-border);
+      border-radius: 24px;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      color: var(--rail-text);
+      user-select: none;
+      transform: scale(0.5);
+      transform-origin: top left;
+    }
+
+    .rail-main {
+      display: grid;
+      grid-template-columns: 90px var(--stage-w);
+      column-gap: var(--label-gap-base);
+      align-items: start;
+    }
+
+    .model-labels {
+      height: calc(var(--row-h) * 3 + var(--row-gap) * 2);
+      margin-top: 34px;
+      display: grid;
+      grid-template-rows: repeat(3, var(--row-h));
+      row-gap: var(--row-gap);
+    }
+
+    .model-label {
+      display: flex;
+      align-items: center;
+      font-size: calc(22px * var(--text-scale));
+      font-weight: 650;
+      letter-spacing: -0.03em;
+    }
+
+    .stage-shell {
+      position: relative;
+      width: var(--stage-w);
+      padding-top: 34px;
+    }
+
+    .effort-labels {
+      position: absolute;
+      left: 0;
+      top: var(--effort-top-base);
+      width: var(--stage-w);
+      height: 30px;
+      pointer-events: none;
+    }
+
+    .effort-label {
+      position: absolute;
+      top: 0;
+      color: #fff;
+      font-size: calc(22px * var(--text-scale));
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      opacity: 0;
+      transform: translateX(-50%);
+      transition: opacity 180ms ease;
+      white-space: nowrap;
+    }
+
+    .effort-label.ultra { color: #a67df2; }
+    .effort-label.active { opacity: 1; }
+
+    .stage {
+      position: relative;
+      width: var(--stage-w);
+      height: calc(var(--row-h) * 3 + var(--row-gap) * 2);
+      cursor: pointer;
+      outline: none;
+      touch-action: none;
+    }
+
+    .selection {
+      position: absolute;
+      left: var(--start-inset);
+      bottom: 0;
+      width: 0;
+      height: var(--row-h);
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--fill-light) 0%, var(--fill-base) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.06);
+      pointer-events: none;
+      transition:
+        width 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        bottom 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        background 240ms ease;
+    }
+
+    .dot {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--dot);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      transition: background 180ms ease;
+    }
+
+    .dot.inside { background: var(--dot-active); }
+
+    .thumb {
+      position: absolute;
+      width: var(--thumb-size);
+      height: var(--thumb-size);
+      border-radius: 50%;
+      background: var(--thumb);
+      box-shadow:
+        0 10px 22px rgba(0, 0, 0, 0.24),
+        0 2px 6px rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+      cursor: grab;
+      transform: translate(-50%, -50%);
+      transition:
+        left 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        top 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        transform 150ms ease;
+    }
+
+    .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 17%;
+      background: rgba(74, 74, 80, 0.28);
+      opacity: 0;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 1.5V9h6.5L11 22.5V15H4.5L13 1.5Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+      transition: opacity 160ms ease;
+    }
+
+    .thumb.fast::after { opacity: 1; }
+    .stage.dragging .thumb { transform: translate(-50%, -50%) scale(1.02); }
+
+    .current-selection {
+      min-height: 26px;
+      margin-top: 18px;
+      padding-left: calc(90px + var(--label-gap-base));
+      font-size: calc(19px * var(--text-scale));
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .current-selection .effort {
+      margin-left: 7px;
+      color: #8e8e93;
+    }
+
+    .current-selection .effort.ultra { color: #a67df2; }
+
+    .fast-status {
+      display: inline-block;
+      margin-left: 7px;
+      color: #0099ff;
+      opacity: 0;
+      transform: translateY(2px);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .fast-status.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .measurements {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 360px;
+      color: #a8a8ae;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .measurement {
+      padding: 6px 9px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+    }
+
+    .measurement strong {
+      color: #e2e2e5;
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      padding: 30px;
+      background: rgba(42, 42, 46, 0.72);
+      border-left: 1px solid var(--border);
+    }
+
+    .controls h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .controls-note {
+      margin: 7px 0 25px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .control-list {
+      display: grid;
+      gap: 24px;
+    }
+
+    .control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 11px;
+    }
+
+    .control-title {
+      color: #e8e8eb;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .number-wrap {
+      display: flex;
+      align-items: center;
+      min-width: 84px;
+      padding: 0 8px;
+      background: #202023;
+      border: 1px solid #45454a;
+      border-radius: 8px;
+    }
+
+    .number-wrap:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-soft);
+    }
+
+    .number-wrap input {
+      width: 52px;
+      height: 32px;
+      padding: 0;
+      color: #f4f4f5;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .unit {
+      margin-left: 4px;
+      color: #8f8f95;
+      font-size: 11px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 18px;
+      margin: 0;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      background: #46464b;
+      border-radius: 999px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      width: 16px;
+      height: 16px;
+      margin-top: -6px;
+      appearance: none;
+      background: #f4f4f5;
+      border: 0;
+      border-radius: 50%;
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+    }
+
+    input[type="range"]:focus-visible { outline: none; }
+
+    input[type="range"]:focus-visible::-webkit-slider-thumb {
+      box-shadow: 0 0 0 4px var(--blue-soft);
+    }
+
+    .control-help {
+      margin: 7px 0 0;
+      color: #85858b;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .export {
+      margin-top: auto;
+      padding-top: 28px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    .button {
+      height: 38px;
+      padding: 0 14px;
+      border: 1px solid #4a4a50;
+      border-radius: 9px;
+      color: #d5d5d9;
+      background: #303034;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: transform 100ms ease, background 100ms ease;
+    }
+
+    .button:hover { background: #38383d; }
+    .button:active { transform: scale(0.98); }
+
+    .button.primary {
+      color: #0f1821;
+      background: #9dd2ff;
+      border-color: #9dd2ff;
+    }
+
+    .button.primary:hover { background: #b5ddff; }
+
+    .config-output {
+      width: 100%;
+      height: 92px;
+      resize: none;
+      padding: 10px 11px;
+      color: #aaaab0;
+      background: #1f1f22;
+      border: 1px solid #3d3d42;
+      border-radius: 9px;
+      outline: none;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .copy-status {
+      min-height: 17px;
+      margin: 7px 1px 0;
+      color: #7cbcf6;
+      font-size: 11px;
+    }
+
+    @media (max-width: 820px) {
+      .page-header { align-items: flex-start; flex-direction: column; }
+      .workspace { grid-template-columns: 1fr; }
+      .controls { border-top: 1px solid var(--border); border-left: 0; }
+      .preview-panel { min-height: 360px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="page-header">
+      <div>
+        <h1>Model Rail 调参台</h1>
+        <p class="intro">预览与当前 Codex 组件保持相同尺寸。调整完成后，复制右侧参数并发给我。</p>
+      </div>
+      <div class="fixed-size">固定预览尺寸&nbsp; 280 × 151 px</div>
+    </header>
+
+    <section class="workspace">
+      <div class="preview-panel">
+        <div class="preview-stack">
+          <div class="rail-frame">
+            <div class="rail" id="rail">
+              <div class="rail-main">
+                <div class="model-labels">
+                  <div class="model-label">Sol</div>
+                  <div class="model-label">Terra</div>
+                  <div class="model-label">Luna</div>
+                </div>
+                <div class="stage-shell">
+                  <div class="effort-labels" id="effortLabels"></div>
+                  <div class="stage" id="stage" tabindex="0" aria-label="二维模型选择器">
+                    <div class="selection" id="selection"></div>
+                    <div id="dots"></div>
+                    <div class="thumb" id="thumb"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="current-selection">
+                <span class="current-model">Sol</span><span class="effort">xhigh</span><span class="fast-status">Fast</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="measurements" aria-label="固定测量值">
+            <span class="measurement">水平点距 <strong>32 px</strong></span>
+            <span class="measurement">竖直点距 <strong>32 px</strong></span>
+            <span class="measurement">整体比例 <strong>50%</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="controls">
+        <div>
+          <h2>实时控制</h2>
+          <p class="controls-note">下面所有数值都是最终显示尺寸，不是缩放前的内部尺寸。</p>
+        </div>
+
+        <div class="control-list">
+          <div class="control">
+            <div class="control-head">
+              <label class="control-title" for="textScaleRange">全部文字大小</label>
+              <div class="number-wrap">
+                <input id="textScaleNumber" type="number" min="60" max="160" step="1" value="100">
+                <span class="unit">%</span>
+              </div>
+            </div>
+            <input id="textScaleRange" type="range" min="60" max="160" step="1" value="100">
+            <p class="control-help">同时缩放模型名、顶部档位文字和底部当前选择。</p>
+          </div>
+
+          <div class="control">
+            <div class="control-head">
+              <label class="control-title" for="labelGapRange">左侧模型名与点阵距离</label>
+              <div class="number-wrap">
+                <input id="labelGapNumber" type="number" min="0" max="15" step="0.5" value="6">
+                <span class="unit">px</span>
+              </div>
+            </div>
+            <input id="labelGapRange" type="range" min="0" max="15" step="0.5" value="6">
+            <p class="control-help">调整 Sol / Terra / Luna 这一列与右侧选择区域之间的水平空隙。</p>
+          </div>
+
+          <div class="control">
+            <div class="control-head">
+              <label class="control-title" for="effortTopRange">顶部档位文字距外框上边</label>
+              <div class="number-wrap">
+                <input id="effortTopNumber" type="number" min="0" max="28" step="0.5" value="8">
+                <span class="unit">px</span>
+              </div>
+            </div>
+            <input id="effortTopRange" type="range" min="0" max="28" step="0.5" value="8">
+            <p class="control-help">数值越大，low / medium / high / xhigh / max / ultra 越向下。</p>
+          </div>
+        </div>
+
+        <div class="export">
+          <div class="actions">
+            <button class="button" id="resetButton" type="button">恢复默认</button>
+            <button class="button primary" id="copyButton" type="button">复制参数</button>
+          </div>
+          <textarea class="config-output" id="configOutput" readonly aria-label="当前调参结果"></textarea>
+          <p class="copy-status" id="copyStatus" aria-live="polite"></p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SCALE = 0.5;
+      const OUTER_TOP_PADDING = 12;
+      const ROW_HEIGHT = 48;
+      const ROW_GAP = 16;
+      const STAGE_WIDTH = 388;
+      const STAGE_HEIGHT = ROW_HEIGHT * 3 + ROW_GAP * 2;
+      const DOT_SPACING = 64;
+      const FIRST_DOT_X = 34;
+      const START_INSET = 6;
+      const RIGHT_INSET_IN_THUMB = 12;
+      const efforts = ["low", "medium", "high", "xhigh", "max", "ultra"];
+      const rows = [
+        { name: "Sol", dots: [1, 2, 3, 4, 5, 6], colors: ["#FBE1E5", "#F7C6CC"] },
+        { name: "Terra", dots: [1, 2, 3, 4, 5, 6], colors: ["#FFF1CF", "#FFE6B8"] },
+        { name: "Luna", dots: [1, 2, 3, 4, 5], colors: ["#EEF9F1", "#DDF3E4"] },
+      ];
+      const centers = Array.from({ length: 6 }, (_, index) => FIRST_DOT_X + DOT_SPACING * index);
+      const rowCenters = [24, 88, 152];
+      const rowBottoms = [128, 64, 0];
+
+      const rail = document.getElementById("rail");
+      const stage = document.getElementById("stage");
+      const selection = document.getElementById("selection");
+      const thumb = document.getElementById("thumb");
+      const dotsWrap = document.getElementById("dots");
+      const effortLabels = document.getElementById("effortLabels");
+      const currentModel = document.querySelector(".current-model");
+      const currentEffort = document.querySelector(".current-selection .effort");
+      const fastStatus = document.querySelector(".fast-status");
+      const configOutput = document.getElementById("configOutput");
+      const copyStatus = document.getElementById("copyStatus");
+
+      const defaults = { textScale: 100, labelGap: 6, effortTop: 8 };
+      const state = { ...defaults };
+      let currentRow = 0;
+      let currentIndex = 3;
+      let fastMode = false;
+      let pointerStartedOnThumb = false;
+      let pointerStartX = 0;
+      let pointerStartY = 0;
+      let pointerMoved = false;
+
+      const controlPairs = [
+        {
+          key: "textScale",
+          range: document.getElementById("textScaleRange"),
+          number: document.getElementById("textScaleNumber"),
+        },
+        {
+          key: "labelGap",
+          range: document.getElementById("labelGapRange"),
+          number: document.getElementById("labelGapNumber"),
+        },
+        {
+          key: "effortTop",
+          range: document.getElementById("effortTopRange"),
+          number: document.getElementById("effortTopNumber"),
+        },
+      ];
+
+      function clamp(value, minimum, maximum) {
+        return Math.min(Math.max(value, minimum), maximum);
+      }
+
+      function cleanNumber(value) {
+        return Number(Number(value).toFixed(2));
+      }
+
+      function outputText() {
+        const fontScale = cleanNumber(state.textScale / 100);
+        return [
+          "MODEL_RAIL_TUNING_V1",
+          "previewWidth: 280px",
+          "previewHeight: 151px",
+          "componentScale: 0.5",
+          "horizontalDotSpacing: 32px",
+          "verticalDotSpacing: 32px",
+          `textScale: ${fontScale}`,
+          `modelAndStageGap: ${cleanNumber(state.labelGap)}px`,
+          `effortTextTop: ${cleanNumber(state.effortTop)}px`,
+          `internalStageWidth: ${STAGE_WIDTH}px`,
+          `internalColumnStep: ${DOT_SPACING}px`,
+          `internalGridGap: ${cleanNumber(state.labelGap / SCALE)}px`,
+          `internalEffortLabelsTop: ${cleanNumber((state.effortTop - OUTER_TOP_PADDING) / SCALE)}px`,
+        ].join("\n");
+      }
+
+      function writeHash() {
+        const params = new URLSearchParams({
+          text: String(cleanNumber(state.textScale)),
+          gap: String(cleanNumber(state.labelGap)),
+          top: String(cleanNumber(state.effortTop)),
+        });
+        history.replaceState(null, "", `#${params.toString()}`);
+      }
+
+      function applyControls({ updateHash = true } = {}) {
+        rail.style.setProperty("--text-scale", String(state.textScale / 100));
+        rail.style.setProperty("--label-gap-base", `${state.labelGap / SCALE}px`);
+        rail.style.setProperty(
+          "--effort-top-base",
+          `${(state.effortTop - OUTER_TOP_PADDING) / SCALE}px`,
+        );
+
+        for (const pair of controlPairs) {
+          pair.range.value = String(state[pair.key]);
+          pair.number.value = String(state[pair.key]);
+        }
+        configOutput.value = outputText();
+        copyStatus.textContent = "";
+        if (updateHash) writeHash();
+      }
+
+      function loadHash() {
+        const params = new URLSearchParams(location.hash.slice(1));
+        const values = {
+          textScale: Number(params.get("text")),
+          labelGap: Number(params.get("gap")),
+          effortTop: Number(params.get("top")),
+        };
+        for (const pair of controlPairs) {
+          const value = values[pair.key];
+          if (!Number.isFinite(value)) continue;
+          const minimum = Number(pair.range.min);
+          const maximum = Number(pair.range.max);
+          state[pair.key] = clamp(value, minimum, maximum);
+        }
+      }
+
+      function renderSelection() {
+        const row = rows[currentRow];
+        const dotNumber = row.dots[currentIndex];
+        const x = centers[dotNumber - 1];
+        const fillRight = Math.min(STAGE_WIDTH, x + RIGHT_INSET_IN_THUMB);
+        const effort = efforts[dotNumber - 1];
+
+        thumb.style.left = `${x}px`;
+        thumb.style.top = `${rowCenters[currentRow]}px`;
+        thumb.classList.toggle("fast", fastMode);
+        selection.style.width = `${Math.max(0, fillRight - START_INSET)}px`;
+        selection.style.bottom = `${rowBottoms[currentRow]}px`;
+        selection.style.setProperty("--fill-light", row.colors[0]);
+        selection.style.setProperty("--fill-base", row.colors[1]);
+
+        for (const dot of document.querySelectorAll(".dot")) {
+          const dotRow = Number(dot.dataset.row);
+          const dotNumberForElement = Number(dot.dataset.dot);
+          dot.classList.toggle(
+            "inside",
+            dotRow === currentRow && centers[dotNumberForElement - 1] <= fillRight,
+          );
+        }
+        for (const [index, label] of [...document.querySelectorAll(".effort-label")].entries()) {
+          label.classList.toggle("active", index === dotNumber - 1);
+        }
+
+        currentModel.textContent = row.name;
+        currentEffort.textContent = effort;
+        currentEffort.classList.toggle("ultra", effort === "ultra");
+        fastStatus.classList.toggle("active", fastMode);
+      }
+
+      function nearestRow(y) {
+        return rowCenters.reduce(
+          (best, center, index) =>
+            Math.abs(y - center) < Math.abs(y - rowCenters[best]) ? index : best,
+          0,
+        );
+      }
+
+      function nearestIndex(rowIndex, x) {
+        return rows[rowIndex].dots.reduce(
+          (best, dotNumber, index) =>
+            Math.abs(x - centers[dotNumber - 1]) <
+            Math.abs(x - centers[rows[rowIndex].dots[best] - 1])
+              ? index
+              : best,
+          0,
+        );
+      }
+
+      function updateFromPointer(clientX, clientY) {
+        const rect = stage.getBoundingClientRect();
+        const x = (clamp(clientX - rect.left, 0, rect.width) / rect.width) * STAGE_WIDTH;
+        const y = (clamp(clientY - rect.top, 0, rect.height) / rect.height) * STAGE_HEIGHT;
+        currentRow = nearestRow(y);
+        currentIndex = nearestIndex(currentRow, x);
+        renderSelection();
+      }
+
+      for (const [index, effort] of efforts.entries()) {
+        const label = document.createElement("div");
+        label.className = `effort-label${effort === "ultra" ? " ultra" : ""}`;
+        label.textContent = effort;
+        label.style.left = `${centers[index]}px`;
+        effortLabels.append(label);
+      }
+
+      for (const [rowIndex, row] of rows.entries()) {
+        for (const dotNumber of row.dots) {
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          dot.dataset.row = String(rowIndex);
+          dot.dataset.dot = String(dotNumber);
+          dot.style.left = `${centers[dotNumber - 1]}px`;
+          dot.style.top = `${rowCenters[rowIndex]}px`;
+          dotsWrap.append(dot);
+        }
+      }
+
+      stage.addEventListener("pointerdown", (event) => {
+        pointerStartedOnThumb = event.target === thumb;
+        pointerStartX = event.clientX;
+        pointerStartY = event.clientY;
+        pointerMoved = false;
+        stage.setPointerCapture(event.pointerId);
+        stage.classList.add("dragging");
+        if (!pointerStartedOnThumb) updateFromPointer(event.clientX, event.clientY);
+      });
+
+      stage.addEventListener("pointermove", (event) => {
+        if (!stage.hasPointerCapture(event.pointerId)) return;
+        if (Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) > 5) {
+          pointerMoved = true;
+        }
+        if (!pointerStartedOnThumb || pointerMoved) updateFromPointer(event.clientX, event.clientY);
+      });
+
+      stage.addEventListener("pointerup", (event) => {
+        if (stage.hasPointerCapture(event.pointerId)) {
+          if (pointerStartedOnThumb && !pointerMoved) {
+            fastMode = !fastMode;
+            renderSelection();
+          } else {
+            updateFromPointer(event.clientX, event.clientY);
+          }
+          stage.releasePointerCapture(event.pointerId);
+        }
+        stage.classList.remove("dragging");
+      });
+
+      stage.addEventListener("pointercancel", () => stage.classList.remove("dragging"));
+
+      for (const pair of controlPairs) {
+        const update = (rawValue) => {
+          const minimum = Number(pair.range.min);
+          const maximum = Number(pair.range.max);
+          const value = clamp(Number(rawValue), minimum, maximum);
+          if (!Number.isFinite(value)) return;
+          state[pair.key] = value;
+          applyControls();
+        };
+        pair.range.addEventListener("input", () => update(pair.range.value));
+        pair.number.addEventListener("input", () => update(pair.number.value));
+        pair.number.addEventListener("change", () => update(pair.number.value));
+      }
+
+      document.getElementById("resetButton").addEventListener("click", () => {
+        Object.assign(state, defaults);
+        applyControls();
+      });
+
+      document.getElementById("copyButton").addEventListener("click", async () => {
+        const text = outputText();
+        let copied = false;
+        try {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        } catch {
+          configOutput.focus();
+          configOutput.select();
+          copied = document.execCommand("copy");
+        }
+        copyStatus.textContent = copied
+          ? "参数已复制，直接粘贴发给我即可。"
+          : "浏览器未允许自动复制，请手动复制上面的参数。";
+      });
+
+      loadHash();
+      applyControls({ updateHash: false });
+      renderSelection();
+    })();
+  </script>
+</body>
+</html>

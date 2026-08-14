@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-15 02:17:00 +0800
+
+- Added a standalone local Model Rail tuning page with a preview fixed to the current 280-by-151-pixel runtime footprint.
+- Changed the tuning preview to equal 32-pixel horizontal and vertical dot spacing while retaining the Sol/Terra six-level and Luna five-level geometry.
+- Added synchronized range and numeric controls for global text scale, model-label-to-stage spacing, and top effort-label vertical placement.
+- Added URL-fragment state, reset behavior, and copyable `MODEL_RAIL_TUNING_V1` output so approved values can be transferred exactly into the injected component.
+- Verified the page in the Codex in-app browser at its native preview size, including live control updates, exact dot spacing, copied output feedback, and reset values.
+
 ## 2026-08-15 02:07:59 +0800
 
 - Scaled the complete detached selector design to 50% while preserving the source geometry and proportional text, controls, gradients, radii, and shadows.
