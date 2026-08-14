@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-15 03:04:05 +0800
+
+- Expanded the preview selector shell by another 4 rendered pixels above its fixed content, increasing the total preview height from 155 to 159 pixels without changing any internal element positions or spacing.
+
 ## 2026-08-15 03:02:35 +0800
 
 - Reverted the preview-only 4-pixel active-effort-label nudge so the approved typography and label-to-stage relationship remain unchanged.
