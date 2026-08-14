@@ -81,11 +81,13 @@ import Testing
     #expect(!expression.contains("textContent"))
 }
 
-@Test func prototypeClickTargetsOnlyTheTemporaryTerraButton() {
-    let expression = InjectionExpressionBuilder.clickPrototypeButtonExpression
+@Test func selectorClickTargetsOnlyTheLocalTerraMediumCell() {
+    let expression = InjectionExpressionBuilder.clickSelectorCellExpression
 
     #expect(expression.contains("codex-model-rail-popover-host"))
-    #expect(expression.contains("data-model-label=\"5.6 Terra\""))
+    #expect(expression.contains("querySelector(\"#stage\")"))
+    #expect(expression.contains("model: \"Terra\""))
+    #expect(expression.contains("effort: \"medium\""))
     #expect(expression.contains("type: \"mouseDown\""))
     #expect(!expression.contains("data-list-navigation-item"))
     #expect(!expression.contains("data-model-picker-model-row"))

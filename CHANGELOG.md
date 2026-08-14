@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-14 22:44:07 +0800
+
+- Replaced the temporary model-button grid with the supplied 560-pixel two-dimensional Sol, Terra, and Luna selector inside the detached Shadow DOM popover.
+- Preserved the source geometry, gradients, six effort columns, draggable thumb, keyboard movement, and Fast toggle while changing the base background to `rgb(44, 44, 44)`.
+- Limited selectable cells to six efforts for Sol and Terra and five efforts for Luna, with no rows or controls for other Codex models.
+- Added trigger-based initialization and an empty `Other` state with no fill, thumb, active effort label, or Fast indicator until a valid selector cell is chosen.
+- Added selector-specific diagnostics and a trusted Terra/medium input probe while keeping all selection feedback local to renderer memory for this visual review.
+- Live-verified a 560-by-302 body-level popover, 360-by-176 stage, 17 dots, exact RGB background, non-overlap, local Terra/medium interaction, official picker retention, and full-list suppression against Codex `26.810.41047` build `6570`.
+
 ## 2026-08-14 22:01:20 +0800
 
 - Added a deliberately temporary 304-pixel neutral prototype card with seven local-only model buttons for interaction review.

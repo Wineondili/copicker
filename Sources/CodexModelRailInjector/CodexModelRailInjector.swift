@@ -19,8 +19,8 @@ struct CodexModelRailInjectorCLI {
                 try await probePicker()
             case "probe-primary":
                 try await probePrimaryPicker()
-            case "probe-prototype":
-                try await probePrototypeInteraction()
+            case "probe-selector", "probe-prototype":
+                try await probeSelectorInteraction()
             case "inject":
                 try await inject()
             case "remove":
@@ -152,20 +152,20 @@ struct CodexModelRailInjectorCLI {
         }
     }
 
-    private static func probePrototypeInteraction() async throws {
+    private static func probeSelectorInteraction() async throws {
         let session = try await openInspector()
         do {
             let result = try await session.evaluate(
-                expression: InjectionExpressionBuilder.clickPrototypeButtonExpression
+                expression: InjectionExpressionBuilder.clickSelectorCellExpression
             )
-            print("Prototype click result:")
+            print("Selector click result:")
             print(result?.prettyPrinted() ?? "null")
             try await Task.sleep(for: .milliseconds(250))
 
             let probeResult = try await session.evaluate(
                 expression: InjectionExpressionBuilder.rendererProbeExpression
             )
-            print("Scoped renderer probe after prototype click:")
+            print("Scoped renderer probe after selector click:")
             print(probeResult?.prettyPrinted() ?? "null")
             await shutdownInspector(session)
         } catch {
@@ -228,14 +228,14 @@ struct CodexModelRailInjectorCLI {
 
     private static func printUsage() {
         print("""
-        Usage: CodexModelRailInjector [status|dry-run|probe|probe-picker|probe-primary|probe-prototype|inject|remove|help]
+        Usage: CodexModelRailInjector [status|dry-run|probe|probe-picker|probe-primary|probe-selector|inject|remove|help]
 
           status   Inspect the installed Codex build without changing runtime state.
           dry-run  Alias for status; validates the bundled payload and expression.
           probe    Return selector metadata and labels only for model-picker controls.
           probe-picker  Open the picker shortcut, then run the scoped selector probe.
           probe-primary  Open the first-level model/reasoning popover, then probe it.
-          probe-prototype  Click the temporary Terra button and verify local-only feedback.
+          probe-selector  Click the Terra/medium selector cell and verify local-only feedback.
           inject   Explicitly enable a temporary loopback Inspector and inject Model Rail.
           remove   Remove Model Rail and disable its current-process reinjection hook.
           help     Show this help.

@@ -174,6 +174,10 @@ public enum InjectionExpressionBuilder {
           const popoverHost = document.getElementById("codex-model-rail-popover-host");
           const anchorRect = primarySurface?.getBoundingClientRect() || null;
           const popoverRect = popoverHost?.getBoundingClientRect() || null;
+          const popoverShadow = popoverHost?.shadowRoot || null;
+          const selectorPanel = popoverShadow?.querySelector(".popover") || null;
+          const selectorStage = popoverShadow?.querySelector("#stage") || null;
+          const selectorStageRect = selectorStage?.getBoundingClientRect() || null;
           const rectanglesOverlap = (left, right) => Boolean(left && right) && !(
             left.right <= right.left ||
             left.left >= right.right ||
@@ -181,8 +185,8 @@ public enum InjectionExpressionBuilder {
             left.top >= right.bottom
           );
           const runtimeState = window.__CODEX_MODEL_RAIL__;
-          const previewWidth = 320;
-          const previewHeight = 180;
+          const previewWidth = 560;
+          const previewHeight = 300;
           const placementPreview = runtimeState?.previewPlacement?.(previewWidth, previewHeight) || null;
           const previewRect = placementPreview ? {
             left: placementPreview.x,
@@ -209,8 +213,18 @@ public enum InjectionExpressionBuilder {
               positionState: popoverHost.getAttribute("data-position-state"),
               visualPending: popoverHost.getAttribute("data-visual-pending"),
               prototype: popoverHost.getAttribute("data-prototype"),
-              prototypeButtonCount: popoverHost.shadowRoot?.querySelectorAll("button[data-model-label]").length || 0,
-              prototypeSelection: popoverHost.getAttribute("data-prototype-selection"),
+              localOnly: popoverHost.getAttribute("data-local-only"),
+              designSource: popoverHost.getAttribute("data-design-source"),
+              selectorModel: popoverHost.getAttribute("data-selector-model"),
+              selectorEffort: popoverHost.getAttribute("data-selector-effort"),
+              selectorFast: popoverHost.getAttribute("data-selector-fast"),
+              selectorHasSelection: popoverHost.getAttribute("data-selector-has-selection"),
+              selectorDotCount: popoverShadow?.querySelectorAll(".dot").length || 0,
+              selectorActiveDotCount: popoverShadow?.querySelectorAll(".dot.inside").length || 0,
+              selectorActiveEffortLabelCount: popoverShadow?.querySelectorAll(".effort-label.active").length || 0,
+              selectorStageWidth: Math.round(selectorStageRect?.width || 0),
+              selectorStageHeight: Math.round(selectorStageRect?.height || 0),
+              popoverBackgroundColor: selectorPanel ? getComputedStyle(selectorPanel).backgroundColor : null,
               ariaHidden: popoverHost.getAttribute("aria-hidden"),
               width: Math.round(popoverRect?.width || 0),
               height: Math.round(popoverRect?.height || 0),
@@ -466,12 +480,12 @@ public enum InjectionExpressionBuilder {
     })()
     """
 
-    public static let clickPrototypeButtonExpression = """
+    public static let clickSelectorCellExpression = """
     (async () => {
       const moduleAPI = process.getBuiltinModule("module");
       const localRequire = typeof require === "function"
         ? require
-        : moduleAPI.createRequire(process.cwd() + "/.codex-model-rail-prototype-click.cjs");
+        : moduleAPI.createRequire(process.cwd() + "/.codex-model-rail-selector-click.cjs");
       const electron = localRequire("electron");
       for (const contents of electron.webContents.getAllWebContents()) {
         if (!contents || contents.isDestroyed()) continue;
@@ -482,15 +496,13 @@ public enum InjectionExpressionBuilder {
             const target = await frame.executeJavaScript(`
               (() => {
                 const host = document.getElementById("codex-model-rail-popover-host");
-                const button = host?.shadowRoot?.querySelector(
-                  'button[data-model-label="5.6 Terra"]'
-                );
-                if (!button) return { found: false };
-                const rect = button.getBoundingClientRect();
+                const stage = host?.shadowRoot?.querySelector("#stage");
+                if (!stage) return { found: false };
+                const rect = stage.getBoundingClientRect();
                 return {
                   found: rect.width > 0 && rect.height > 0,
-                  x: Math.round(rect.left + rect.width / 2),
-                  y: Math.round(rect.top + rect.height / 2)
+                  x: Math.round(rect.left + rect.width * (91.2 / 360)),
+                  y: Math.round(rect.top + rect.height * (88 / 176))
                 };
               })()
             `, false);
@@ -510,15 +522,17 @@ public enum InjectionExpressionBuilder {
               button: "left",
               clickCount: 1
             });
-            return { clicked: true, label: "5.6 Terra" };
+            return { clicked: true, model: "Terra", effort: "medium" };
           } catch {
             // Detached frames are ignored.
           }
         }
       }
-      return { clicked: false, label: "5.6 Terra" };
+      return { clicked: false, model: "Terra", effort: "medium" };
     })()
     """
+
+    public static let clickPrototypeButtonExpression = clickSelectorCellExpression
 
 }
 
