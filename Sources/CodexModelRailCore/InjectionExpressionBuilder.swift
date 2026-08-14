@@ -84,14 +84,14 @@ public enum InjectionExpressionBuilder {
     (async () => {
       const stateKey = Symbol.for("com.jonas.codex-model-rail.main-state");
       const globalKey = "__CODEX_MODEL_RAIL__";
-      const hostID = "codex-model-rail-host";
+      const hostIDs = ["codex-model-rail-host", "codex-model-rail-popover-host"];
       const cleanupSource = `
         (() => {
           const current = window["${globalKey}"];
           const hadState = Boolean(current);
-          const hadHost = Boolean(document.getElementById("${hostID}"));
+          const hadHost = ${JSON.stringify(hostIDs)}.some((id) => document.getElementById(id));
           current?.dispose?.();
-          document.getElementById("${hostID}")?.remove();
+          for (const id of ${JSON.stringify(hostIDs)}) document.getElementById(id)?.remove();
           return { hadState, hadHost };
         })()
       `;
@@ -165,6 +165,31 @@ public enum InjectionExpressionBuilder {
               }
             }
           }
+          const primarySurface = [...document.querySelectorAll('[data-radix-menu-content], [role="menu"]')]
+            .find((surface) =>
+              surface.querySelector("[data-reasoning-slider]") &&
+              surface.querySelector("[data-model-picker-power-slider], [data-model-picker-view-toggle]") &&
+              !surface.closest("[data-composer-overlay-floating-ui]")
+            ) || null;
+          const popoverHost = document.getElementById("codex-model-rail-popover-host");
+          const anchorRect = primarySurface?.getBoundingClientRect() || null;
+          const popoverRect = popoverHost?.getBoundingClientRect() || null;
+          const rectanglesOverlap = (left, right) => Boolean(left && right) && !(
+            left.right <= right.left ||
+            left.left >= right.right ||
+            left.bottom <= right.top ||
+            left.top >= right.bottom
+          );
+          const runtimeState = window.__CODEX_MODEL_RAIL__;
+          const previewWidth = 320;
+          const previewHeight = 180;
+          const placementPreview = runtimeState?.previewPlacement?.(previewWidth, previewHeight) || null;
+          const previewRect = placementPreview ? {
+            left: placementPreview.x,
+            top: placementPreview.y,
+            right: placementPreview.x + previewWidth,
+            bottom: placementPreview.y + previewHeight
+          } : null;
           return {
             readyState: document.readyState,
             hasBody: Boolean(document.body),
@@ -173,8 +198,29 @@ public enum InjectionExpressionBuilder {
               modelRow: document.querySelectorAll("[data-model-picker-model-row]").length,
               reasoningSlider: document.querySelectorAll("[data-reasoning-slider]").length,
               composerTargets: document.querySelectorAll("[data-composer-navigation-target]").length,
-              modelRailHost: document.querySelectorAll("#codex-model-rail-host").length
+              modelRailHost: document.querySelectorAll("#codex-model-rail-host").length,
+              detachedPopoverHost: document.querySelectorAll("#codex-model-rail-popover-host").length
             },
+            detachedPopoverDescriptors: popoverHost ? [{
+              version: popoverHost.getAttribute("data-codex-model-rail-popover"),
+              parentIsBody: popoverHost.parentElement === document.body,
+              insidePrimarySurface: Boolean(primarySurface?.contains(popoverHost)),
+              placement: popoverHost.getAttribute("data-placement"),
+              positionState: popoverHost.getAttribute("data-position-state"),
+              visualPending: popoverHost.getAttribute("data-visual-pending"),
+              ariaHidden: popoverHost.getAttribute("aria-hidden"),
+              width: Math.round(popoverRect?.width || 0),
+              height: Math.round(popoverRect?.height || 0),
+              overlapsPrimarySurface: rectanglesOverlap(popoverRect, anchorRect),
+              placementPreview: placementPreview ? {
+                fixtureWidth: previewWidth,
+                fixtureHeight: previewHeight,
+                placement: placementPreview.placement,
+                x: Math.round(placementPreview.x),
+                y: Math.round(placementPreview.y),
+                overlapsPrimarySurface: rectanglesOverlap(previewRect, anchorRect)
+              } : null
+            }] : [],
             modelRailDescriptors: [...document.querySelectorAll("#codex-model-rail-host")]
               .slice(0, 2)
               .map((host) => {

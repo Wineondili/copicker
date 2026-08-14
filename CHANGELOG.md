@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-14 21:54:28 +0800
+
+- Replaced the in-surface mount contract with an independent `document.body` popover scaffold that uses the first-level menu only as a positioning anchor.
+- Added left, right, bottom, and top collision-free placement with a fixed gap, viewport padding, automatic side changes, and hide-on-no-fit behavior.
+- Added resize and scroll repositioning while keeping all visual content intentionally disabled pending the user's specification.
+- Added global full-model-list suppression so the detached popover is removed even when the first-level menu remains mounted behind Figure 2.
+- Live-verified body-level parentage, separation from the official menu subtree, left-side placement, non-overlap, and removal when the seven-item full model list opens.
+
 ## 2026-08-14 21:49:31 +0800
 
 - Removed the previous custom visual from the running Codex process and added an explicit `remove` command for future rollback.

@@ -1,6 +1,6 @@
 # Codex Model Rail
 
-Codex Model Rail is a local macOS injector prototype for adding a user-designed model control to the official Codex first-level model/reasoning popover.
+Codex Model Rail is a local macOS injector prototype for showing a user-designed model control in its own popover beside the official Codex first-level model/reasoning popover.
 
 The project is designed around one non-negotiable safety property: it does not modify or re-sign `/Applications/ChatGPT.app`. The injector briefly connects to the Electron main-process Inspector on loopback, injects a self-contained DOM component through `webContents.executeJavaScript`, and closes the Inspector connection immediately afterward.
 
@@ -19,10 +19,13 @@ The injection transport and first-level mount-target lifecycle are live-verified
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
 - The Inspector is bound to loopback, and shutdown is scheduled immediately after the renderer hook is installed.
-- The only accepted mount lifecycle is the first-level popover opened from `[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]`.
-- A valid mount surface must be an open menu containing `[data-reasoning-slider]` and the current model-picker controls.
-- The full model-list overlay identified by `[data-composer-overlay-floating-ui]` and `button[data-list-navigation-item]` is explicitly excluded.
-- The previous `0.2.0` Shadow DOM rail and its visual styling were removed. Version `0.3.0` observes the correct target but intentionally renders nothing until the visual contract is supplied.
+- The only accepted anchor lifecycle is the first-level popover opened from `[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]`.
+- A valid anchor surface must be an open menu containing `[data-reasoning-slider]` and the current model-picker controls.
+- The custom popover scaffold is appended directly to `document.body`; it is never inserted into, or made a child of, the official first-level popover.
+- The scaffold uses the official popover rectangle only for positioning. It prefers left, then right, bottom, and top, with a 12-pixel gap and viewport padding.
+- Every placement candidate must fit the viewport and must not overlap the official popover. If none fits, the custom popover remains hidden.
+- The full model-list overlay identified by `[data-composer-overlay-floating-ui]` and multiple `button[data-list-navigation-item]` controls globally suppresses and removes the custom popover, even if the first-level menu remains mounted in the DOM.
+- Version `0.4.1` provides only this detached lifecycle and collision contract. It intentionally renders no visible content until the visual specification is supplied.
 
 ## Build and test
 
@@ -66,9 +69,11 @@ The intended lifecycle is:
 
 1. Click the bottom composer control that currently displays the selected model and reasoning effort, such as `5.6 Sol / 极高`.
 2. Wait for that exact trigger to report `aria-expanded="true"` and `data-state="open"`.
-3. Resolve the nearest visible first-level menu containing the reasoning slider and model-picker controls.
+3. Resolve the nearest visible first-level menu containing the reasoning slider and model-picker controls as a positioning anchor only.
 4. Reject the full model-list overlay even if it is simultaneously present elsewhere in the DOM.
-5. Mount the future user-designed component only in the accepted first-level surface and remove it as soon as that surface closes.
+5. Append an independent popover host to `document.body`, outside the official popover DOM subtree.
+6. Position it beside the official popover without intersection; automatically change sides when necessary and hide it when no side fits.
+7. Remove the independent popover as soon as the first-level surface closes or the full model list opens.
 
 For a scoped live check of this target:
 
