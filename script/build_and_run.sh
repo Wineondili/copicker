@@ -35,6 +35,9 @@ case "$MODE" in
   --probe-primary|probe-primary)
     "$APP_BINARY" probe-primary
     ;;
+  --probe-prototype|probe-prototype)
+    "$APP_BINARY" probe-prototype
+    ;;
   --debug|debug)
     lldb -- "$APP_BINARY"
     ;;
@@ -50,7 +53,7 @@ case "$MODE" in
     "$APP_BINARY"
     ;;
   *)
-    echo "usage: $0 [run|--inject|--remove|--probe|--probe-picker|--probe-primary|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|--inject|--remove|--probe|--probe-picker|--probe-primary|--probe-prototype|--debug|--logs|--telemetry|--verify]" >&2
     exit 2
     ;;
 esac

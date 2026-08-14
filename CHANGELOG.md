@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-14 22:01:20 +0800
+
+- Added a deliberately temporary 304-pixel neutral prototype card with seven local-only model buttons for interaction review.
+- Added hover, pressed, keyboard-focus, and local selected-state feedback without connecting any button to Codex model selection.
+- Treated the detached popover as part of the combined picker interaction region while preserving outside-click, `Escape`, document-hide, window-blur, official-close, and Figure 2 dismissal behavior.
+- Added a trusted-input prototype probe and live-verified that clicking `5.6 Terra` keeps Figure 1 open and changes only the prototype selection state.
+- Confirmed separate body-level parentage, seven prototype buttons, non-overlap, and unchanged official application boundaries.
+
 ## 2026-08-14 21:54:28 +0800
 
 - Replaced the in-surface mount contract with an independent `document.body` popover scaffold that uses the first-level menu only as a positioning anchor.

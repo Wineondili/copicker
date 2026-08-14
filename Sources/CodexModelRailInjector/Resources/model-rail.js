@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.4.1";
+  const VERSION = "0.5.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -15,6 +15,15 @@
     "[data-model-picker-power-slider], [data-model-picker-view-toggle]";
   const SECONDARY_SURFACE_SELECTOR = "[data-composer-overlay-floating-ui]";
   const SECONDARY_ITEM_SELECTOR = "button[data-list-navigation-item]";
+  const PROTOTYPE_MODELS = [
+    "5.6 Sol",
+    "5.6 Terra",
+    "5.6 Luna",
+    "5.5",
+    "5.4",
+    "5.4 Mini",
+    "5.3 Spark",
+  ];
 
   const previous = window[GLOBAL_KEY];
   if (previous?.version === VERSION) {
@@ -25,7 +34,8 @@
       triggerFound: Boolean(previous.hasPrimaryTarget?.()),
       primaryOnly: true,
       secondaryExcluded: true,
-      visualPending: true,
+      prototype: true,
+      visualPending: false,
       version: VERSION,
     };
   }
@@ -40,6 +50,8 @@
     popoverHost: null,
     resizeObserver: null,
     observedSurface: null,
+    dismissedForCurrentOpen: false,
+    prototypeSelection: "5.6 Sol",
   };
 
   function isVisible(element) {
@@ -130,6 +142,11 @@
   function currentPrimaryTarget() {
     if (isSecondaryPickerOpen()) return null;
     const trigger = findOpenTrigger();
+    if (!trigger) {
+      state.dismissedForCurrentOpen = false;
+      return null;
+    }
+    if (state.dismissedForCurrentOpen) return null;
     const surface = findPrimarySurface(trigger);
     return surface ? { trigger, surface } : null;
   }
@@ -210,6 +227,166 @@
     return null;
   }
 
+  function selectPrototypeModel(host, label) {
+    state.prototypeSelection = label;
+    host.setAttribute("data-prototype-selection", label);
+    for (const button of host.shadowRoot?.querySelectorAll("button[data-model-label]") || []) {
+      button.setAttribute(
+        "aria-pressed",
+        button.getAttribute("data-model-label") === label ? "true" : "false",
+      );
+    }
+    const status = host.shadowRoot?.querySelector("[data-selection-status]");
+    if (status) status.textContent = `本地选中：${label}`;
+  }
+
+  function renderPrototype(host) {
+    if (host.shadowRoot) return;
+    const shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
+      <style>
+        :host {
+          all: initial;
+          display: block;
+          width: 304px;
+          color-scheme: dark;
+          font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        .panel {
+          width: 304px;
+          padding: 12px;
+          color: #f1f1f3;
+          background: #1d1d20;
+          border: 1px solid #3b3b40;
+          border-radius: 14px;
+          box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
+        }
+
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin: 0 2px 10px;
+        }
+
+        .title {
+          font-size: 13px;
+          font-weight: 650;
+          letter-spacing: -0.01em;
+        }
+
+        .tag {
+          color: #919198;
+          font-size: 10px;
+          font-weight: 550;
+        }
+
+        .models {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 6px;
+        }
+
+        button {
+          appearance: none;
+          min-width: 0;
+          min-height: 36px;
+          padding: 7px 9px;
+          overflow: hidden;
+          color: #d3d3d7;
+          background: #28282c;
+          border: 1px solid #38383d;
+          border-radius: 9px;
+          font: inherit;
+          font-size: 12px;
+          font-weight: 560;
+          text-align: left;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          cursor: default;
+          transition: background 100ms ease, border-color 100ms ease, transform 80ms ease;
+        }
+
+        button:hover {
+          color: #ffffff;
+          background: #323237;
+          border-color: #4b4b52;
+        }
+
+        button:active { transform: scale(0.975); }
+
+        button[aria-pressed="true"] {
+          color: #171719;
+          background: #f0f0f2;
+          border-color: #f0f0f2;
+        }
+
+        button:focus-visible {
+          outline: 2px solid #8e8e96;
+          outline-offset: 2px;
+        }
+
+        .footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          min-height: 16px;
+          margin: 10px 2px 0;
+          color: #8e8e95;
+          font-size: 10px;
+        }
+
+        [data-selection-status] {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          button { transition: none; }
+        }
+      </style>
+      <section class="panel" data-prototype="true" aria-label="临时快捷模型交互稿">
+        <div class="header">
+          <span class="title">快捷模型</span>
+          <span class="tag">临时交互稿</span>
+        </div>
+        <div class="models"></div>
+        <div class="footer">
+          <span data-selection-status></span>
+          <span>不切换真实模型</span>
+        </div>
+      </section>
+    `;
+
+    const models = shadow.querySelector(".models");
+    for (const label of PROTOTYPE_MODELS) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.setAttribute("data-model-label", label);
+      button.setAttribute("aria-pressed", "false");
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectPrototypeModel(host, label);
+      });
+      models?.append(button);
+    }
+
+    shadow.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    shadow.addEventListener("click", (event) => event.stopPropagation());
+    selectPrototypeModel(host, state.prototypeSelection);
+  }
+
   function ensureDetachedPopover() {
     let host = document.getElementById(POPOVER_HOST_ID);
     if (!host) {
@@ -218,7 +395,8 @@
     }
 
     host.setAttribute("data-codex-model-rail-popover", VERSION);
-    host.setAttribute("data-visual-pending", "true");
+    host.setAttribute("data-prototype", "true");
+    host.setAttribute("data-visual-pending", "false");
     host.setAttribute("aria-hidden", "true");
     host.style.position = "fixed";
     host.style.left = "0px";
@@ -229,6 +407,7 @@
     host.style.zIndex = "2147483000";
 
     if (host.parentElement !== document.body) document.body.append(host);
+    renderPrototype(host);
     state.popoverHost = host;
     return host;
   }
@@ -244,15 +423,21 @@
     if (!placement) {
       host.setAttribute("data-placement", "none");
       host.setAttribute("data-position-state", "hidden-no-fit");
+      host.setAttribute("aria-hidden", "true");
       host.style.left = "-100000px";
       host.style.top = "-100000px";
+      host.style.pointerEvents = "none";
+      host.style.visibility = "hidden";
       return;
     }
 
     host.setAttribute("data-placement", placement.placement);
     host.setAttribute("data-position-state", "positioned");
+    host.setAttribute("aria-hidden", "false");
     host.style.left = `${Math.round(placement.x)}px`;
     host.style.top = `${Math.round(placement.y)}px`;
+    host.style.pointerEvents = "auto";
+    host.style.visibility = "visible";
   }
 
   function syncNow() {
@@ -278,7 +463,7 @@
     }
     positionDetachedPopover();
 
-    // The detached scaffold is intentionally invisible until the user supplies its design.
+    // This is a disposable visual prototype. It does not change the real Codex model.
   }
 
   function scheduleSync() {
@@ -303,10 +488,24 @@
     if (!state.primarySurface) return null;
     return computePlacement(state.primarySurface.getBoundingClientRect(), width, height);
   };
+  state.dismissForCurrentOpen = () => {
+    state.dismissedForCurrentOpen = true;
+    removeDetachedPopover();
+  };
+  state.handleWindowBlur = () => state.dismissForCurrentOpen();
+  state.handleVisibilityChange = () => {
+    if (document.visibilityState === "hidden") state.dismissForCurrentOpen();
+  };
+  state.handleKeyDown = (event) => {
+    if (event.key === "Escape") state.dismissForCurrentOpen();
+  };
   state.dispose = () => {
     state.observer?.disconnect();
     window.removeEventListener("resize", scheduleSync);
     window.removeEventListener("scroll", scheduleSync, true);
+    window.removeEventListener("blur", state.handleWindowBlur);
+    document.removeEventListener("visibilitychange", state.handleVisibilityChange);
+    document.removeEventListener("keydown", state.handleKeyDown, true);
     removeDetachedPopover();
     removePreviousVisual();
     state.trigger = null;
@@ -316,6 +515,9 @@
 
   window.addEventListener("resize", scheduleSync);
   window.addEventListener("scroll", scheduleSync, true);
+  window.addEventListener("blur", state.handleWindowBlur);
+  document.addEventListener("visibilitychange", state.handleVisibilityChange);
+  document.addEventListener("keydown", state.handleKeyDown, true);
   window[GLOBAL_KEY] = state;
   scheduleSync();
 
@@ -325,7 +527,8 @@
     triggerFound: Boolean(currentPrimaryTarget()),
     primaryOnly: true,
     secondaryExcluded: true,
-    visualPending: true,
+    prototype: true,
+    visualPending: false,
     version: VERSION,
   };
 })();

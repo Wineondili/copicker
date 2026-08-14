@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). The visual component is intentionally pending the user's design specification:
+The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). Version `0.5.0` includes a disposable visual prototype so the open, click, and dismiss behavior can be reviewed before the user supplies the final design:
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -25,7 +25,10 @@ The injection transport and first-level mount-target lifecycle are live-verified
 - The scaffold uses the official popover rectangle only for positioning. It prefers left, then right, bottom, and top, with a 12-pixel gap and viewport padding.
 - Every placement candidate must fit the viewport and must not overlap the official popover. If none fits, the custom popover remains hidden.
 - The full model-list overlay identified by `[data-composer-overlay-floating-ui]` and multiple `button[data-list-navigation-item]` controls globally suppresses and removes the custom popover, even if the first-level menu remains mounted in the DOM.
-- Version `0.4.1` provides only this detached lifecycle and collision contract. It intentionally renders no visible content until the visual specification is supplied.
+- The prototype is a neutral 304-pixel card with seven two-column model buttons. Hover, press, focus, and local selected states are implemented only as interaction feedback.
+- Prototype buttons do not click official model controls, call model APIs, or change the current Codex task model. The footer states this explicitly.
+- Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
+- All prototype markup and styles are isolated in the detached host and are intended to be replaced wholesale by the user's final specification.
 
 ## Build and test
 
@@ -81,10 +84,16 @@ For a scoped live check of this target:
 ./script/build_and_run.sh --probe-primary
 ```
 
+For a trusted-input check that clicks only the temporary `5.6 Terra` button and verifies local selected-state feedback:
+
+```bash
+./script/build_and_run.sh --probe-prototype
+```
+
 `Ctrl+Shift+M` opens the full model list in the current build. It is retained only as a diagnostic exclusion test through `--probe-picker`; it is not the custom component's mount trigger.
 
 ## Privacy and rollback
 
-The payload contains no network request, storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors. The diagnostic probe is scoped to control metadata and short control labels; it does not read the conversation body or composer text.
+The payload contains no network request, storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors. Prototype selection exists only in renderer memory and disappears with the Codex process. The diagnostic probe is scoped to control metadata and short control labels; it does not read the conversation body or composer text.
 
 The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. The official application bundle is never changed.

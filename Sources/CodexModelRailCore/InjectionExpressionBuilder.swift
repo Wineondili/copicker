@@ -208,6 +208,9 @@ public enum InjectionExpressionBuilder {
               placement: popoverHost.getAttribute("data-placement"),
               positionState: popoverHost.getAttribute("data-position-state"),
               visualPending: popoverHost.getAttribute("data-visual-pending"),
+              prototype: popoverHost.getAttribute("data-prototype"),
+              prototypeButtonCount: popoverHost.shadowRoot?.querySelectorAll("button[data-model-label]").length || 0,
+              prototypeSelection: popoverHost.getAttribute("data-prototype-selection"),
               ariaHidden: popoverHost.getAttribute("aria-hidden"),
               width: Math.round(popoverRect?.width || 0),
               height: Math.round(popoverRect?.height || 0),
@@ -460,6 +463,60 @@ public enum InjectionExpressionBuilder {
         }
       }
       return { found: false, clicked: false, alreadyOpen: false };
+    })()
+    """
+
+    public static let clickPrototypeButtonExpression = """
+    (async () => {
+      const moduleAPI = process.getBuiltinModule("module");
+      const localRequire = typeof require === "function"
+        ? require
+        : moduleAPI.createRequire(process.cwd() + "/.codex-model-rail-prototype-click.cjs");
+      const electron = localRequire("electron");
+      for (const contents of electron.webContents.getAllWebContents()) {
+        if (!contents || contents.isDestroyed()) continue;
+        const type = contents.getType();
+        if (type !== "window" && type !== "webview") continue;
+        for (const frame of contents.mainFrame?.framesInSubtree || []) {
+          try {
+            const target = await frame.executeJavaScript(`
+              (() => {
+                const host = document.getElementById("codex-model-rail-popover-host");
+                const button = host?.shadowRoot?.querySelector(
+                  'button[data-model-label="5.6 Terra"]'
+                );
+                if (!button) return { found: false };
+                const rect = button.getBoundingClientRect();
+                return {
+                  found: rect.width > 0 && rect.height > 0,
+                  x: Math.round(rect.left + rect.width / 2),
+                  y: Math.round(rect.top + rect.height / 2)
+                };
+              })()
+            `, false);
+            if (!target?.found) continue;
+            contents.sendInputEvent({ type: "mouseMove", x: target.x, y: target.y });
+            contents.sendInputEvent({
+              type: "mouseDown",
+              x: target.x,
+              y: target.y,
+              button: "left",
+              clickCount: 1
+            });
+            contents.sendInputEvent({
+              type: "mouseUp",
+              x: target.x,
+              y: target.y,
+              button: "left",
+              clickCount: 1
+            });
+            return { clicked: true, label: "5.6 Terra" };
+          } catch {
+            // Detached frames are ignored.
+          }
+        }
+      }
+      return { clicked: false, label: "5.6 Terra" };
     })()
     """
 
