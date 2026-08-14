@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-15 03:28:02 +0800
+
+- Removed the preview footer's model-and-effort summary and moved the current model to the left side of the active top effort label without changing the effort's dot-centered position.
+- Extended endpoint collision detection across the complete model-effort-Fast group so `Faster` and `Smarter` continue to yield when the moving label group reaches them.
+- Raised only the bottom edge and reduced the preview height from 159 to 134.75 pixels; live measurements confirm equal 13.5-pixel left and Luna-text bottom insets.
+
 ## 2026-08-15 03:23:50 +0800
 
 - Extended only the preview selector's right edge by another 1.75 rendered pixels, increasing the total width from 288 to 289.75 pixels while leaving the left edge and all selector content fixed.

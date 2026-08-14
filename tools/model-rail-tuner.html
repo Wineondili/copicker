@@ -103,8 +103,9 @@
     .rail-frame {
       position: relative;
       left: 4.875px;
+      top: -12.125px;
       width: 289.75px;
-      height: 159px;
+      height: 134.75px;
       flex: none;
     }
 
@@ -126,7 +127,7 @@
       position: relative;
       top: -4px;
       width: 579.5px;
-      padding: 40px 26px 22px;
+      padding: 40px 26px 17.5px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
         var(--popover);
@@ -195,6 +196,18 @@
 
     .effort-label.ultra { color: #a67df2; }
     .effort-label.active { opacity: 1; }
+
+    .effort-model {
+      position: absolute;
+      right: calc(100% + 7px);
+      bottom: 0;
+      color: #f3f3f4;
+      font-size: calc(19px * var(--text-scale));
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
 
     .effort-fast {
       position: absolute;
@@ -306,6 +319,7 @@
     .stage.dragging .thumb { transform: translate(-50%, -50%) scale(1.02); }
 
     .current-selection {
+      display: none;
       min-height: 26px;
       margin-top: 18px;
       padding-left: calc(90px + var(--label-gap-base));
@@ -577,7 +591,7 @@
         <h1>Model Rail 调参台</h1>
         <p class="intro">预览与当前 Codex 组件保持相同尺寸，代码保存后会自动刷新。调整完成后，复制右侧参数并发给我。</p>
       </div>
-      <div class="fixed-size">固定预览尺寸&nbsp; 289.75 × 159 px</div>
+      <div class="fixed-size">固定预览尺寸&nbsp; 289.75 × 134.75 px</div>
     </header>
 
     <section class="workspace">
@@ -750,7 +764,7 @@
         return [
           "MODEL_RAIL_TUNING_V1",
           "previewWidth: 289.75px",
-          "previewHeight: 159px",
+          "previewHeight: 134.75px",
           "componentScale: 0.5",
           "horizontalDotSpacing: 32px",
           "verticalDotSpacing: 32px",
@@ -829,6 +843,9 @@
             dotRow === currentRow && centers[dotNumberForElement - 1] <= fillRight,
           );
         }
+        for (const modelLabel of document.querySelectorAll(".effort-model")) {
+          modelLabel.textContent = row.name;
+        }
         for (const [index, label] of [...document.querySelectorAll(".effort-label")].entries()) {
           const active = index === dotNumber - 1;
           label.classList.toggle("active", active);
@@ -842,6 +859,10 @@
         const activeFastLabel = activeEffortLabel?.querySelector(".effort-fast") || null;
         if (fastMode && activeFastLabel) {
           activeEffortRects.push(activeFastLabel.getBoundingClientRect());
+        }
+        const activeModelLabel = activeEffortLabel?.querySelector(".effort-model") || null;
+        if (activeModelLabel) {
+          activeEffortRects.push(activeModelLabel.getBoundingClientRect());
         }
         const activeEffortRect = activeEffortRects.length > 0
           ? {
@@ -899,6 +920,10 @@
       for (const [index, effort] of efforts.entries()) {
         const label = document.createElement("div");
         label.className = `effort-label${effort === "ultra" ? " ultra" : ""}`;
+        const modelLabel = document.createElement("span");
+        modelLabel.className = "effort-model";
+        modelLabel.textContent = rows[currentRow].name;
+        label.append(modelLabel);
         label.append(document.createTextNode(effort));
         const fastLabel = document.createElement("span");
         fastLabel.className = "effort-fast";
