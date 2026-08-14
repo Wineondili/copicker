@@ -1,0 +1,36 @@
+import Foundation
+import Testing
+@testable import CodexModelRailCore
+
+@Test func safelyEmbedsPayloadAsAJavaScriptLiteral() throws {
+    let payload = """
+    (() => ({ text: "quote: \\\" and newline\\n", installed: true }))();
+    """
+
+    let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+
+    #expect(expression.contains("executeJavaScript"))
+    #expect(expression.contains("com.jonas.codex-model-rail.main-state"))
+    #expect(expression.contains("quote:"))
+    #expect(!expression.contains("conversation"))
+}
+
+@Test func decodesInspectorTarget() throws {
+    let data = Data(
+        """
+        [{
+          "id": "target-1",
+          "title": "ChatGPT",
+          "type": "node",
+          "url": "file://",
+          "webSocketDebuggerUrl": "ws://127.0.0.1:9229/example"
+        }]
+        """.utf8
+    )
+
+    let targets = try JSONDecoder().decode([InspectorTarget].self, from: data)
+
+    #expect(targets.count == 1)
+    #expect(targets[0].type == "node")
+    #expect(targets[0].webSocketDebuggerURL?.host == "127.0.0.1")
+}

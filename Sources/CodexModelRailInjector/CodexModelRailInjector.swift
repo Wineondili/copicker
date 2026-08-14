@@ -1,0 +1,152 @@
+import CodexModelRailCore
+import Darwin
+import Foundation
+
+@main
+@MainActor
+struct CodexModelRailInjectorCLI {
+    static func main() async {
+        do {
+            let arguments = Array(CommandLine.arguments.dropFirst())
+            let command = arguments.first ?? "status"
+
+            switch command {
+            case "status", "dry-run":
+                try printStatus()
+            case "inject":
+                try await inject()
+            case "help", "--help", "-h":
+                printUsage()
+            default:
+                throw CLIError.unknownCommand(command)
+            }
+        } catch {
+            fputs("Codex Model Rail error: \(error.localizedDescription)\n", stderr)
+            exit(1)
+        }
+    }
+
+    private static func printStatus() throws {
+        let installation = try CodexInstallation.inspect()
+        let process = CodexProcessDiscovery.runningProcess(
+            bundleIdentifier: installation.bundleIdentifier
+        )
+        let payload = try loadPayload()
+        _ = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+
+        print("Codex Model Rail \(ProjectInfo.version)")
+        print("App: \(installation.appURL.path)")
+        print("Codex version: \(installation.shortVersion) (\(installation.buildVersion))")
+        print("Bundle identifier: \(installation.bundleIdentifier)")
+        print("Electron fuse wire: \(installation.fuseReport.rawWire)")
+        print("Node CLI Inspector: \(installation.fuseReport.nodeCLIInspectionEnabled ? "enabled" : "disabled")")
+        print("ASAR integrity enforcement: \(installation.fuseReport.embeddedASARIntegrityEnabled ? "enabled" : "disabled")")
+        print("Model Rail payload: \(payload.utf8.count) bytes")
+        if let process {
+            print("Running process: \(process.processIdentifier)")
+            print("Executable: \(process.executableURL?.path ?? "unknown")")
+        } else {
+            print("Running process: not found")
+        }
+        print("No signal was sent and no Inspector connection was opened.")
+    }
+
+    private static func inject() async throws {
+        let installation = try CodexInstallation.inspect()
+        guard installation.fuseReport.nodeCLIInspectionEnabled else {
+            throw CLIError.nodeInspectorDisabled
+        }
+        guard let process = CodexProcessDiscovery.runningProcess(
+            bundleIdentifier: installation.bundleIdentifier
+        ) else {
+            throw CLIError.codexNotRunning
+        }
+
+        if let executableURL = process.executableURL,
+           executableURL.standardizedFileURL != installation.executableURL.standardizedFileURL {
+            throw CLIError.unexpectedExecutable(
+                expected: installation.executableURL,
+                actual: executableURL
+            )
+        }
+
+        let discovery = InspectorEndpointDiscovery()
+        if let targets = try? await discovery.fetchTargets(), !targets.isEmpty {
+            throw InspectorError.inspectorPortAlreadyInUse
+        }
+
+        let payload = try loadPayload()
+        let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+
+        print("Enabling the loopback Inspector for Codex process \(process.processIdentifier)...")
+        try process.enableInspectorWithUserSignal()
+        let target = try await discovery.waitForTarget()
+        guard let webSocketURL = target.webSocketDebuggerURL else {
+            throw CLIError.inspectorTargetMissingWebSocket
+        }
+
+        let session = InspectorSession(url: webSocketURL)
+        await session.connect()
+        do {
+            let result = try await session.evaluate(expression: expression)
+            print("Injection result:")
+            print(result?.prettyPrinted() ?? "null")
+
+            _ = try await session.evaluate(
+                expression: InjectionExpressionBuilder.scheduleInspectorShutdownExpression,
+                awaitPromise: false
+            )
+            try? await Task.sleep(for: .milliseconds(250))
+            await session.close()
+            print("Inspector shutdown scheduled; the official application bundle was not modified.")
+        } catch {
+            await session.close()
+            throw error
+        }
+    }
+
+    private static func loadPayload() throws -> String {
+        guard let url = Bundle.module.url(forResource: "model-rail", withExtension: "js") else {
+            throw CLIError.payloadMissing
+        }
+        return try String(contentsOf: url, encoding: .utf8)
+    }
+
+    private static func printUsage() {
+        print("""
+        Usage: CodexModelRailInjector [status|dry-run|inject|help]
+
+          status   Inspect the installed Codex build without changing runtime state.
+          dry-run  Alias for status; validates the bundled payload and expression.
+          inject   Explicitly enable a temporary loopback Inspector and inject Model Rail.
+          help     Show this help.
+        """)
+    }
+}
+
+private enum CLIError: LocalizedError {
+    case unknownCommand(String)
+    case nodeInspectorDisabled
+    case codexNotRunning
+    case unexpectedExecutable(expected: URL, actual: URL)
+    case inspectorTargetMissingWebSocket
+    case payloadMissing
+
+    var errorDescription: String? {
+        switch self {
+        case let .unknownCommand(command):
+            "Unknown command '\(command)'. Run with 'help' for usage."
+        case .nodeInspectorDisabled:
+            "This Codex build disables Electron Node CLI Inspector arguments."
+        case .codexNotRunning:
+            "Codex is not running. Start the official application before using 'inject'."
+        case let .unexpectedExecutable(expected, actual):
+            "Running Codex executable does not match the inspected application. Expected \(expected.path), found \(actual.path)."
+        case .inspectorTargetMissingWebSocket:
+            "Inspector target did not publish a WebSocket debugger URL."
+        case .payloadMissing:
+            "Bundled model-rail.js resource is missing."
+        }
+    }
+}
+
