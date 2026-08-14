@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.6.3";
+  const VERSION = "0.7.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -36,10 +36,10 @@
 
   const ROW_HEIGHT = 48;
   const ROW_GAP = 16;
-  const STAGE_WIDTH = 360;
+  const STAGE_WIDTH = 388;
   const STAGE_HEIGHT = ROW_HEIGHT * 3 + ROW_GAP * 2;
   const LEFT_PADDING = 34;
-  const RIGHT_PADDING = 40;
+  const RIGHT_PADDING = 34;
   const USABLE_WIDTH = STAGE_WIDTH - LEFT_PADDING - RIGHT_PADDING;
   const START_INSET = 6;
   const RIGHT_INSET_IN_THUMB = 12;
@@ -472,8 +472,9 @@
           --row-h: 48px;
           --row-gap: 16px;
           --thumb-size: 56px;
-          --stage-w: 360px;
+          --stage-w: 388px;
           --start-inset: 6px;
+          --text-scale: 1.2;
           color: var(--text);
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
             "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
@@ -483,7 +484,7 @@
 
         .popover {
           width: 560px;
-          padding: 24px 26px 22px;
+          padding: 38px 32px 22px;
           background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
             var(--popover);
@@ -500,13 +501,13 @@
         .main {
           display: grid;
           grid-template-columns: 90px var(--stage-w);
-          column-gap: 12px;
+          column-gap: 0;
           align-items: start;
         }
 
         .labels {
           height: calc(var(--row-h) * 3 + var(--row-gap) * 2);
-          margin-top: 34px;
+          margin-top: 20px;
           display: grid;
           grid-template-rows: repeat(3, var(--row-h));
           row-gap: var(--row-gap);
@@ -515,7 +516,7 @@
         .label {
           display: flex;
           align-items: center;
-          font-size: 22px;
+          font-size: calc(22px * var(--text-scale));
           font-weight: 650;
           letter-spacing: -0.03em;
         }
@@ -523,13 +524,13 @@
         .stage-shell {
           position: relative;
           width: var(--stage-w);
-          padding-top: 34px;
+          padding-top: 20px;
         }
 
         .effort-labels {
           position: absolute;
           left: 0;
-          top: -8px;
+          top: -22px;
           width: var(--stage-w);
           height: 30px;
           pointer-events: none;
@@ -540,7 +541,7 @@
           top: 0;
           transform: translateX(-50%);
           white-space: nowrap;
-          font-size: 22px;
+          font-size: calc(22px * var(--text-scale));
           font-weight: 650;
           letter-spacing: -0.03em;
           color: #fff;
@@ -668,10 +669,11 @@
 
         .current-selection {
           margin-top: 18px;
-          padding-left: 102px;
+          padding-left: 90px;
           min-height: 26px;
-          font-size: 19px;
+          font-size: calc(19px * var(--text-scale));
           font-weight: 600;
+          line-height: 26px;
           letter-spacing: -0.015em;
         }
 

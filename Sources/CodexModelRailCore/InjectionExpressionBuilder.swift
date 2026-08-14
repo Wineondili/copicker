@@ -178,6 +178,14 @@ public enum InjectionExpressionBuilder {
           const selectorPanel = popoverShadow?.querySelector(".popover") || null;
           const selectorStage = popoverShadow?.querySelector("#stage") || null;
           const selectorStageRect = selectorStage?.getBoundingClientRect() || null;
+          const selectorPanelRect = selectorPanel?.getBoundingClientRect() || null;
+          const selectorModelLabel = popoverShadow?.querySelector(".model-label, .label") || null;
+          const selectorEffortLabel = popoverShadow?.querySelector(".effort-label.active") || null;
+          const selectorCurrentSelection = popoverShadow?.querySelector(".current-selection") || null;
+          const selectorModelLabelRect = selectorModelLabel?.getBoundingClientRect() || null;
+          const selectorEffortLabelRect = selectorEffortLabel?.getBoundingClientRect() || null;
+          const selectorCurrentSelectionRect = selectorCurrentSelection?.getBoundingClientRect() || null;
+          const selectorPanelStyle = selectorPanel ? getComputedStyle(selectorPanel) : null;
           const rectanglesOverlap = (left, right) => Boolean(left && right) && !(
             left.right <= right.left ||
             left.left >= right.right ||
@@ -224,7 +232,25 @@ public enum InjectionExpressionBuilder {
               selectorActiveEffortLabelCount: popoverShadow?.querySelectorAll(".effort-label.active").length || 0,
               selectorStageWidth: Math.round(selectorStageRect?.width || 0),
               selectorStageHeight: Math.round(selectorStageRect?.height || 0),
-              popoverBackgroundColor: selectorPanel ? getComputedStyle(selectorPanel).backgroundColor : null,
+              selectorModelLabelFontSize: selectorModelLabel ? getComputedStyle(selectorModelLabel).fontSize : null,
+              selectorEffortLabelFontSize: selectorEffortLabel ? getComputedStyle(selectorEffortLabel).fontSize : null,
+              selectorCurrentFontSize: selectorCurrentSelection ? getComputedStyle(selectorCurrentSelection).fontSize : null,
+              selectorTopTextInset: selectorPanelRect && selectorEffortLabelRect
+                ? Math.round(selectorEffortLabelRect.top - selectorPanelRect.top)
+                : null,
+              selectorLeftTextInset: selectorPanelRect && selectorModelLabelRect
+                ? Math.round(selectorModelLabelRect.left - selectorPanelRect.left)
+                : null,
+              selectorBottomTextInset: selectorPanelRect && selectorCurrentSelectionRect
+                ? Math.round(selectorPanelRect.bottom - selectorCurrentSelectionRect.bottom)
+                : null,
+              popoverPadding: selectorPanelStyle ? {
+                top: selectorPanelStyle.paddingTop,
+                right: selectorPanelStyle.paddingRight,
+                bottom: selectorPanelStyle.paddingBottom,
+                left: selectorPanelStyle.paddingLeft
+              } : null,
+              popoverBackgroundColor: selectorPanelStyle?.backgroundColor || null,
               ariaHidden: popoverHost.getAttribute("aria-hidden"),
               width: Math.round(popoverRect?.width || 0),
               height: Math.round(popoverRect?.height || 0),

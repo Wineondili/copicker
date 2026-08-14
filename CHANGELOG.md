@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-15 02:34:05 +0800
+
+- Applied the approved `MODEL_RAIL_TUNING_V1` values to the injected selector: 280-by-151-pixel preview, 0.5 component scale, 388-pixel internal stage, 64-pixel internal column step, 1.2 text scale, zero model-to-stage gap, and a -22-pixel internal effort-label offset.
+- Preserved equal 32-pixel rendered horizontal and vertical dot spacing across the six Sol/Terra effort columns and five visible Luna columns.
+- Added safe-area compensation around the supplied geometry without changing the outer footprint, yielding live rendered text insets of 9 pixels at the top, 17 pixels at the left, and 12 pixels at the bottom.
+- Extended runtime diagnostics and payload contract coverage for typography, popover padding, and rendered text insets.
+- Live-verified the 280-by-151-pixel detached popover, 194-by-88-pixel rendered stage, non-overlap placement, exact `rgb(44, 44, 44)` background, and local-only Terra/medium click behavior against Codex `26.810.41047` build `6570`.
+
 ## 2026-08-15 02:17:00 +0800
 
 - Added a standalone local Model Rail tuning page with a preview fixed to the current 280-by-151-pixel runtime footprint.
