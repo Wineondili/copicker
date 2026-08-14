@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 03:02:35 +0800
+
+- Reverted the preview-only 4-pixel active-effort-label nudge so the approved typography and label-to-stage relationship remain unchanged.
+- Added 4 rendered pixels above the complete selector by expanding the rail shell from 151 to 155 pixels and anchoring its existing content and bottom edge in place.
+
 ## 2026-08-15 03:00:51 +0800
 
 - Increased the preview-only active effort label's rendered top inset by 4 pixels, from approximately 1 pixel to 5 pixels, without moving the model rows, dot grid, or current-selection footer.
