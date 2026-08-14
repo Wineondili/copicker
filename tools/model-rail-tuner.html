@@ -195,6 +195,29 @@
     .effort-label.ultra { color: #a67df2; }
     .effort-label.active { opacity: 1; }
 
+    .effort-endpoint {
+      position: absolute;
+      top: calc(1.8px * var(--text-scale));
+      color: #8e8e93;
+      font-size: calc(19px * var(--text-scale));
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      opacity: 1;
+      white-space: nowrap;
+      transition: opacity 120ms ease;
+    }
+
+    .effort-endpoint.faster {
+      left: calc(-90px - var(--label-gap-base));
+    }
+
+    .effort-endpoint.smarter {
+      right: calc(-28px + var(--label-gap-base));
+    }
+
+    .effort-endpoint.obscured { opacity: 0; }
+
     .stage {
       position: relative;
       width: var(--stage-w);
@@ -551,7 +574,10 @@
                   <div class="model-label">Luna</div>
                 </div>
                 <div class="stage-shell">
-                  <div class="effort-labels" id="effortLabels"></div>
+                  <div class="effort-labels" id="effortLabels">
+                    <div class="effort-endpoint faster">Faster</div>
+                    <div class="effort-endpoint smarter">Smarter</div>
+                  </div>
                   <div class="stage" id="stage" tabindex="0" aria-label="二维模型选择器">
                     <div class="selection" id="selection"></div>
                     <div id="dots"></div>
@@ -787,6 +813,19 @@
         }
         for (const [index, label] of [...document.querySelectorAll(".effort-label")].entries()) {
           label.classList.toggle("active", index === dotNumber - 1);
+        }
+
+        const activeEffortLabel = document.querySelector(".effort-label.active");
+        const activeEffortRect = activeEffortLabel?.getBoundingClientRect() || null;
+        for (const endpoint of document.querySelectorAll(".effort-endpoint")) {
+          const endpointRect = endpoint.getBoundingClientRect();
+          const overlaps = Boolean(activeEffortRect) && !(
+            activeEffortRect.right <= endpointRect.left ||
+            activeEffortRect.left >= endpointRect.right ||
+            activeEffortRect.bottom <= endpointRect.top ||
+            activeEffortRect.top >= endpointRect.bottom
+          );
+          endpoint.classList.toggle("obscured", overlaps);
         }
 
         currentModel.textContent = row.name;

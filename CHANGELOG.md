@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 03:12:05 +0800
+
+- Added `Faster` and `Smarter` endpoint labels to the preview effort row, aligned to equal left and right shell insets and vertically centered against the active effort label.
+- Styled both endpoint labels one type step smaller in the same neutral gray and added per-label collision detection so only an endpoint overlapped by the active effort text is temporarily hidden.
+
 ## 2026-08-15 03:04:05 +0800
 
 - Expanded the preview selector shell by another 4 rendered pixels above its fixed content, increasing the total preview height from 155 to 159 pixels without changing any internal element positions or spacing.
