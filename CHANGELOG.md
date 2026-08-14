@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-15 03:29:30 +0800
+
+- Matched the moving top model label's font size, weight, letter spacing, and line height exactly to the active effort label.
+- Added Sol, Terra, and Luna text palettes derived from slightly darker versions of their selector fills, each with a restrained left-light-to-right-dark gradient.
+- Live-verified identical 26.4-pixel font size, 650 weight, and 31.68-pixel line height between the current model and effort labels.
+
 ## 2026-08-15 03:28:02 +0800
 
 - Removed the preview footer's model-and-effort summary and moved the current model to the left side of the active top effort label without changing the effort's dot-centered position.

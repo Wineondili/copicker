@@ -201,12 +201,34 @@
       position: absolute;
       right: calc(100% + 7px);
       bottom: 0;
-      color: #f3f3f4;
-      font-size: calc(19px * var(--text-scale));
-      font-weight: 600;
-      letter-spacing: -0.015em;
-      line-height: 1.2;
+      color: transparent;
+      font: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+      background: linear-gradient(
+        90deg,
+        var(--model-text-light),
+        var(--model-text-dark)
+      );
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       white-space: nowrap;
+    }
+
+    .effort-model[data-model="Sol"] {
+      --model-text-light: #f1c0c9;
+      --model-text-dark: #edb7c1;
+    }
+
+    .effort-model[data-model="Terra"] {
+      --model-text-light: #f0d69b;
+      --model-text-dark: #ebcd90;
+    }
+
+    .effort-model[data-model="Luna"] {
+      --model-text-light: #c1e2cb;
+      --model-text-dark: #b7dcc3;
     }
 
     .effort-fast {
@@ -845,6 +867,7 @@
         }
         for (const modelLabel of document.querySelectorAll(".effort-model")) {
           modelLabel.textContent = row.name;
+          modelLabel.dataset.model = row.name;
         }
         for (const [index, label] of [...document.querySelectorAll(".effort-label")].entries()) {
           const active = index === dotNumber - 1;
@@ -923,6 +946,7 @@
         const modelLabel = document.createElement("span");
         modelLabel.className = "effort-model";
         modelLabel.textContent = rows[currentRow].name;
+        modelLabel.dataset.model = rows[currentRow].name;
         label.append(modelLabel);
         label.append(document.createTextNode(effort));
         const fastLabel = document.createElement("span");
