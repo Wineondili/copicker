@@ -3,31 +3,30 @@
 import PackageDescription
 
 let package = Package(
-    name: "CodexModelRail",
+    name: "Copicker",
     platforms: [
         .macOS(.v14),
     ],
     products: [
         .library(
-            name: "CodexModelRailCore",
-            targets: ["CodexModelRailCore"]
+            name: "CopickerCore",
+            targets: ["CopickerCore"]
         ),
         .executable(
-            name: "CodexModelRailInjector",
-            targets: ["CodexModelRailInjector"]
+            name: "copicker",
+            targets: ["CopickerCLI"]
         ),
     ],
     targets: [
-        .target(name: "CodexModelRailCore"),
+        .target(name: "CopickerCore"),
         .executableTarget(
-            name: "CodexModelRailInjector",
-            dependencies: ["CodexModelRailCore"],
+            name: "CopickerCLI",
+            dependencies: ["CopickerCore"],
             resources: [.process("Resources")]
         ),
         .testTarget(
-            name: "CodexModelRailCoreTests",
-            dependencies: ["CodexModelRailCore"]
+            name: "CopickerCoreTests",
+            dependencies: ["CopickerCore"]
         ),
     ]
 )
-

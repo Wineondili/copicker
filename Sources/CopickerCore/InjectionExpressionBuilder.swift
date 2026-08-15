@@ -662,6 +662,6 @@ public enum InjectionExpressionError: LocalizedError {
     case payloadEncodingFailed
 
     public var errorDescription: String? {
-        "Model Rail payload could not be encoded as a JavaScript string literal."
+        "Copicker payload could not be encoded as a JavaScript string literal."
     }
 }

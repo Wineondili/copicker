@@ -532,7 +532,7 @@
   function sendAppServerRequest(method, params) {
     const allowedMethods = new Set(["model/list", "thread/settings/update"]);
     if (!allowedMethods.has(method)) {
-      return Promise.reject(new Error("Model Rail rejected an unsupported app-server method."));
+      return Promise.reject(new Error("Copicker rejected an unsupported app-server method."));
     }
 
     const bridge = window.electronBridge;
@@ -1437,7 +1437,7 @@
           .current-selection .fast-status { transition: none; }
         }
       </style>
-      <section class="popover" data-design="preview-2d" aria-label="Codex Model Rail">
+      <section class="popover" data-design="preview-2d" aria-label="Copicker">
         <div class="other-label" aria-hidden="true">Other</div>
         <div class="main">
           <div class="labels">
@@ -1739,7 +1739,7 @@
   };
   state.setSelection = (modelName, effort, fastMode = false) => {
     const accepted = applySelection({ modelName, effort, fastMode }, { render: false });
-    if (!accepted) return Promise.reject(new Error("Unsupported Model Rail selection."));
+    if (!accepted) return Promise.reject(new Error("Unsupported Copicker selection."));
     state.selectionRevision += 1;
     if (state.popoverHost) updateSelectorUI(state.popoverHost);
     window.clearTimeout(state.commitTimer);
@@ -1796,12 +1796,12 @@
     document.removeEventListener("keydown", state.handleKeyDown, true);
     for (const pending of state.pendingRequests.values()) {
       window.clearTimeout(pending.timeoutID);
-      pending.reject(new Error("Model Rail was disposed."));
+      pending.reject(new Error("Copicker was disposed."));
     }
     state.pendingRequests.clear();
     for (const waiter of state.settingsWaiters) {
       window.clearTimeout(waiter.timeoutID);
-      waiter.reject(new Error("Model Rail was disposed."));
+      waiter.reject(new Error("Copicker was disposed."));
     }
     state.settingsWaiters.clear();
     removeDetachedPopover({ animated: false });

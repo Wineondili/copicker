@@ -1,10 +1,10 @@
-import CodexModelRailCore
+import CopickerCore
 import Darwin
 import Foundation
 
 @main
 @MainActor
-struct CodexModelRailInjectorCLI {
+struct CopickerCLI {
     static func main() async {
         do {
             let arguments = Array(CommandLine.arguments.dropFirst())
@@ -31,7 +31,7 @@ struct CodexModelRailInjectorCLI {
                 throw CLIError.unknownCommand(command)
             }
         } catch {
-            fputs("Codex Model Rail error: \(error.localizedDescription)\n", stderr)
+            fputs("Copicker error: \(error.localizedDescription)\n", stderr)
             exit(1)
         }
     }
@@ -44,14 +44,14 @@ struct CodexModelRailInjectorCLI {
         let payload = try loadPayload()
         _ = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
 
-        print("Codex Model Rail \(ProjectInfo.version)")
+        print("Copicker \(ProjectInfo.version)")
         print("App: \(installation.appURL.path)")
         print("Codex version: \(installation.shortVersion) (\(installation.buildVersion))")
         print("Bundle identifier: \(installation.bundleIdentifier)")
         print("Electron fuse wire: \(installation.fuseReport.rawWire)")
         print("Node CLI Inspector: \(installation.fuseReport.nodeCLIInspectionEnabled ? "enabled" : "disabled")")
         print("ASAR integrity enforcement: \(installation.fuseReport.embeddedASARIntegrityEnabled ? "enabled" : "disabled")")
-        print("Model Rail payload: \(payload.utf8.count) bytes")
+        print("Copicker payload: \(payload.utf8.count) bytes")
         if let process {
             print("Running process: \(process.processIdentifier)")
             print("Executable: \(process.executableURL?.path ?? "unknown")")
@@ -101,7 +101,7 @@ struct CodexModelRailInjectorCLI {
             print("Removal result:")
             print(result?.prettyPrinted() ?? "null")
             await shutdownInspector(session)
-            print("Model Rail removed for the current Codex process; the official bundle was not modified.")
+            print("Copicker removed for the current Codex process; the official bundle was not modified.")
         } catch {
             await shutdownInspector(session)
             throw error
@@ -228,7 +228,7 @@ struct CodexModelRailInjectorCLI {
 
     private static func printUsage() {
         print("""
-        Usage: CodexModelRailInjector [status|dry-run|probe|probe-picker|probe-primary|probe-selector|inject|remove|help]
+        Usage: copicker [status|dry-run|probe|probe-picker|probe-primary|probe-selector|inject|remove|help]
 
           status   Inspect the installed Codex build without changing runtime state.
           dry-run  Alias for status; validates the bundled payload and expression.
@@ -236,8 +236,8 @@ struct CodexModelRailInjectorCLI {
           probe-picker  Open the picker shortcut, then run the scoped selector probe.
           probe-primary  Open the first-level model/reasoning popover, then probe it.
           probe-selector  Directly switch to a supported test selection, confirm it, and restore the original settings.
-          inject   Explicitly enable a temporary loopback Inspector and inject Model Rail.
-          remove   Remove Model Rail and disable its current-process reinjection hook.
+          inject   Explicitly enable a temporary loopback Inspector and inject Copicker.
+          remove   Remove Copicker and disable its current-process reinjection hook.
           help     Show this help.
         """)
     }

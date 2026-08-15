@@ -1,8 +1,7 @@
 import Testing
-@testable import CodexModelRailCore
+@testable import CopickerCore
 
 @Test func projectMetadataIsAvailable() {
-    #expect(ProjectInfo.name == "Codex Model Rail")
+    #expect(ProjectInfo.name == "Copicker")
     #expect(!ProjectInfo.version.isEmpty)
 }
-

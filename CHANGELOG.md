@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-16 00:03:47 +0800
+
+- Renamed the public project from Codex Model Rail to Copicker, including the Swift package, core module, CLI target, executable, metadata, documentation, and user-facing runtime messages.
+- Relocated the repository to `/Users/jonas/Code/02-Public/04-Tools/CLI/copicker` while preserving its Git history.
+- Retained the existing `codex-model-rail` renderer state keys, DOM host IDs, payload filename, and logging subsystem as compatibility identifiers for already injected payloads.
+
 ## 2026-08-15 22:10:20 +0800
 
 - Restored obstacle avoidance for every visible Radix/`role="menu"` submenu attached to the first-level picker, including the reasoning-effort menu as well as nested model menus.

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import CodexModelRailCore
+@testable import CopickerCore
 
 @Test func safelyEmbedsPayloadAsAJavaScriptLiteral() throws {
     let payload = """

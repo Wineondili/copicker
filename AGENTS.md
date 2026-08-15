@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository builds a local macOS injector that adds a model-selection rail to the official Codex desktop renderer without modifying or re-signing the OpenAI application bundle.
+This repository builds Copicker, a local macOS CLI that adds a model-selection rail to the official Codex desktop renderer without modifying or re-signing the OpenAI application bundle.
 
 ## Safety boundaries
 
@@ -17,11 +17,13 @@ This repository builds a local macOS injector that adds a model-selection rail t
 
 ## Project layout
 
-- `Sources/CodexModelRailCore/`: Inspector protocol, process discovery, compatibility, and injection planning.
-- `Sources/CodexModelRailInjector/`: CLI entrypoint and bundled DOM payload.
+- `Sources/CopickerCore/`: Inspector protocol, process discovery, compatibility, and injection planning.
+- `Sources/CopickerCLI/`: CLI entrypoint and bundled DOM payload.
 - `Tests/`: offline unit tests; tests must not signal or attach to the running Codex process.
 - `script/build_and_run.sh`: single build/run/debug entrypoint.
 - `.codex/environments/environment.toml`: Codex Run action.
+
+The existing `codex-model-rail` state keys, host IDs, and log subsystem are legacy runtime compatibility identifiers. Do not rename them without an explicit migration that can remove an already injected older payload.
 
 ## Commands
 
