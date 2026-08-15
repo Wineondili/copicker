@@ -1,6 +1,6 @@
-# Codex Model Rail
+# Copicker
 
-Codex Model Rail is a local macOS injector prototype for showing a user-designed model control in its own popover above the official Codex first-level model/reasoning popover.
+Copicker is a local macOS CLI that adds a user-designed model-and-effort control in its own popover above the official Codex first-level model/reasoning popover.
 
 The project is designed around one non-negotiable safety property: it does not modify or re-sign `/Applications/ChatGPT.app`. The injector briefly connects to the Electron main-process Inspector on loopback, injects a self-contained DOM component through `webContents.executeJavaScript`, and closes the Inspector connection immediately afterward.
 

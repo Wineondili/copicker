@@ -8,7 +8,7 @@ import Testing
         .deletingLastPathComponent()
         .deletingLastPathComponent()
     let payloadURL = repositoryRoot
-        .appendingPathComponent("Sources/CodexModelRailInjector/Resources/model-rail.js")
+        .appendingPathComponent("Sources/CopickerCLI/Resources/model-rail.js")
     let payload = try String(contentsOf: payloadURL, encoding: .utf8)
 
     #expect(payload.contains("data-codex-intelligence-trigger"))

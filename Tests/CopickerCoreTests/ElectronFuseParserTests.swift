@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import CodexModelRailCore
+@testable import CopickerCore
 
 @Test func parsesVersionOneFuseWire() throws {
     var data = Data([0x00, 0x01, 0x02])
@@ -24,4 +24,3 @@ import Testing
         try ElectronFuseParser.parse(data: Data("not-an-electron-binary".utf8))
     }
 }
-
