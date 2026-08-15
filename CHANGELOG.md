@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-16 02:27:18 +0800
+
+- Added testable, user-scoped Copicker autostart paths for the stable CLI copy, Swift resource bundle, LaunchAgent plist, privacy-safe state file, and logs.
+- Added deterministic LaunchAgent plist generation, exact managed-artifact replacement, structured autostart state persistence, and a finite retry schedule without loading or modifying the real user LaunchAgent.
+
 ## 2026-08-16 00:03:47 +0800
 
 - Renamed the public project from Codex Model Rail to Copicker, including the Swift package, core module, CLI target, executable, metadata, documentation, and user-facing runtime messages.
