@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). Version `0.9.3` retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method:
+The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). The `0.9.3` renderer payload retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method. Copicker `0.10.0-dev` adds an opt-in user LaunchAgent and a guarded process watcher; those autostart paths are offline-tested but are not installed or enabled by default.
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -63,9 +63,52 @@ Remove the current-process hook and any injected visual with:
 ./script/build_and_run.sh --remove
 ```
 
-The hook lasts for the current Codex process, so run the command again after every Codex restart. After an app update, run the normal status/test gates first because private DOM anchors may have changed.
+Without autostart, the hook lasts for the current Codex process, so run the command again after every Codex restart. After an app update, run the normal status/test gates first because private DOM anchors may have changed.
 
-The command performs these gates before it sends a signal:
+## Automatic injection (opt-in)
+
+Inspect autostart without changing launchd, signaling Codex, or opening Inspector:
+
+```bash
+swift run copicker autostart status
+```
+
+Explicitly install a stable copy of the current executable and Swift resource bundle, create the user LaunchAgent, and load its watcher:
+
+```bash
+swift run copicker autostart enable
+```
+
+The managed files are limited to:
+
+- `~/Library/Application Support/Copicker/bin/copicker`
+- `~/Library/Application Support/Copicker/bin/Copicker_CopickerCLI.bundle`
+- `~/Library/Application Support/Copicker/autostart-state.json`
+- `~/Library/LaunchAgents/io.github.wineondili.copicker.plist`
+- `~/Library/Logs/Copicker/autostart.log`
+- `~/Library/Logs/Copicker/autostart-error.log`
+
+The LaunchAgent starts a long-running `copicker watch` process in the logged-in GUI session. The watcher polls only for the `com.openai.codex` process, injects once per new PID, and waits for the next PID after Codex quits. A restarted watcher may safely call the installer again because the renderer and Electron main-process hooks are versioned and idempotent.
+
+Transient process-start or signal races use the finite `0.5`, `1`, `2`, `4`, and `8` second retry schedule. An incompatible Codex installation, an unknown Inspector already occupying `127.0.0.1:9229`, an Inspector timeout, or an unconfirmed installer result stops retries for that PID and records a structured result code. The state file contains only Copicker/Codex versions, process identifiers, timestamps, phases, and result codes.
+
+Disable future automatic injection without changing the current Codex process:
+
+```bash
+swift run copicker autostart disable
+```
+
+Disable autostart and also remove the current-process hook when Codex is running:
+
+```bash
+swift run copicker autostart disable --remove
+```
+
+`autostart enable` and `autostart disable` must run as the logged-in user, never through `sudo`. Enabling autostart may inject the currently running Codex process as soon as the LaunchAgent starts. Disabling autostart removes the LaunchAgent plist but intentionally leaves the stable CLI copy and privacy-safe logs in place for inspection and later re-enabling.
+
+## Injection safety gates
+
+Both manual and automatic injection perform these gates before sending a signal:
 
 1. Confirm `/Applications/ChatGPT.app` exists and decode its version.
 2. Read the Electron fuse wire and require `EnableNodeCliInspectArguments=1`.
@@ -116,4 +159,4 @@ For a direct settings round trip that first verifies a same-value write, switche
 
 The payload makes no external network request and performs no storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors and sends the two allowlisted app-server methods through Codex's existing renderer bridge. Selector and catalog state exist only in renderer memory and disappear with the Codex process. The diagnostic probe reports control metadata, supported selection state, and task-marker counts without returning task identifiers, conversation body text, or composer text.
 
-The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. The official application bundle is never changed.
+The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. Use `copicker autostart disable` to stop future automatic injection. The official application bundle is never changed.
