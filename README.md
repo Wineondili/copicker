@@ -1,6 +1,6 @@
 # Codex Model Rail
 
-Codex Model Rail is a local macOS injector prototype for showing a user-designed model control in its own popover beside the official Codex first-level model/reasoning popover.
+Codex Model Rail is a local macOS injector prototype for showing a user-designed model control in its own popover above the official Codex first-level model/reasoning popover.
 
 The project is designed around one non-negotiable safety property: it does not modify or re-sign `/Applications/ChatGPT.app`. The injector briefly connects to the Electron main-process Inspector on loopback, injects a self-contained DOM component through `webContents.executeJavaScript`, and closes the Inspector connection immediately afterward.
 
@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). Version `0.9.0` retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method:
+The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). Version `0.9.2` retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method:
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -22,13 +22,14 @@ The injection transport, first-level mount-target lifecycle, and direct current-
 - The only accepted anchor lifecycle is the first-level popover opened from `[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]`.
 - A valid anchor surface must be an open menu containing `[data-reasoning-slider]` and the current model-picker controls.
 - The custom popover scaffold is appended directly to `document.body`; it is never inserted into, or made a child of, the official first-level popover.
-- The scaffold uses the official popover rectangle only for positioning. It prefers left, then right, bottom, and top, with a 12-pixel gap and viewport padding.
-- Every placement candidate must fit the viewport and must not overlap the official popover. If none fits, the custom popover remains hidden.
-- The full model-list overlay identified by `[data-composer-overlay-floating-ui]` and multiple `button[data-list-navigation-item]` controls globally suppresses and removes the custom popover, even if the first-level menu remains mounted in the DOM.
+- The scaffold uses the official popover rectangle only for positioning. It prefers a horizontally centered position above that popover with a 12-pixel gap, then tries other above-aligned positions before side or bottom fallbacks.
+- Every placement candidate must fit the viewport and must not overlap either the official first-level popover or the visible nested Model Picker identified by `[data-model-picker-model-row]`. That nested picker remains open while the rail moves around its rectangle instead of disappearing.
+- The full-width model list opened directly above the composer input is intentionally not a placement obstacle. It may sit behind the higher-z-index rail and does not move the rail away from its normal above-primary position.
+- Opening and closing use a short opacity, scale, and vertical-motion transition; obstacle-driven position changes animate through the same 180-millisecond motion curve.
 - The custom popover renders at 50% scale for a 289.75-by-134.75-pixel footprint. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
 - The top row contains `Faster`, the moving model/effort/Fast labels, and `Smarter`; the old bottom status row is hidden. The shell background is `rgb(44, 44, 44)`.
 - Only Sol and Terra's six effort levels (`low` through `ultra`) and Luna's five levels (`low` through `max`) exist in the selector. No other model is offered as a switch target.
-- When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty `Other` state with no fill, thumb, or active moving labels until the user selects a valid cell.
+- When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty state with no fill, thumb, or active moving labels, plus a centered gray `Other` label on the top row until the user selects a valid cell.
 - While the rail is visible, the arrow keys move through model and effort cells, Luna is clamped to five effort levels, and Space toggles Fast. Arrow input is briefly coalesced, while pointer release and Space commit immediately.
 - The renderer reuses Codex's existing `electronBridge` and local app-server connection. It calls only `model/list` and `thread/settings/update`; it does not spawn another app-server process or proxy a click through the official model list.
 - Sol, Terra, and Luna model IDs are matched from their official catalog display names. Supported effort levels and the service tier named `Fast` are validated from that catalog before any write, and no model ID or tier ID is persisted.
@@ -92,10 +93,10 @@ The intended lifecycle is:
 1. Click the bottom composer control that currently displays the selected model and reasoning effort, such as `5.6 Sol / 极高`.
 2. Wait for that exact trigger to report `aria-expanded="true"` and `data-state="open"`.
 3. Resolve the nearest visible first-level menu containing the reasoning slider and model-picker controls as a positioning anchor only.
-4. Reject the full model-list overlay even if it is simultaneously present elsewhere in the DOM.
+4. Discover only a simultaneously visible nested Model Picker containing `[data-model-picker-model-row]` as a placement obstacle; ignore the full-width composer model list.
 5. Append an independent popover host to `document.body`, outside the official popover DOM subtree.
-6. Position it beside the official popover without intersection; automatically change sides when necessary and hide it when no side fits.
-7. Remove the independent popover as soon as the first-level surface closes or the full model list opens.
+6. Position it above the official popover without intersection; shift it along the top edge or use a fallback side when needed to clear a secondary menu.
+7. Keep it present while a secondary menu is open, and animate it closed only when the first-level surface itself closes or the combined picker loses focus.
 
 For a scoped live check of this target:
 
@@ -109,7 +110,7 @@ For a direct settings round trip that first verifies a same-value write, switche
 ./script/build_and_run.sh --probe-selector
 ```
 
-`Ctrl+Shift+M` opens the full model list in the current build. It is retained only as a diagnostic exclusion test through `--probe-picker`; it is not the custom component's mount trigger.
+`Ctrl+Shift+M` opens the full-width model list above the composer in the current build. `--probe-picker` verifies that this input-origin list does not become an avoidance obstacle; it is not the custom component's mount trigger.
 
 ## Privacy and rollback
 

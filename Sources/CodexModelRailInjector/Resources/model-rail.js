@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.9.0";
+  const VERSION = "0.9.2";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -15,12 +15,14 @@
     "[data-model-picker-power-slider], [data-model-picker-view-toggle]";
   const SECONDARY_SURFACE_SELECTOR = "[data-composer-overlay-floating-ui]";
   const SECONDARY_ITEM_SELECTOR = "button[data-list-navigation-item]";
+  const MODEL_ROW_SELECTOR = "[data-model-picker-model-row]";
   const CONVERSATION_CONTEXT_SELECTOR = "[data-above-composer-conversation-id]";
   const FAST_MODE_SELECTOR = '[role="menuitemcheckbox"][data-fast-mode-enabled]';
   const APP_SERVER_HOST_ID = "local";
   const APP_SERVER_REQUEST_TIMEOUT_MS = 5000;
   const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
   const KEYBOARD_COMMIT_DELAY_MS = 120;
+  const POPOVER_ANIMATION_MS = 180;
   const EFFORTS = ["low", "medium", "high", "xhigh", "max", "ultra"];
   const ROWS = [
     {
@@ -75,7 +77,8 @@
       reused: true,
       triggerFound: Boolean(previous.hasPrimaryTarget?.()),
       primaryOnly: true,
-      secondaryExcluded: true,
+      secondaryExcluded: false,
+      secondaryAvoided: true,
       prototype: false,
       visualPending: false,
       localOnly: false,
@@ -95,6 +98,8 @@
     popoverHost: null,
     resizeObserver: null,
     observedSurface: null,
+    closeTimer: null,
+    revealFrame: null,
     dismissedForCurrentOpen: false,
     currentRow: null,
     currentIndex: null,
@@ -127,29 +132,66 @@
     document.getElementById(LEGACY_HOST_ID)?.remove();
   }
 
-  function removeDetachedPopover() {
+  function removeDetachedPopover({ animated = true } = {}) {
     state.resizeObserver?.disconnect();
     state.resizeObserver = null;
-    state.popoverHost?.remove();
-    document.getElementById(POPOVER_HOST_ID)?.remove();
-    state.popoverHost = null;
     state.observedSurface = null;
+    window.cancelAnimationFrame(state.revealFrame);
+    state.revealFrame = null;
+
+    const host = state.popoverHost || document.getElementById(POPOVER_HOST_ID);
+    if (!host) return;
+
+    if (!animated) {
+      window.clearTimeout(state.closeTimer);
+      state.closeTimer = null;
+      host.remove();
+      if (state.popoverHost === host) state.popoverHost = null;
+      return;
+    }
+
+    if (host.getAttribute("data-open-state") === "closing") return;
+    host.setAttribute("data-open-state", "closing");
+    host.setAttribute("aria-hidden", "true");
+    host.style.pointerEvents = "none";
+    host.style.opacity = "0";
+    host.style.transform = "translateY(6px) scale(0.98)";
+    window.clearTimeout(state.closeTimer);
+    state.closeTimer = window.setTimeout(() => {
+      host.remove();
+      if (state.popoverHost === host) state.popoverHost = null;
+      state.closeTimer = null;
+    }, POPOVER_ANIMATION_MS);
   }
 
   function isSecondarySurface(surface) {
     return (
       surface.matches(SECONDARY_SURFACE_SELECTOR) ||
       Boolean(surface.closest(SECONDARY_SURFACE_SELECTOR)) ||
-      Boolean(surface.querySelector(SECONDARY_ITEM_SELECTOR))
+      Boolean(surface.querySelector(SECONDARY_ITEM_SELECTOR)) ||
+      Boolean(surface.querySelector(MODEL_ROW_SELECTOR))
     );
   }
 
-  function isSecondaryPickerOpen() {
-    return [...document.querySelectorAll(SECONDARY_SURFACE_SELECTOR)].some(
-      (surface) =>
-        isVisible(surface) &&
-        surface.querySelectorAll(SECONDARY_ITEM_SELECTOR).length >= 2,
-    );
+  function findModelPickerObstacleSurfaces(primarySurface = state.primarySurface) {
+    const surfaces = new Set();
+    for (const row of document.querySelectorAll(MODEL_ROW_SELECTOR)) {
+      const surface =
+        row.closest(PRIMARY_SURFACE_SELECTOR) ||
+        row.closest(SECONDARY_SURFACE_SELECTOR);
+      if (surface) surfaces.add(surface);
+    }
+
+    return [...surfaces].filter((surface) => {
+      if (!isVisible(surface) || surface === primarySurface) return false;
+      if (
+        primarySurface?.contains(surface) ||
+        (primarySurface && surface.contains(primarySurface))
+      ) {
+        return false;
+      }
+      return Boolean(surface.querySelector(MODEL_ROW_SELECTOR));
+    });
   }
 
   function isPrimarySurface(surface) {
@@ -202,7 +244,6 @@
   }
 
   function currentPrimaryTarget() {
-    if (isSecondaryPickerOpen()) return null;
     const trigger = findOpenTrigger();
     if (!trigger) {
       state.dismissedForCurrentOpen = false;
@@ -226,7 +267,12 @@
     );
   }
 
-  function computePlacement(anchorRect, popoverWidth, popoverHeight) {
+  function computePlacement(
+    anchorRect,
+    popoverWidth,
+    popoverHeight,
+    obstacleRects = [],
+  ) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     if (
@@ -246,26 +292,57 @@
       VIEWPORT_PADDING,
       viewportWidth - VIEWPORT_PADDING - popoverWidth,
     );
-    const candidates = [
+    const topY = anchorRect.top - POPOVER_GAP - popoverHeight;
+    const proposedTopCandidates = [
+      { placementVariant: "center", x: centeredX },
       {
-        placement: "left",
-        x: anchorRect.left - POPOVER_GAP - popoverWidth,
-        y: centeredY,
+        placementVariant: "align-right",
+        x: clamp(
+          anchorRect.right - popoverWidth,
+          VIEWPORT_PADDING,
+          viewportWidth - VIEWPORT_PADDING - popoverWidth,
+        ),
       },
       {
+        placementVariant: "align-left",
+        x: clamp(
+          anchorRect.left,
+          VIEWPORT_PADDING,
+          viewportWidth - VIEWPORT_PADDING - popoverWidth,
+        ),
+      },
+      { placementVariant: "viewport-left", x: VIEWPORT_PADDING },
+      {
+        placementVariant: "viewport-right",
+        x: viewportWidth - VIEWPORT_PADDING - popoverWidth,
+      },
+    ];
+    const seenTopX = new Set();
+    const topCandidates = proposedTopCandidates.flatMap((candidate) => {
+      const roundedX = Math.round(candidate.x * 100) / 100;
+      if (seenTopX.has(roundedX)) return [];
+      seenTopX.add(roundedX);
+      return [{ placement: "top", ...candidate, x: roundedX, y: topY }];
+    });
+    const candidates = [
+      ...topCandidates,
+      {
         placement: "right",
+        placementVariant: "center",
         x: anchorRect.right + POPOVER_GAP,
         y: centeredY,
       },
       {
-        placement: "bottom",
-        x: centeredX,
-        y: anchorRect.bottom + POPOVER_GAP,
+        placement: "left",
+        placementVariant: "center",
+        x: anchorRect.left - POPOVER_GAP - popoverWidth,
+        y: centeredY,
       },
       {
-        placement: "top",
+        placement: "bottom",
+        placementVariant: "center",
         x: centeredX,
-        y: anchorRect.top - POPOVER_GAP - popoverHeight,
+        y: anchorRect.bottom + POPOVER_GAP,
       },
     ];
 
@@ -281,7 +358,10 @@
         rect.top >= VIEWPORT_PADDING &&
         rect.right <= viewportWidth - VIEWPORT_PADDING &&
         rect.bottom <= viewportHeight - VIEWPORT_PADDING;
-      if (withinViewport && !overlaps(rect, anchorRect)) {
+      const clearsObstacles = obstacleRects.every(
+        (obstacleRect) => !overlaps(rect, obstacleRect),
+      );
+      if (withinViewport && !overlaps(rect, anchorRect) && clearsObstacles) {
         return { ...candidate, width: popoverWidth, height: popoverHeight };
       }
     }
@@ -814,10 +894,13 @@
 
     const selection = shadow.querySelector("#selection");
     const thumb = shadow.querySelector("#thumb");
+    const otherElement = shadow.querySelector(".other-label");
     const modelElement = shadow.querySelector(".current-selection .model");
     const effortElement = shadow.querySelector(".current-selection .effort");
     const fastElement = shadow.querySelector(".current-selection .fast-status");
     const selected = hasSelectorSelection();
+    otherElement?.classList.toggle("active", !selected);
+    otherElement?.setAttribute("aria-hidden", String(selected));
 
     if (!selected) {
       host.setAttribute("data-selector-model", "Other");
@@ -1127,6 +1210,25 @@
         .effort-label.ultra { color: #A67DF2; }
         .effort-label.active { opacity: 1; }
 
+        .other-label {
+          position: absolute;
+          left: 50%;
+          top: 18px;
+          z-index: 1;
+          color: #8e8e93;
+          font-size: calc(22px * var(--text-scale));
+          font-weight: 650;
+          letter-spacing: -0.03em;
+          line-height: 1.2;
+          opacity: 0;
+          pointer-events: none;
+          transform: translateX(-50%);
+          transition: opacity 160ms ease;
+          white-space: nowrap;
+        }
+
+        .other-label.active { opacity: 1; }
+
         .effort-model {
           position: absolute;
           right: calc(100% + 7px);
@@ -1324,11 +1426,13 @@
           .dot,
           .thumb,
           .effort-label,
+          .other-label,
           .current-selection .effort,
           .current-selection .fast-status { transition: none; }
         }
       </style>
       <section class="popover" data-design="preview-2d" aria-label="Codex Model Rail">
+        <div class="other-label" aria-hidden="true">Other</div>
         <div class="main">
           <div class="labels">
             <div class="label">Sol</div>
@@ -1447,10 +1551,14 @@
 
   function ensureDetachedPopover() {
     let host = document.getElementById(POPOVER_HOST_ID);
+    const isNew = !host;
     if (!host) {
       host = document.createElement("div");
       host.id = POPOVER_HOST_ID;
     }
+
+    window.clearTimeout(state.closeTimer);
+    state.closeTimer = null;
 
     host.setAttribute("data-codex-model-rail-popover", VERSION);
     host.setAttribute("data-prototype", "false");
@@ -1460,19 +1568,59 @@
     host.setAttribute("data-switch-state", state.switchState);
     host.setAttribute("data-keyboard-navigation", "arrows-space");
     host.setAttribute("data-design-source", "preview.html");
-    host.setAttribute("aria-hidden", "true");
     host.style.position = "fixed";
-    host.style.left = "0px";
-    host.style.top = "0px";
     host.style.margin = "0";
-    host.style.pointerEvents = "none";
-    host.style.visibility = "hidden";
     host.style.zIndex = "2147483000";
+    host.style.transformOrigin = "50% 100%";
+    host.style.transition = [
+      `opacity ${POPOVER_ANIMATION_MS - 20}ms ease`,
+      `transform ${POPOVER_ANIMATION_MS}ms cubic-bezier(0.22, 0.86, 0.2, 1)`,
+      `left ${POPOVER_ANIMATION_MS}ms cubic-bezier(0.22, 0.86, 0.2, 1)`,
+      `top ${POPOVER_ANIMATION_MS}ms cubic-bezier(0.22, 0.86, 0.2, 1)`,
+    ].join(", ");
+
+    if (isNew) {
+      host.setAttribute("data-open-state", "opening");
+      host.setAttribute("aria-hidden", "true");
+      host.style.left = "0px";
+      host.style.top = "0px";
+      host.style.opacity = "0";
+      host.style.pointerEvents = "none";
+      host.style.transform = "translateY(6px) scale(0.98)";
+      host.style.visibility = "hidden";
+    }
 
     if (host.parentElement !== document.body) document.body.append(host);
     render2DSelector(host);
     state.popoverHost = host;
     return host;
+  }
+
+  function revealDetachedPopover(host) {
+    if (!host?.isConnected) return;
+    host.setAttribute("aria-hidden", "false");
+    host.style.pointerEvents = "auto";
+    host.style.visibility = "visible";
+    if (host.getAttribute("data-open-state") === "open") return;
+
+    host.setAttribute("data-open-state", "opening");
+    host.style.opacity = "0";
+    host.style.transform = "translateY(6px) scale(0.98)";
+    window.cancelAnimationFrame(state.revealFrame);
+    state.revealFrame = window.requestAnimationFrame(() => {
+      state.revealFrame = window.requestAnimationFrame(() => {
+        if (
+          !host.isConnected ||
+          host.getAttribute("data-position-state") !== "positioned"
+        ) {
+          return;
+        }
+        host.setAttribute("data-open-state", "open");
+        host.style.opacity = "1";
+        host.style.transform = "translateY(0) scale(1)";
+        state.revealFrame = null;
+      });
+    });
   }
 
   function positionDetachedPopover() {
@@ -1482,25 +1630,51 @@
 
     const anchorRect = surface.getBoundingClientRect();
     const hostRect = host.getBoundingClientRect();
-    const placement = computePlacement(anchorRect, hostRect.width, hostRect.height);
+    const hostStyle = getComputedStyle(host);
+    const popoverWidth = Number.parseFloat(hostStyle.width) || hostRect.width;
+    const popoverHeight = Number.parseFloat(hostStyle.height) || hostRect.height;
+    const obstacleSurfaces = findModelPickerObstacleSurfaces(surface);
+    for (const obstacleSurface of obstacleSurfaces) {
+      state.resizeObserver?.observe(obstacleSurface);
+    }
+    const obstacleRects = obstacleSurfaces.map((obstacleSurface) =>
+      obstacleSurface.getBoundingClientRect(),
+    );
+    const placement = computePlacement(
+      anchorRect,
+      popoverWidth,
+      popoverHeight,
+      obstacleRects,
+    );
+    host.setAttribute("data-secondary-obstacle-count", String(obstacleRects.length));
     if (!placement) {
       host.setAttribute("data-placement", "none");
+      host.setAttribute("data-placement-variant", "none");
       host.setAttribute("data-position-state", "hidden-no-fit");
+      host.setAttribute("data-open-state", "hidden-no-fit");
       host.setAttribute("aria-hidden", "true");
       host.style.left = "-100000px";
       host.style.top = "-100000px";
+      host.style.opacity = "0";
+      host.style.transform = "translateY(6px) scale(0.98)";
       host.style.pointerEvents = "none";
       host.style.visibility = "hidden";
       return;
     }
 
     host.setAttribute("data-placement", placement.placement);
+    host.setAttribute("data-placement-variant", placement.placementVariant);
     host.setAttribute("data-position-state", "positioned");
-    host.setAttribute("aria-hidden", "false");
+    const wasOpen = host.getAttribute("data-open-state") === "open";
+    const animatedTransition = host.style.transition;
+    if (!wasOpen) host.style.transition = "none";
     host.style.left = `${Math.round(placement.x)}px`;
     host.style.top = `${Math.round(placement.y)}px`;
-    host.style.pointerEvents = "auto";
-    host.style.visibility = "visible";
+    if (!wasOpen) {
+      void host.offsetWidth;
+      host.style.transition = animatedTransition;
+    }
+    revealDetachedPopover(host);
   }
 
   function syncNow() {
@@ -1569,7 +1743,14 @@
   state.commitCurrentSelection = (options = {}) => enqueueSelectionCommit(options);
   state.previewPlacement = (width, height) => {
     if (!state.primarySurface) return null;
-    return computePlacement(state.primarySurface.getBoundingClientRect(), width, height);
+    return computePlacement(
+      state.primarySurface.getBoundingClientRect(),
+      width,
+      height,
+      findModelPickerObstacleSurfaces(state.primarySurface).map((surface) =>
+        surface.getBoundingClientRect(),
+      ),
+    );
   };
   state.dismissForCurrentOpen = () => {
     state.dismissedForCurrentOpen = true;
@@ -1617,7 +1798,7 @@
       waiter.reject(new Error("Model Rail was disposed."));
     }
     state.settingsWaiters.clear();
-    removeDetachedPopover();
+    removeDetachedPopover({ animated: false });
     removePreviousVisual();
     state.trigger = null;
     state.primarySurface = null;
@@ -1639,7 +1820,8 @@
     reused: false,
     triggerFound: Boolean(currentPrimaryTarget()),
     primaryOnly: true,
-    secondaryExcluded: true,
+    secondaryExcluded: false,
+    secondaryAvoided: true,
     prototype: false,
     visualPending: false,
     localOnly: false,

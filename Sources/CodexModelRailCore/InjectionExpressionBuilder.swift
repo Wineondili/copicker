@@ -176,6 +176,7 @@ public enum InjectionExpressionBuilder {
           const popoverRect = popoverHost?.getBoundingClientRect() || null;
           const popoverShadow = popoverHost?.shadowRoot || null;
           const selectorPanel = popoverShadow?.querySelector(".popover") || null;
+          const selectorOtherLabel = popoverShadow?.querySelector(".other-label") || null;
           const selectorStage = popoverShadow?.querySelector("#stage") || null;
           const selectorStageRect = selectorStage?.getBoundingClientRect() || null;
           const selectorPanelRect = selectorPanel?.getBoundingClientRect() || null;
@@ -190,6 +191,7 @@ public enum InjectionExpressionBuilder {
           const selectorBottomModelLabelRect = selectorBottomModelLabel?.getBoundingClientRect() || null;
           const selectorSelectionRect = selectorSelection?.getBoundingClientRect() || null;
           const selectorPanelStyle = selectorPanel ? getComputedStyle(selectorPanel) : null;
+          const selectorOtherLabelStyle = selectorOtherLabel ? getComputedStyle(selectorOtherLabel) : null;
           const rectanglesOverlap = (left, right) => Boolean(left && right) && !(
             left.right <= right.left ||
             left.left >= right.right ||
@@ -197,6 +199,27 @@ public enum InjectionExpressionBuilder {
             left.top >= right.bottom
           );
           const runtimeState = window.__CODEX_MODEL_RAIL__;
+          const secondarySurfaces = [
+            ...new Set(
+              [...document.querySelectorAll("[data-model-picker-model-row]")]
+                .map((row) =>
+                  row.closest('[data-radix-menu-content], [role="menu"]') ||
+                  row.closest("[data-composer-overlay-floating-ui]")
+                )
+                .filter(Boolean)
+            )
+          ].filter((surface) => {
+            if (
+              surface === primarySurface ||
+              primarySurface?.contains(surface) ||
+              (primarySurface && surface.contains(primarySurface))
+            ) return false;
+            const style = getComputedStyle(surface);
+            const rect = surface.getBoundingClientRect();
+            return style.display !== "none" && style.visibility !== "hidden"
+              && rect.width > 0 && rect.height > 0;
+          });
+          const secondaryRects = secondarySurfaces.map((surface) => surface.getBoundingClientRect());
           const conversationContextMarkers = [
             ...document.querySelectorAll("[data-above-composer-conversation-id]")
           ];
@@ -235,7 +258,12 @@ public enum InjectionExpressionBuilder {
               parentIsBody: popoverHost.parentElement === document.body,
               insidePrimarySurface: Boolean(primarySurface?.contains(popoverHost)),
               placement: popoverHost.getAttribute("data-placement"),
+              placementVariant: popoverHost.getAttribute("data-placement-variant"),
               positionState: popoverHost.getAttribute("data-position-state"),
+              openState: popoverHost.getAttribute("data-open-state"),
+              secondaryObstacleCount: Number(
+                popoverHost.getAttribute("data-secondary-obstacle-count") || 0
+              ),
               visualPending: popoverHost.getAttribute("data-visual-pending"),
               prototype: popoverHost.getAttribute("data-prototype"),
               localOnly: popoverHost.getAttribute("data-local-only"),
@@ -253,6 +281,10 @@ public enum InjectionExpressionBuilder {
               selectorEffort: popoverHost.getAttribute("data-selector-effort"),
               selectorFast: popoverHost.getAttribute("data-selector-fast"),
               selectorHasSelection: popoverHost.getAttribute("data-selector-has-selection"),
+              selectorOtherVisible: Boolean(selectorOtherLabel?.classList.contains("active"))
+                && selectorOtherLabelStyle?.opacity !== "0",
+              selectorOtherColor: selectorOtherLabelStyle?.color || null,
+              selectorOtherFontSize: selectorOtherLabelStyle?.fontSize || null,
               selectorDotCount: popoverShadow?.querySelectorAll(".dot").length || 0,
               selectorActiveDotCount: popoverShadow?.querySelectorAll(".dot.inside").length || 0,
               selectorActiveEffortLabelCount: popoverShadow?.querySelectorAll(".effort-label.active").length || 0,
@@ -284,13 +316,20 @@ public enum InjectionExpressionBuilder {
               width: Number((popoverRect?.width || 0).toFixed(2)),
               height: Number((popoverRect?.height || 0).toFixed(2)),
               overlapsPrimarySurface: rectanglesOverlap(popoverRect, anchorRect),
+              overlapsSecondarySurface: secondaryRects.some((rect) =>
+                rectanglesOverlap(popoverRect, rect)
+              ),
               placementPreview: placementPreview ? {
                 fixtureWidth: previewWidth,
                 fixtureHeight: previewHeight,
                 placement: placementPreview.placement,
+                placementVariant: placementPreview.placementVariant,
                 x: Math.round(placementPreview.x),
                 y: Math.round(placementPreview.y),
-                overlapsPrimarySurface: rectanglesOverlap(previewRect, anchorRect)
+                overlapsPrimarySurface: rectanglesOverlap(previewRect, anchorRect),
+                overlapsSecondarySurface: secondaryRects.some((rect) =>
+                  rectanglesOverlap(previewRect, rect)
+                )
               } : null
             }] : [],
             modelRailDescriptors: [...document.querySelectorAll("#codex-model-rail-host")]

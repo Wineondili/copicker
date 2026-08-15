@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-15 22:07:48 +0800
+
+- Moved the detached Model Rail to a top-first placement strategy while preserving the approved 289.75-by-134.75-pixel internal design.
+- Kept the rail visible while the nested Model Picker is open and added obstacle-aware top alignment, side fallbacks, and animated repositioning around visible `[data-model-picker-model-row]` surfaces.
+- Excluded the full-width model list opened above the composer input from avoidance so it no longer displaces the rail from its normal centered top position.
+- Added 180-millisecond open and close transitions while snapping initial `left` and `top` coordinates before animation, eliminating the long fly-in from the viewport origin.
+- Added a centered gray `Other` label to the top row for unsupported official models while retaining the empty fill, thumb, and active-effort state.
+- Live-verified top-centered placement, zero overlap with the first-level picker, and zero avoidance obstacles for the input-origin full model list against Codex `26.810.41047` build `6570`.
+
 ## 2026-08-15 21:50:03 +0800
 
 - Connected the approved Model Rail controls to the current task through Codex's existing renderer bridge and documented `thread/settings/update` app-server method, without proxy-clicking official picker items.
