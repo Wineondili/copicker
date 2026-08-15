@@ -852,7 +852,7 @@
         thumb.style.left = `${x}px`;
         thumb.style.top = `${rowCenters[currentRow]}px`;
         thumb.classList.toggle("fast", fastMode);
-        selection.style.width = `${Math.max(0, fillRight - START_INSET)}px`;
+        selection.style.width = `${Math.max(ROW_HEIGHT, fillRight - START_INSET)}px`;
         selection.style.bottom = `${rowBottoms[currentRow]}px`;
         selection.style.setProperty("--fill-light", row.colors[0]);
         selection.style.setProperty("--fill-base", row.colors[1]);

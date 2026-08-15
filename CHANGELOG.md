@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 16:43:21 +0800
+
+- Clamped the preview fill to one full row height at the first effort stage so its 24-pixel end radius no longer collapses beneath the 56-pixel thumb.
+- Preserved all later-stage fill widths and live-verified the first Sol, Terra, and Luna stages without the previously exposed colored crescent.
+
 ## 2026-08-15 03:29:30 +0800
 
 - Matched the moving top model label's font size, weight, letter spacing, and line height exactly to the active effort label.
