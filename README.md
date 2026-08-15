@@ -9,12 +9,12 @@ The project is designed around one non-negotiable safety property: it does not m
 - Preserve the official OpenAI signature, Team ID, permissions, Keychain access, App Groups, and update path.
 - Keep the Inspector bound to `127.0.0.1` and open only for the injection window.
 - Avoid reading, storing, or logging conversation content.
-- Discover model options from the official picker instead of hard-coding account-specific model IDs.
+- Discover model IDs, supported efforts, and the Fast service tier from the current Codex app-server model catalog instead of hard-coding account-specific values.
 - Stop safely when a Codex update changes the expected DOM anchors.
 
 ## Current status
 
-The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). Version `0.8.0` applies the approved compact rail design to the detached two-dimensional selector:
+The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). Version `0.9.0` retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method:
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -29,7 +29,11 @@ The injection transport and first-level mount-target lifecycle are live-verified
 - The top row contains `Faster`, the moving model/effort/Fast labels, and `Smarter`; the old bottom status row is hidden. The shell background is `rgb(44, 44, 44)`.
 - Only Sol and Terra's six effort levels (`low` through `ultra`) and Luna's five levels (`low` through `max`) exist in the selector. No other model is offered as a switch target.
 - When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty `Other` state with no fill, thumb, or active moving labels until the user selects a valid cell.
-- While the rail is visible, the arrow keys move through model and effort cells, Luna is clamped to five effort levels, and Space toggles Fast. These changes remain local to renderer memory: the build does not click official model controls, call model APIs, or change the current Codex task model.
+- While the rail is visible, the arrow keys move through model and effort cells, Luna is clamped to five effort levels, and Space toggles Fast. Arrow input is briefly coalesced, while pointer release and Space commit immediately.
+- The renderer reuses Codex's existing `electronBridge` and local app-server connection. It calls only `model/list` and `thread/settings/update`; it does not spawn another app-server process or proxy a click through the official model list.
+- Sol, Terra, and Luna model IDs are matched from their official catalog display names. Supported effort levels and the service tier named `Fast` are validated from that catalog before any write, and no model ID or tier ID is persisted.
+- A settings update is scoped to the active task identified by Codex's composer context. The rail waits for `thread/settings/updated` before marking a changed selection as confirmed, serializes rapid changes, and restores the last confirmed selection if the update fails.
+- On a new unsent task with no thread identifier, the rail remains visible but refuses to write until Codex creates the task. Model or effort changes may trigger the same compaction behavior as the official picker because both use the same current-task settings path.
 - Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
 - All selector markup and styles are isolated in the detached Shadow DOM host.
 
@@ -99,7 +103,7 @@ For a scoped live check of this target:
 ./script/build_and_run.sh --probe-primary
 ```
 
-For a trusted-input check that clicks only the local Terra/medium cell and verifies local selected-state feedback:
+For a direct settings round trip that first verifies a same-value write, switches to a supported alternate model/effort/Fast combination, confirms it, and restores the original settings:
 
 ```bash
 ./script/build_and_run.sh --probe-selector
@@ -109,6 +113,6 @@ For a trusted-input check that clicks only the local Terra/medium cell and verif
 
 ## Privacy and rollback
 
-The payload contains no network request, storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors. Selector state exists only in renderer memory and disappears with the Codex process. The diagnostic probe is scoped to control metadata and short control labels; it does not read the conversation body or composer text.
+The payload makes no external network request and performs no storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors and sends the two allowlisted app-server methods through Codex's existing renderer bridge. Selector and catalog state exist only in renderer memory and disappear with the Codex process. The diagnostic probe reports control metadata, supported selection state, and task-marker counts without returning task identifiers, conversation body text, or composer text.
 
 The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. The official application bundle is never changed.

@@ -11,7 +11,8 @@ This repository builds a local macOS injector that adds a model-selection rail t
 - Bind Inspector endpoints to `127.0.0.1` only, use the shortest practical lifetime, and close them after injection.
 - Do not log or persist DOM text, conversation content, authentication data, cookies, tokens, task contents, or workspace file contents.
 - Treat private Codex DOM selectors as versioned compatibility points. Abort safely when required anchors are absent.
-- Proxy model selection through the official accessible menu items. Do not call undocumented model RPCs or write account-specific model IDs.
+- Use the documented app-server `thread/settings/update` method through the existing Codex renderer bridge for current-task model, effort, and service-tier changes. Resolve model IDs and the Fast service tier from `model/list`; never hard-code account-specific model IDs or tier IDs.
+- Require an active task identifier and an official settings confirmation for direct changes. Keep accessible-control proxying only as a separately verified fallback if the documented settings method becomes unavailable.
 - Keep live injection explicit. The default CLI action must remain read-only.
 
 ## Project layout
@@ -36,4 +37,3 @@ swift test
 - Work in small, coherent commits.
 - Update `CHANGELOG.md` with a timestamp including seconds and timezone for every committed change batch.
 - Keep implementation details and comments in English.
-

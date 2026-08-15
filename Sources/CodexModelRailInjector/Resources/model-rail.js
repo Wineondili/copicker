@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.8.0";
+  const VERSION = "0.9.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -15,20 +15,29 @@
     "[data-model-picker-power-slider], [data-model-picker-view-toggle]";
   const SECONDARY_SURFACE_SELECTOR = "[data-composer-overlay-floating-ui]";
   const SECONDARY_ITEM_SELECTOR = "button[data-list-navigation-item]";
+  const CONVERSATION_CONTEXT_SELECTOR = "[data-above-composer-conversation-id]";
+  const FAST_MODE_SELECTOR = '[role="menuitemcheckbox"][data-fast-mode-enabled]';
+  const APP_SERVER_HOST_ID = "local";
+  const APP_SERVER_REQUEST_TIMEOUT_MS = 5000;
+  const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
+  const KEYBOARD_COMMIT_DELAY_MS = 120;
   const EFFORTS = ["low", "medium", "high", "xhigh", "max", "ultra"];
   const ROWS = [
     {
       name: "Sol",
+      catalogDisplayName: "GPT-5.6-Sol",
       dots: [1, 2, 3, 4, 5, 6],
       colors: ["#FBE1E5", "#F7C6CC"],
     },
     {
       name: "Terra",
+      catalogDisplayName: "GPT-5.6-Terra",
       dots: [1, 2, 3, 4, 5, 6],
       colors: ["#FFF1CF", "#FFE6B8"],
     },
     {
       name: "Luna",
+      catalogDisplayName: "GPT-5.6-Luna",
       dots: [1, 2, 3, 4, 5],
       colors: ["#EEF9F1", "#DDF3E4"],
     },
@@ -69,7 +78,8 @@
       secondaryExcluded: true,
       prototype: false,
       visualPending: false,
-      localOnly: true,
+      localOnly: false,
+      switchMode: "thread-settings-update",
       design: "preview-2d",
       version: VERSION,
     };
@@ -89,6 +99,20 @@
     currentRow: null,
     currentIndex: null,
     fastMode: false,
+    selectionRevision: 0,
+    confirmedSelection: null,
+    commitTimer: null,
+    commitQueue: Promise.resolve(),
+    commitInFlight: false,
+    pendingRequests: new Map(),
+    settingsWaiters: new Set(),
+    modelCatalog: null,
+    modelCatalogPromise: null,
+    currentThreadID: null,
+    switchState: "idle",
+    lastSwitchError: null,
+    handleBridgeMessage: null,
+    disposed: false,
   };
 
   function isVisible(element) {
@@ -281,7 +305,15 @@
 
     state.currentRow = isValid ? rowIndex : null;
     state.currentIndex = isValid ? effortIndex : null;
-    state.fastMode = false;
+    state.fastMode = readOfficialFastMode(state.primarySurface);
+    state.selectionRevision += 1;
+    state.confirmedSelection = snapshotSelection();
+    state.currentThreadID = resolveCurrentThreadID(trigger);
+    state.lastSwitchError = null;
+    setSwitchState(state.currentThreadID ? "loading" : "no-thread");
+    if (state.currentThreadID) {
+      void ensureModelCatalog().catch(() => {});
+    }
   }
 
   function hasSelectorSelection() {
@@ -290,6 +322,447 @@
       Number.isInteger(state.currentIndex) &&
       Boolean(ROWS[state.currentRow]?.dots[state.currentIndex])
     );
+  }
+
+  function readOfficialFastMode(surface) {
+    const scopedControl = surface?.querySelector(FAST_MODE_SELECTOR) || null;
+    const control = scopedControl || [...document.querySelectorAll(FAST_MODE_SELECTOR)].find(isVisible);
+    return (
+      control?.getAttribute("data-fast-mode-enabled") === "true" ||
+      control?.getAttribute("aria-checked") === "true"
+    );
+  }
+
+  function snapshotSelection() {
+    if (!hasSelectorSelection()) {
+      return {
+        rowIndex: null,
+        indexInRow: null,
+        modelName: "Other",
+        effort: null,
+        fastMode: false,
+      };
+    }
+
+    const rowIndex = state.currentRow;
+    const indexInRow = state.currentIndex;
+    const row = ROWS[rowIndex];
+    return {
+      rowIndex,
+      indexInRow,
+      modelName: row.name,
+      effort: EFFORTS[row.dots[indexInRow] - 1],
+      fastMode: Boolean(state.fastMode),
+    };
+  }
+
+  function selectionsEqual(left, right) {
+    return Boolean(left && right) &&
+      left.rowIndex === right.rowIndex &&
+      left.indexInRow === right.indexInRow &&
+      left.effort === right.effort &&
+      Boolean(left.fastMode) === Boolean(right.fastMode);
+  }
+
+  function applySelection(selection, { render = true } = {}) {
+    const rowIndex = Number.isInteger(selection?.rowIndex)
+      ? selection.rowIndex
+      : ROWS.findIndex((row) =>
+          [row.name, row.catalogDisplayName]
+            .map((value) => value.toLocaleLowerCase())
+            .includes(String(selection?.modelName || "").toLocaleLowerCase()),
+        );
+    const effortIndex = EFFORTS.indexOf(String(selection?.effort || ""));
+    const valid =
+      rowIndex >= 0 &&
+      effortIndex >= 0 &&
+      ROWS[rowIndex].dots.includes(effortIndex + 1);
+
+    state.currentRow = valid ? rowIndex : null;
+    state.currentIndex = valid ? effortIndex : null;
+    state.fastMode = valid && Boolean(selection?.fastMode);
+    if (render && state.popoverHost) updateSelectorUI(state.popoverHost);
+    return valid;
+  }
+
+  function markSelectionChanged(host) {
+    state.selectionRevision += 1;
+    state.lastSwitchError = null;
+    updateSelectorUI(host);
+  }
+
+  function setSwitchState(value) {
+    state.switchState = value;
+    state.popoverHost?.setAttribute("data-switch-state", value);
+  }
+
+  function isValidThreadID(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      String(value || ""),
+    );
+  }
+
+  function resolveCurrentThreadID(trigger) {
+    const composer = trigger?.closest("[data-codex-composer-root]") || null;
+    const directCandidates = [
+      trigger?.closest(CONVERSATION_CONTEXT_SELECTOR),
+      composer?.closest(CONVERSATION_CONTEXT_SELECTOR),
+      composer?.querySelector(CONVERSATION_CONTEXT_SELECTOR),
+    ].filter(Boolean);
+    const documentCandidates = [...document.querySelectorAll(CONVERSATION_CONTEXT_SELECTOR)];
+    const candidates = [...new Set([...directCandidates, ...documentCandidates])];
+    const validCandidates = candidates
+      .map((element) => ({
+        element,
+        threadID: element.getAttribute("data-above-composer-conversation-id"),
+      }))
+      .filter(({ threadID }) => isValidThreadID(threadID));
+    if (validCandidates.length === 0) return null;
+    if (validCandidates.length === 1) return validCandidates[0].threadID;
+
+    const triggerRect = trigger?.getBoundingClientRect();
+    return validCandidates
+      .sort((left, right) => {
+        const score = ({ element }) => {
+          if (element.contains(trigger)) return -100000;
+          if (!triggerRect) return 0;
+          const rect = element.getBoundingClientRect();
+          return Math.hypot(
+            rect.left + rect.width / 2 - (triggerRect.left + triggerRect.width / 2),
+            rect.top + rect.height / 2 - (triggerRect.top + triggerRect.height / 2),
+          );
+        };
+        return score(left) - score(right);
+      })[0].threadID;
+  }
+
+  function makeRequestID() {
+    if (typeof crypto?.randomUUID === "function") {
+      return `model-rail-${crypto.randomUUID()}`;
+    }
+    return `model-rail-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function sendAppServerRequest(method, params) {
+    const allowedMethods = new Set(["model/list", "thread/settings/update"]);
+    if (!allowedMethods.has(method)) {
+      return Promise.reject(new Error("Model Rail rejected an unsupported app-server method."));
+    }
+
+    const bridge = window.electronBridge;
+    if (typeof bridge?.sendMessageFromView !== "function") {
+      return Promise.reject(new Error("Codex renderer bridge is unavailable."));
+    }
+
+    const id = makeRequestID();
+    return new Promise((resolve, reject) => {
+      const timeoutID = window.setTimeout(() => {
+        state.pendingRequests.delete(id);
+        reject(new Error(`${method} timed out.`));
+      }, APP_SERVER_REQUEST_TIMEOUT_MS);
+      state.pendingRequests.set(id, { method, resolve, reject, timeoutID });
+
+      try {
+        bridge.sendMessageFromView({
+          type: "mcp-request",
+          hostId: APP_SERVER_HOST_ID,
+          request: { id, method, params },
+          priority: method === "thread/settings/update" ? "critical" : "background",
+          source: method === "thread/settings/update" ? "thread" : "model",
+          timeoutMs: APP_SERVER_REQUEST_TIMEOUT_MS,
+          expiresAtMs: Date.now() + APP_SERVER_REQUEST_TIMEOUT_MS,
+        });
+      } catch (error) {
+        window.clearTimeout(timeoutID);
+        state.pendingRequests.delete(id);
+        reject(error);
+      }
+    });
+  }
+
+  function normalizedModelCatalog(result) {
+    const models = Array.isArray(result?.data)
+      ? result.data
+      : Array.isArray(result?.models)
+        ? result.models
+        : [];
+    return ROWS.map((row, rowIndex) => {
+      const model = models.find(
+        (candidate) =>
+          String(candidate?.displayName || "").toLocaleLowerCase() ===
+          row.catalogDisplayName.toLocaleLowerCase(),
+      );
+      if (!model || typeof model.model !== "string" || model.model.length === 0) {
+        throw new Error(`Required model ${row.catalogDisplayName} is unavailable.`);
+      }
+
+      const supportedEfforts = new Set(
+        (model.supportedReasoningEfforts || [])
+          .map((entry) =>
+            typeof entry === "string"
+              ? entry
+              : entry?.reasoningEffort || entry?.effort || null,
+          )
+          .filter(Boolean),
+      );
+      const requiredEfforts = row.dots.map((dotNumber) => EFFORTS[dotNumber - 1]);
+      if (requiredEfforts.some((effort) => !supportedEfforts.has(effort))) {
+        throw new Error(`Required effort levels for ${row.catalogDisplayName} are unavailable.`);
+      }
+
+      const fastTier = (model.serviceTiers || []).find(
+        (tier) => String(tier?.name || "").toLocaleLowerCase() === "fast",
+      );
+      return {
+        rowIndex,
+        model: model.model,
+        displayName: model.displayName,
+        supportedEfforts,
+        fastTierID: fastTier?.id || fastTier?.serviceTier || null,
+      };
+    });
+  }
+
+  function ensureModelCatalog() {
+    if (state.modelCatalog) return Promise.resolve(state.modelCatalog);
+    if (state.modelCatalogPromise) return state.modelCatalogPromise;
+
+    setSwitchState("loading");
+    state.modelCatalogPromise = sendAppServerRequest("model/list", {
+      cursor: null,
+      includeHidden: false,
+      limit: 100,
+    })
+      .then((result) => {
+        state.modelCatalog = normalizedModelCatalog(result);
+        setSwitchState(state.currentThreadID ? "ready" : "no-thread");
+        return state.modelCatalog;
+      })
+      .catch((error) => {
+        state.lastSwitchError = error;
+        setSwitchState("error");
+        throw error;
+      })
+      .finally(() => {
+        state.modelCatalogPromise = null;
+      });
+    return state.modelCatalogPromise;
+  }
+
+  function selectionFromThreadSettings(settings) {
+    if (!settings || !state.modelCatalog) return null;
+    const catalogEntry = state.modelCatalog.find(
+      (entry) => entry.model === settings.model,
+    );
+    if (!catalogEntry) {
+      return {
+        rowIndex: null,
+        indexInRow: null,
+        modelName: "Other",
+        effort: null,
+        fastMode: false,
+      };
+    }
+
+    const effort = settings.effort || settings.reasoningEffort || null;
+    const effortIndex = EFFORTS.indexOf(effort);
+    const row = ROWS[catalogEntry.rowIndex];
+    if (effortIndex < 0 || !row.dots.includes(effortIndex + 1)) return null;
+    return {
+      rowIndex: catalogEntry.rowIndex,
+      indexInRow: effortIndex,
+      modelName: row.name,
+      effort,
+      fastMode: Boolean(
+        catalogEntry.fastTierID && settings.serviceTier === catalogEntry.fastTierID,
+      ),
+    };
+  }
+
+  function createSettingsWaiter(threadID, target) {
+    let timeoutID = null;
+    let waiter = null;
+    const promise = new Promise((resolve, reject) => {
+      waiter = { threadID, target, resolve, reject };
+      timeoutID = window.setTimeout(() => {
+        state.settingsWaiters.delete(waiter);
+        reject(new Error("Codex did not confirm the thread settings update."));
+      }, SETTINGS_CONFIRMATION_TIMEOUT_MS);
+      waiter.timeoutID = timeoutID;
+      state.settingsWaiters.add(waiter);
+    });
+    void promise.catch(() => {});
+    return {
+      promise,
+      cancel() {
+        if (!waiter) return;
+        window.clearTimeout(timeoutID);
+        state.settingsWaiters.delete(waiter);
+      },
+    };
+  }
+
+  function confirmSettingsNotification(threadID, settings) {
+    if (threadID !== state.currentThreadID) return;
+    const confirmed = selectionFromThreadSettings(settings);
+    if (!confirmed) return;
+
+    state.confirmedSelection = confirmed;
+    for (const waiter of [...state.settingsWaiters]) {
+      if (waiter.threadID !== threadID || !selectionsEqual(waiter.target, confirmed)) continue;
+      window.clearTimeout(waiter.timeoutID);
+      state.settingsWaiters.delete(waiter);
+      waiter.resolve(confirmed);
+    }
+    if (!state.commitInFlight) {
+      applySelection(confirmed);
+      setSwitchState("confirmed");
+    }
+  }
+
+  function handleBridgeMessage(event) {
+    const envelope = event.data;
+    if (!envelope || envelope.hostId !== APP_SERVER_HOST_ID) return;
+
+    if (envelope.type === "mcp-response") {
+      const response = envelope.message;
+      const pending = state.pendingRequests.get(response?.id);
+      if (!pending) return;
+      event.stopImmediatePropagation();
+      window.clearTimeout(pending.timeoutID);
+      state.pendingRequests.delete(response.id);
+      if (response.error) {
+        const error = new Error(`${pending.method} failed.`);
+        error.code = response.error.code;
+        pending.reject(error);
+      } else {
+        pending.resolve(response.result);
+      }
+      return;
+    }
+
+    const notification = envelope.message || envelope;
+    if (
+      envelope.type === "mcp-notification" &&
+      notification.method === "thread/settings/updated"
+    ) {
+      confirmSettingsNotification(
+        notification.params?.threadId,
+        notification.params?.threadSettings,
+      );
+    }
+  }
+
+  function officialSelectionFromDOM() {
+    const trigger = state.trigger?.isConnected ? state.trigger : findOpenTrigger();
+    if (!trigger) return null;
+    const text = String(trigger.textContent || "").replace(/\s+/g, " ").trim();
+    const rowIndex = ROWS.findIndex((row) =>
+      new RegExp(`\\b${row.name}\\b`, "i").test(text),
+    );
+    const effort = trigger.getAttribute("data-selected-reasoning-effort") || "";
+    const effortIndex = EFFORTS.indexOf(effort);
+    if (
+      rowIndex < 0 ||
+      effortIndex < 0 ||
+      !ROWS[rowIndex].dots.includes(effortIndex + 1)
+    ) {
+      return null;
+    }
+    return {
+      rowIndex,
+      indexInRow: effortIndex,
+      modelName: ROWS[rowIndex].name,
+      effort,
+      fastMode: readOfficialFastMode(state.primarySurface),
+    };
+  }
+
+  async function performSelectionCommit(selection, revision, { force = false } = {}) {
+    if (!Number.isInteger(selection?.rowIndex) || !selection.effort) {
+      throw new Error("A supported model and effort must be selected.");
+    }
+    if (revision < state.selectionRevision) return { skipped: "superseded" };
+
+    const threadID = state.currentThreadID || resolveCurrentThreadID(state.trigger);
+    if (!threadID) {
+      setSwitchState("no-thread");
+      throw new Error("The current Codex task has no thread identifier yet.");
+    }
+    state.currentThreadID = threadID;
+
+    const catalog = await ensureModelCatalog();
+    const catalogEntry = catalog[selection.rowIndex];
+    if (!catalogEntry?.supportedEfforts.has(selection.effort)) {
+      throw new Error("The selected model or effort is unavailable.");
+    }
+    if (selection.fastMode && !catalogEntry.fastTierID) {
+      throw new Error("Fast is unavailable for the selected model.");
+    }
+
+    const previousConfirmed = state.confirmedSelection;
+    const sameAsConfirmed = selectionsEqual(previousConfirmed, selection);
+    if (sameAsConfirmed && !force) {
+      setSwitchState("confirmed");
+      return { confirmed: true, unchanged: true };
+    }
+
+    const confirmation = sameAsConfirmed
+      ? null
+      : createSettingsWaiter(threadID, selection);
+    state.commitInFlight = true;
+    setSwitchState("pending");
+    try {
+      await sendAppServerRequest("thread/settings/update", {
+        threadId: threadID,
+        model: catalogEntry.model,
+        effort: selection.effort,
+        serviceTier: selection.fastMode ? catalogEntry.fastTierID : null,
+      });
+
+      if (confirmation) {
+        try {
+          await confirmation.promise;
+        } catch (confirmationError) {
+          const officialSelection = officialSelectionFromDOM();
+          if (!selectionsEqual(officialSelection, selection)) throw confirmationError;
+        }
+      }
+
+      state.confirmedSelection = { ...selection };
+      state.lastSwitchError = null;
+      setSwitchState("confirmed");
+      return { confirmed: true, unchanged: sameAsConfirmed };
+    } catch (error) {
+      confirmation?.cancel();
+      state.lastSwitchError = error;
+      if (revision === state.selectionRevision && previousConfirmed) {
+        applySelection(previousConfirmed);
+      }
+      setSwitchState("error");
+      throw error;
+    } finally {
+      confirmation?.cancel();
+      state.commitInFlight = false;
+    }
+  }
+
+  function enqueueSelectionCommit(options = {}) {
+    const selection = snapshotSelection();
+    const revision = state.selectionRevision;
+    const task = state.commitQueue
+      .catch(() => {})
+      .then(() => performSelectionCommit(selection, revision, options));
+    state.commitQueue = task.catch(() => {});
+    return task;
+  }
+
+  function scheduleSelectionCommit() {
+    window.clearTimeout(state.commitTimer);
+    state.commitTimer = window.setTimeout(() => {
+      state.commitTimer = null;
+      void enqueueSelectionCommit().catch(() => {});
+    }, KEYBOARD_COMMIT_DELAY_MS);
   }
 
   function xFor(rowIndex, indexInRow) {
@@ -468,9 +941,12 @@
     const y = clamp(clientY - rect.top, 0, rect.height);
     const scaledX = (x / rect.width) * STAGE_WIDTH;
     const scaledY = (y / rect.height) * STAGE_HEIGHT;
-    state.currentRow = nearestRowFromY(scaledY);
-    state.currentIndex = nearestIndexInRow(state.currentRow, scaledX);
-    updateSelectorUI(host);
+    const nextRow = nearestRowFromY(scaledY);
+    const nextIndex = nearestIndexInRow(nextRow, scaledX);
+    if (state.currentRow === nextRow && state.currentIndex === nextIndex) return;
+    state.currentRow = nextRow;
+    state.currentIndex = nextIndex;
+    markSelectionChanged(host);
   }
 
   function handleSelectorKey(host, event) {
@@ -484,7 +960,10 @@
     if (isSpace) {
       if (!hasSelectorSelection() || event.repeat) return true;
       state.fastMode = !state.fastMode;
-      updateSelectorUI(host);
+      markSelectionChanged(host);
+      window.clearTimeout(state.commitTimer);
+      state.commitTimer = null;
+      void enqueueSelectionCommit().catch(() => {});
       return true;
     }
 
@@ -492,9 +971,13 @@
       state.currentRow = 0;
       state.currentIndex = 0;
       state.fastMode = false;
-      updateSelectorUI(host);
+      markSelectionChanged(host);
+      scheduleSelectionCommit();
       return true;
     }
+
+    const previousRow = state.currentRow;
+    const previousIndex = state.currentIndex;
 
     if (event.key === "ArrowUp") {
       state.currentRow = Math.max(0, state.currentRow - 1);
@@ -516,7 +999,10 @@
         state.currentIndex + 1,
       );
     }
-    updateSelectorUI(host);
+    if (state.currentRow !== previousRow || state.currentIndex !== previousIndex) {
+      markSelectionChanged(host);
+      scheduleSelectionCommit();
+    }
     return true;
   }
 
@@ -931,11 +1417,14 @@
       if (stage.hasPointerCapture(event.pointerId)) {
         if (pointerDownOnThumb && !pointerMoved) {
           state.fastMode = !state.fastMode;
-          updateSelectorUI(host);
+          markSelectionChanged(host);
         } else {
           updateFromPointer(host, event.clientX, event.clientY);
         }
         stage.releasePointerCapture(event.pointerId);
+        window.clearTimeout(state.commitTimer);
+        state.commitTimer = null;
+        void enqueueSelectionCommit().catch(() => {});
       }
       stage.classList.remove("dragging");
       pointerDownOnThumb = false;
@@ -966,7 +1455,9 @@
     host.setAttribute("data-codex-model-rail-popover", VERSION);
     host.setAttribute("data-prototype", "false");
     host.setAttribute("data-visual-pending", "false");
-    host.setAttribute("data-local-only", "true");
+    host.setAttribute("data-local-only", "false");
+    host.setAttribute("data-switch-mode", "thread-settings-update");
+    host.setAttribute("data-switch-state", state.switchState);
     host.setAttribute("data-keyboard-navigation", "arrows-space");
     host.setAttribute("data-design-source", "preview.html");
     host.setAttribute("aria-hidden", "true");
@@ -1058,6 +1549,24 @@
   state.hasPrimaryTarget = () => Boolean(currentPrimaryTarget());
   state.getAnchorSurface = () => state.primarySurface;
   state.getPopoverHost = () => state.popoverHost;
+  state.getSelection = () => {
+    const selection = snapshotSelection();
+    return {
+      modelName: selection.modelName,
+      effort: selection.effort,
+      fastMode: selection.fastMode,
+    };
+  };
+  state.setSelection = (modelName, effort, fastMode = false) => {
+    const accepted = applySelection({ modelName, effort, fastMode }, { render: false });
+    if (!accepted) return Promise.reject(new Error("Unsupported Model Rail selection."));
+    state.selectionRevision += 1;
+    if (state.popoverHost) updateSelectorUI(state.popoverHost);
+    window.clearTimeout(state.commitTimer);
+    state.commitTimer = null;
+    return enqueueSelectionCommit();
+  };
+  state.commitCurrentSelection = (options = {}) => enqueueSelectionCommit(options);
   state.previewPlacement = (width, height) => {
     if (!state.primarySurface) return null;
     return computePlacement(state.primarySurface.getBoundingClientRect(), width, height);
@@ -1088,12 +1597,26 @@
     handleSelectorKey(host, event);
   };
   state.dispose = () => {
+    state.disposed = true;
     state.observer?.disconnect();
+    window.clearTimeout(state.commitTimer);
+    state.commitTimer = null;
+    window.removeEventListener("message", state.handleBridgeMessage, true);
     window.removeEventListener("resize", scheduleSync);
     window.removeEventListener("scroll", scheduleSync, true);
     window.removeEventListener("blur", state.handleWindowBlur);
     document.removeEventListener("visibilitychange", state.handleVisibilityChange);
     document.removeEventListener("keydown", state.handleKeyDown, true);
+    for (const pending of state.pendingRequests.values()) {
+      window.clearTimeout(pending.timeoutID);
+      pending.reject(new Error("Model Rail was disposed."));
+    }
+    state.pendingRequests.clear();
+    for (const waiter of state.settingsWaiters) {
+      window.clearTimeout(waiter.timeoutID);
+      waiter.reject(new Error("Model Rail was disposed."));
+    }
+    state.settingsWaiters.clear();
     removeDetachedPopover();
     removePreviousVisual();
     state.trigger = null;
@@ -1106,6 +1629,8 @@
   window.addEventListener("blur", state.handleWindowBlur);
   document.addEventListener("visibilitychange", state.handleVisibilityChange);
   document.addEventListener("keydown", state.handleKeyDown, true);
+  state.handleBridgeMessage = handleBridgeMessage;
+  window.addEventListener("message", state.handleBridgeMessage, true);
   window[GLOBAL_KEY] = state;
   scheduleSync();
 
@@ -1117,7 +1642,8 @@
     secondaryExcluded: true,
     prototype: false,
     visualPending: false,
-    localOnly: true,
+    localOnly: false,
+    switchMode: "thread-settings-update",
     design: "preview-2d",
     version: VERSION,
   };

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-15 21:50:03 +0800
+
+- Connected the approved Model Rail controls to the current task through Codex's existing renderer bridge and documented `thread/settings/update` app-server method, without proxy-clicking official picker items.
+- Added dynamically discovered Sol, Terra, and Luna model IDs, supported-effort validation, and Fast service-tier lookup from `model/list`, with no persisted or hard-coded account-specific identifiers.
+- Added serialized pointer and keyboard commits, official `thread/settings/updated` confirmation, no-thread refusal, same-value support, and rollback to the last confirmed selection on failure.
+- Extended privacy-safe diagnostics and the selector probe with bridge readiness, task-marker counts, switch state, a direct alternate-selection check, and automatic restoration of the original model, effort, and Fast state.
+- Live-verified a `Sol/xhigh/Fast off` to `Terra/medium/Fast on` switch and restoration against Codex `26.810.41047` build `6570`; the accepted 289.75-by-134.75-pixel appearance remained unchanged.
+
 ## 2026-08-15 17:01:40 +0800
 
 - Ported the accepted compact Model Rail appearance into the runtime injector at a 289.75-by-134.75-pixel footprint, including the moving model/effort/Fast labels, endpoint labels, gradients, and hidden footer.

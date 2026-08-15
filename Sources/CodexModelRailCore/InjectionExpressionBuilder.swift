@@ -197,6 +197,13 @@ public enum InjectionExpressionBuilder {
             left.top >= right.bottom
           );
           const runtimeState = window.__CODEX_MODEL_RAIL__;
+          const conversationContextMarkers = [
+            ...document.querySelectorAll("[data-above-composer-conversation-id]")
+          ];
+          const validThreadIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          const officialFastControl = primarySurface?.querySelector(
+            '[role="menuitemcheckbox"][data-fast-mode-enabled]'
+          ) || null;
           const previewWidth = 289.75;
           const previewHeight = 134.75;
           const placementPreview = runtimeState?.previewPlacement?.(previewWidth, previewHeight) || null;
@@ -214,6 +221,12 @@ public enum InjectionExpressionBuilder {
               modelRow: document.querySelectorAll("[data-model-picker-model-row]").length,
               reasoningSlider: document.querySelectorAll("[data-reasoning-slider]").length,
               composerTargets: document.querySelectorAll("[data-composer-navigation-target]").length,
+              conversationContextMarkers: conversationContextMarkers.length,
+              validConversationContextMarkers: conversationContextMarkers.filter((element) =>
+                validThreadIDPattern.test(
+                  element.getAttribute("data-above-composer-conversation-id") || ""
+                )
+              ).length,
               modelRailHost: document.querySelectorAll("#codex-model-rail-host").length,
               detachedPopoverHost: document.querySelectorAll("#codex-model-rail-popover-host").length
             },
@@ -226,6 +239,14 @@ public enum InjectionExpressionBuilder {
               visualPending: popoverHost.getAttribute("data-visual-pending"),
               prototype: popoverHost.getAttribute("data-prototype"),
               localOnly: popoverHost.getAttribute("data-local-only"),
+              switchMode: popoverHost.getAttribute("data-switch-mode"),
+              switchState: popoverHost.getAttribute("data-switch-state"),
+              bridgeAvailable: typeof window.electronBridge?.sendMessageFromView === "function",
+              directSelectionAvailable: typeof runtimeState?.setSelection === "function",
+              officialFastEnabled: officialFastControl
+                ? officialFastControl.getAttribute("data-fast-mode-enabled") === "true"
+                  || officialFastControl.getAttribute("aria-checked") === "true"
+                : null,
               keyboardNavigation: popoverHost.getAttribute("data-keyboard-navigation"),
               designSource: popoverHost.getAttribute("data-design-source"),
               selectorModel: popoverHost.getAttribute("data-selector-model"),
@@ -527,42 +548,70 @@ public enum InjectionExpressionBuilder {
         if (type !== "window" && type !== "webview") continue;
         for (const frame of contents.mainFrame?.framesInSubtree || []) {
           try {
-            const target = await frame.executeJavaScript(`
-              (() => {
+            const result = await frame.executeJavaScript(`
+              (async () => {
+                const runtime = window.__CODEX_MODEL_RAIL__;
                 const host = document.getElementById("codex-model-rail-popover-host");
-                const stage = host?.shadowRoot?.querySelector("#stage");
-                if (!stage) return { found: false };
-                const rect = stage.getBoundingClientRect();
+                if (!host || typeof runtime?.setSelection !== "function") {
+                  return { found: false, switched: false, restored: false };
+                }
+
+                const original = runtime.getSelection?.() || null;
+                if (!original || original.modelName === "Other" || !original.effort) {
+                  return {
+                    found: true,
+                    switched: false,
+                    restored: false,
+                    reason: "unsupported-original-selection"
+                  };
+                }
+                const target = original.modelName === "Terra" && original.effort === "medium"
+                  ? { modelName: "Sol", effort: "low", fastMode: !original.fastMode }
+                  : { modelName: "Terra", effort: "medium", fastMode: !original.fastMode };
+
+                let switched = false;
+                let restored = false;
+                let selectedAfterSwitch = null;
+                try {
+                  await runtime.commitCurrentSelection({ force: true });
+                  await runtime.setSelection(target.modelName, target.effort, target.fastMode);
+                  selectedAfterSwitch = runtime.getSelection();
+                  switched = selectedAfterSwitch.modelName === target.modelName
+                    && selectedAfterSwitch.effort === target.effort
+                    && selectedAfterSwitch.fastMode === target.fastMode;
+                } finally {
+                  await runtime.setSelection(
+                    original.modelName,
+                    original.effort,
+                    original.fastMode
+                  );
+                  const selectedAfterRestore = runtime.getSelection();
+                  restored = selectedAfterRestore.modelName === original.modelName
+                    && selectedAfterRestore.effort === original.effort
+                    && selectedAfterRestore.fastMode === original.fastMode;
+                }
+
                 return {
-                  found: rect.width > 0 && rect.height > 0,
-                  x: Math.round(rect.left + rect.width * (98 / 388)),
-                  y: Math.round(rect.top + rect.height * (88 / 176))
+                  found: true,
+                  switched,
+                  restored,
+                  original,
+                  target,
+                  selectedAfterSwitch,
+                  finalSelection: runtime.getSelection(),
+                  switchMode: host.getAttribute("data-switch-mode"),
+                  switchState: host.getAttribute("data-switch-state")
                 };
               })()
-            `, false);
-            if (!target?.found) continue;
-            contents.sendInputEvent({ type: "mouseMove", x: target.x, y: target.y });
-            contents.sendInputEvent({
-              type: "mouseDown",
-              x: target.x,
-              y: target.y,
-              button: "left",
-              clickCount: 1
-            });
-            contents.sendInputEvent({
-              type: "mouseUp",
-              x: target.x,
-              y: target.y,
-              button: "left",
-              clickCount: 1
-            });
-            return { clicked: true, model: "Terra", effort: "medium" };
+            `, true);
+            if (!result?.found) continue;
+            return result;
           } catch {
             // Detached frames are ignored.
           }
         }
       }
-      return { clicked: false, model: "Terra", effort: "medium" };
+      return { found: false, switched: false, restored: false };
     })()
     """
 

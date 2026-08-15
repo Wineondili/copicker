@@ -52,6 +52,10 @@ import Testing
     #expect(expression.contains("selectorActiveModelFontSize"))
     #expect(expression.contains("selectorFillWidth"))
     #expect(expression.contains("keyboardNavigation"))
+    #expect(expression.contains("switchMode"))
+    #expect(expression.contains("switchState"))
+    #expect(expression.contains("bridgeAvailable"))
+    #expect(expression.contains("validConversationContextMarkers"))
     #expect(expression.contains("const previewWidth = 289.75"))
     #expect(expression.contains("const previewHeight = 134.75"))
     #expect(expression.contains("popoverPadding"))
@@ -90,14 +94,17 @@ import Testing
     #expect(!expression.contains("textContent"))
 }
 
-@Test func selectorClickTargetsOnlyTheLocalTerraMediumCell() {
+@Test func selectorProbeUsesDirectSettingsAndRestoresTheOriginalSelection() {
     let expression = InjectionExpressionBuilder.clickSelectorCellExpression
 
     #expect(expression.contains("codex-model-rail-popover-host"))
-    #expect(expression.contains("querySelector(\"#stage\")"))
-    #expect(expression.contains("model: \"Terra\""))
+    #expect(expression.contains("runtime.commitCurrentSelection({ force: true })"))
+    #expect(expression.contains("runtime.setSelection"))
+    #expect(expression.contains("modelName: \"Terra\""))
     #expect(expression.contains("effort: \"medium\""))
-    #expect(expression.contains("type: \"mouseDown\""))
+    #expect(expression.contains("finally"))
+    #expect(expression.contains("restored"))
     #expect(!expression.contains("data-list-navigation-item"))
     #expect(!expression.contains("data-model-picker-model-row"))
+    #expect(!expression.contains("sendInputEvent"))
 }

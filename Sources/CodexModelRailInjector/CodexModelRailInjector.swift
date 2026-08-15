@@ -158,14 +158,14 @@ struct CodexModelRailInjectorCLI {
             let result = try await session.evaluate(
                 expression: InjectionExpressionBuilder.clickSelectorCellExpression
             )
-            print("Selector click result:")
+            print("Selector settings round-trip result:")
             print(result?.prettyPrinted() ?? "null")
             try await Task.sleep(for: .milliseconds(250))
 
             let probeResult = try await session.evaluate(
                 expression: InjectionExpressionBuilder.rendererProbeExpression
             )
-            print("Scoped renderer probe after selector click:")
+            print("Scoped renderer probe after settings restoration:")
             print(probeResult?.prettyPrinted() ?? "null")
             await shutdownInspector(session)
         } catch {
@@ -235,7 +235,7 @@ struct CodexModelRailInjectorCLI {
           probe    Return selector metadata and labels only for model-picker controls.
           probe-picker  Open the picker shortcut, then run the scoped selector probe.
           probe-primary  Open the first-level model/reasoning popover, then probe it.
-          probe-selector  Click the Terra/medium selector cell and verify local-only feedback.
+          probe-selector  Directly switch to a supported test selection, confirm it, and restore the original settings.
           inject   Explicitly enable a temporary loopback Inspector and inject Model Rail.
           remove   Remove Model Rail and disable its current-process reinjection hook.
           help     Show this help.
