@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15 22:10:20 +0800
+
+- Restored obstacle avoidance for every visible Radix/`role="menu"` submenu attached to the first-level picker, including the reasoning-effort menu as well as nested model menus.
+- Kept the input-origin full-width model list as the sole explicit non-obstacle exception through its `[data-composer-overlay-floating-ui]` ancestry.
+
 ## 2026-08-15 22:07:48 +0800
 
 - Moved the detached Model Rail to a top-first placement strategy while preserving the approved 289.75-by-134.75-pixel internal design.

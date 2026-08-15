@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.9.2";
+  const VERSION = "0.9.3";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -173,8 +173,8 @@
     );
   }
 
-  function findModelPickerObstacleSurfaces(primarySurface = state.primarySurface) {
-    const surfaces = new Set();
+  function findSecondaryMenuObstacleSurfaces(primarySurface = state.primarySurface) {
+    const surfaces = new Set(document.querySelectorAll(PRIMARY_SURFACE_SELECTOR));
     for (const row of document.querySelectorAll(MODEL_ROW_SELECTOR)) {
       const surface =
         row.closest(PRIMARY_SURFACE_SELECTOR) ||
@@ -190,7 +190,13 @@
       ) {
         return false;
       }
-      return Boolean(surface.querySelector(MODEL_ROW_SELECTOR));
+      const composerInputOverlay =
+        (surface.matches(SECONDARY_SURFACE_SELECTOR) && surface) ||
+        surface.closest(SECONDARY_SURFACE_SELECTOR);
+      return (
+        !composerInputOverlay ||
+        Boolean(surface.querySelector(MODEL_ROW_SELECTOR))
+      );
     });
   }
 
@@ -1633,7 +1639,7 @@
     const hostStyle = getComputedStyle(host);
     const popoverWidth = Number.parseFloat(hostStyle.width) || hostRect.width;
     const popoverHeight = Number.parseFloat(hostStyle.height) || hostRect.height;
-    const obstacleSurfaces = findModelPickerObstacleSurfaces(surface);
+    const obstacleSurfaces = findSecondaryMenuObstacleSurfaces(surface);
     for (const obstacleSurface of obstacleSurfaces) {
       state.resizeObserver?.observe(obstacleSurface);
     }
@@ -1747,7 +1753,7 @@
       state.primarySurface.getBoundingClientRect(),
       width,
       height,
-      findModelPickerObstacleSurfaces(state.primarySurface).map((surface) =>
+      findSecondaryMenuObstacleSurfaces(state.primarySurface).map((surface) =>
         surface.getBoundingClientRect(),
       ),
     );

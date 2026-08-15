@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). Version `0.9.2` retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method:
+The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). Version `0.9.3` retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method:
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -23,7 +23,7 @@ The injection transport, first-level mount-target lifecycle, and direct current-
 - A valid anchor surface must be an open menu containing `[data-reasoning-slider]` and the current model-picker controls.
 - The custom popover scaffold is appended directly to `document.body`; it is never inserted into, or made a child of, the official first-level popover.
 - The scaffold uses the official popover rectangle only for positioning. It prefers a horizontally centered position above that popover with a 12-pixel gap, then tries other above-aligned positions before side or bottom fallbacks.
-- Every placement candidate must fit the viewport and must not overlap either the official first-level popover or the visible nested Model Picker identified by `[data-model-picker-model-row]`. That nested picker remains open while the rail moves around its rectangle instead of disappearing.
+- Every placement candidate must fit the viewport and must not overlap either the official first-level popover or another visible Radix/`role="menu"` submenu, including nested model and reasoning-effort pickers. Those submenus remain open while the rail moves around their rectangles instead of disappearing.
 - The full-width model list opened directly above the composer input is intentionally not a placement obstacle. It may sit behind the higher-z-index rail and does not move the rail away from its normal above-primary position.
 - Opening and closing use a short opacity, scale, and vertical-motion transition; obstacle-driven position changes animate through the same 180-millisecond motion curve.
 - The custom popover renders at 50% scale for a 289.75-by-134.75-pixel footprint. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
@@ -93,7 +93,7 @@ The intended lifecycle is:
 1. Click the bottom composer control that currently displays the selected model and reasoning effort, such as `5.6 Sol / 极高`.
 2. Wait for that exact trigger to report `aria-expanded="true"` and `data-state="open"`.
 3. Resolve the nearest visible first-level menu containing the reasoning slider and model-picker controls as a positioning anchor only.
-4. Discover only a simultaneously visible nested Model Picker containing `[data-model-picker-model-row]` as a placement obstacle; ignore the full-width composer model list.
+4. Discover simultaneously visible Radix/`role="menu"` secondary surfaces as placement obstacles, while explicitly ignoring the full-width composer model list under `[data-composer-overlay-floating-ui]` unless it is a nested model-row surface.
 5. Append an independent popover host to `document.body`, outside the official popover DOM subtree.
 6. Position it above the official popover without intersection; shift it along the top edge or use a fallback side when needed to clear a secondary menu.
 7. Keep it present while a secondary menu is open, and animate it closed only when the first-level surface itself closes or the combined picker loses focus.

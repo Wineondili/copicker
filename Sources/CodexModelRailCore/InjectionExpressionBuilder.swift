@@ -200,14 +200,7 @@ public enum InjectionExpressionBuilder {
           );
           const runtimeState = window.__CODEX_MODEL_RAIL__;
           const secondarySurfaces = [
-            ...new Set(
-              [...document.querySelectorAll("[data-model-picker-model-row]")]
-                .map((row) =>
-                  row.closest('[data-radix-menu-content], [role="menu"]') ||
-                  row.closest("[data-composer-overlay-floating-ui]")
-                )
-                .filter(Boolean)
-            )
+            ...new Set(document.querySelectorAll('[data-radix-menu-content], [role="menu"]'))
           ].filter((surface) => {
             if (
               surface === primarySurface ||
@@ -216,8 +209,15 @@ public enum InjectionExpressionBuilder {
             ) return false;
             const style = getComputedStyle(surface);
             const rect = surface.getBoundingClientRect();
+            const composerInputOverlay = surface.closest(
+              "[data-composer-overlay-floating-ui]"
+            );
             return style.display !== "none" && style.visibility !== "hidden"
-              && rect.width > 0 && rect.height > 0;
+              && rect.width > 0 && rect.height > 0
+              && (
+                !composerInputOverlay ||
+                Boolean(surface.querySelector("[data-model-picker-model-row]"))
+              );
           });
           const secondaryRects = secondarySurfaces.map((surface) => surface.getBoundingClientRect());
           const conversationContextMarkers = [
