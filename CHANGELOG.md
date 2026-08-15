@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-16 02:32:22 +0800
+
+- Added opt-in `copicker autostart enable`, `disable`, `disable --remove`, and read-only `status` commands backed by a user LaunchAgent and a stable installed CLI/resource copy.
+- Added the long-running `copicker watch` process with one injection per Codex PID, bounded retry for transient startup races, fail-closed Inspector and compatibility outcomes, and privacy-safe structured state.
+- Refactored manual and automatic injection through one confirmed installer path, kept the default command read-only, removed the build script's broad `pkill`, documented rollback, and advanced the CLI version to `0.10.0-dev` while retaining renderer payload `0.9.3`.
+
 ## 2026-08-16 02:27:18 +0800
 
 - Added testable, user-scoped Copicker autostart paths for the stable CLI copy, Swift resource bundle, LaunchAgent plist, privacy-safe state file, and logs.

@@ -7,8 +7,6 @@ APP_NAME="copicker"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-pkill -x "$APP_NAME" >/dev/null 2>&1 || true
-
 if command -v node >/dev/null 2>&1; then
   node --check Sources/CopickerCLI/Resources/model-rail.js
 fi
@@ -25,6 +23,15 @@ case "$MODE" in
     ;;
   --remove|remove)
     "$APP_BINARY" remove
+    ;;
+  --autostart-enable|autostart-enable)
+    "$APP_BINARY" autostart enable
+    ;;
+  --autostart-disable|autostart-disable)
+    "$APP_BINARY" autostart disable
+    ;;
+  --autostart-status|autostart-status)
+    "$APP_BINARY" autostart status
     ;;
   --probe|probe)
     "$APP_BINARY" probe
@@ -56,7 +63,7 @@ case "$MODE" in
     "$APP_BINARY"
     ;;
   *)
-    echo "usage: $0 [run|--inject|--remove|--probe|--probe-picker|--probe-primary|--probe-selector|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|--inject|--remove|--autostart-enable|--autostart-disable|--autostart-status|--probe|--probe-picker|--probe-primary|--probe-selector|--debug|--logs|--telemetry|--verify]" >&2
     exit 2
     ;;
 esac
