@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.7.0";
+  const VERSION = "0.8.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -305,6 +305,36 @@
     );
   }
 
+  function updateEndpointVisibility(shadow) {
+    const activeEffortLabel = shadow.querySelector(".effort-label.active");
+    const activeRects = activeEffortLabel
+      ? [activeEffortLabel.getBoundingClientRect()]
+      : [];
+    const activeFastLabel = activeEffortLabel?.querySelector(".effort-fast") || null;
+    if (activeEffortLabel?.classList.contains("fast") && activeFastLabel) {
+      activeRects.push(activeFastLabel.getBoundingClientRect());
+    }
+    const activeModelLabel = activeEffortLabel?.querySelector(".effort-model") || null;
+    if (activeModelLabel) activeRects.push(activeModelLabel.getBoundingClientRect());
+
+    const activeRect = activeRects.length > 0
+      ? {
+          left: Math.min(...activeRects.map((rect) => rect.left)),
+          right: Math.max(...activeRects.map((rect) => rect.right)),
+          top: Math.min(...activeRects.map((rect) => rect.top)),
+          bottom: Math.max(...activeRects.map((rect) => rect.bottom)),
+        }
+      : null;
+
+    for (const endpoint of shadow.querySelectorAll(".effort-endpoint")) {
+      const endpointRect = endpoint.getBoundingClientRect();
+      endpoint.classList.toggle(
+        "obscured",
+        Boolean(activeRect) && overlaps(activeRect, endpointRect),
+      );
+    }
+  }
+
   function updateSelectorUI(host) {
     const shadow = host.shadowRoot;
     if (!shadow) return;
@@ -329,7 +359,9 @@
       }
       for (const label of shadow.querySelectorAll(".effort-label")) {
         label.classList.remove("active");
+        label.classList.remove("fast");
       }
+      updateEndpointVisibility(shadow);
       if (modelElement) modelElement.textContent = "Other";
       if (effortElement) {
         effortElement.textContent = "";
@@ -363,7 +395,7 @@
     }
     if (selection) {
       selection.classList.remove("inactive");
-      selection.style.width = `${Math.max(0, width - START_INSET)}px`;
+      selection.style.width = `${Math.max(ROW_HEIGHT, width - START_INSET)}px`;
       selection.style.height = `${ROW_HEIGHT}px`;
       selection.style.bottom = `${ROW_BOTTOMS[rowIndex]}px`;
       selection.style.borderRadius = `${ROW_HEIGHT / 2}px`;
@@ -379,9 +411,16 @@
         COLUMN_CENTERS[dotNumberForElement - 1] <= width;
       dot.classList.toggle("inside", inside);
     }
-    for (const [index, label] of [...shadow.querySelectorAll(".effort-label")].entries()) {
-      label.classList.toggle("active", index === dotNumber - 1);
+    for (const modelLabel of shadow.querySelectorAll(".effort-model")) {
+      modelLabel.textContent = row.name;
+      modelLabel.setAttribute("data-model", row.name);
     }
+    for (const [index, label] of [...shadow.querySelectorAll(".effort-label")].entries()) {
+      const active = index === dotNumber - 1;
+      label.classList.toggle("active", active);
+      label.classList.toggle("fast", active && state.fastMode);
+    }
+    updateEndpointVisibility(shadow);
 
     if (modelElement) modelElement.textContent = row.name;
     if (effortElement) {
@@ -434,6 +473,53 @@
     updateSelectorUI(host);
   }
 
+  function handleSelectorKey(host, event) {
+    const isArrow = event.key.startsWith("Arrow");
+    const isSpace = event.key === " " || event.key === "Spacebar" || event.code === "Space";
+    if (!isArrow && !isSpace) return false;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    if (isSpace) {
+      if (!hasSelectorSelection() || event.repeat) return true;
+      state.fastMode = !state.fastMode;
+      updateSelectorUI(host);
+      return true;
+    }
+
+    if (!hasSelectorSelection()) {
+      state.currentRow = 0;
+      state.currentIndex = 0;
+      state.fastMode = false;
+      updateSelectorUI(host);
+      return true;
+    }
+
+    if (event.key === "ArrowUp") {
+      state.currentRow = Math.max(0, state.currentRow - 1);
+      state.currentIndex = Math.min(
+        state.currentIndex,
+        ROWS[state.currentRow].dots.length - 1,
+      );
+    } else if (event.key === "ArrowDown") {
+      state.currentRow = Math.min(ROWS.length - 1, state.currentRow + 1);
+      state.currentIndex = Math.min(
+        state.currentIndex,
+        ROWS[state.currentRow].dots.length - 1,
+      );
+    } else if (event.key === "ArrowLeft") {
+      state.currentIndex = Math.max(0, state.currentIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      state.currentIndex = Math.min(
+        ROWS[state.currentRow].dots.length - 1,
+        state.currentIndex + 1,
+      );
+    }
+    updateSelectorUI(host);
+    return true;
+  }
+
   function render2DSelector(host) {
     if (host.shadowRoot) return;
     const shadow = host.attachShadow({ mode: "open" });
@@ -454,8 +540,8 @@
         :host {
           all: initial;
           display: block;
-          width: 280px;
-          height: 151px;
+          width: 289.75px;
+          height: 134.75px;
           color-scheme: dark;
           --popover: rgb(44, 44, 44);
           --border: #444448;
@@ -483,8 +569,10 @@
         * { box-sizing: border-box; }
 
         .popover {
-          width: 560px;
-          padding: 38px 32px 22px;
+          position: relative;
+          top: -4px;
+          width: 579.5px;
+          padding: 40px 26px 17.5px;
           background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
             var(--popover);
@@ -507,7 +595,7 @@
 
         .labels {
           height: calc(var(--row-h) * 3 + var(--row-gap) * 2);
-          margin-top: 20px;
+          margin-top: 34px;
           display: grid;
           grid-template-rows: repeat(3, var(--row-h));
           row-gap: var(--row-gap);
@@ -524,7 +612,7 @@
         .stage-shell {
           position: relative;
           width: var(--stage-w);
-          padding-top: 20px;
+          padding-top: 34px;
         }
 
         .effort-labels {
@@ -539,18 +627,85 @@
         .effort-label {
           position: absolute;
           top: 0;
-          transform: translateX(-50%);
-          white-space: nowrap;
+          color: #fff;
           font-size: calc(22px * var(--text-scale));
           font-weight: 650;
           letter-spacing: -0.03em;
-          color: #fff;
+          line-height: 1.2;
           opacity: 0;
+          transform: translateX(-50%);
           transition: opacity 180ms ease;
+          white-space: nowrap;
         }
 
         .effort-label.ultra { color: #A67DF2; }
         .effort-label.active { opacity: 1; }
+
+        .effort-model {
+          position: absolute;
+          right: calc(100% + 7px);
+          bottom: 0;
+          color: transparent;
+          font: inherit;
+          letter-spacing: inherit;
+          line-height: inherit;
+          background: linear-gradient(
+            90deg,
+            var(--model-text-light),
+            var(--model-text-dark)
+          );
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          white-space: nowrap;
+        }
+
+        .effort-model[data-model="Sol"] {
+          --model-text-light: #f1c0c9;
+          --model-text-dark: #edb7c1;
+        }
+
+        .effort-model[data-model="Terra"] {
+          --model-text-light: #f0d69b;
+          --model-text-dark: #ebcd90;
+        }
+
+        .effort-model[data-model="Luna"] {
+          --model-text-light: #c1e2cb;
+          --model-text-dark: #b7dcc3;
+        }
+
+        .effort-fast {
+          position: absolute;
+          left: calc(100% + 7px);
+          bottom: 0;
+          color: #0099ff;
+          font: inherit;
+          letter-spacing: inherit;
+          line-height: inherit;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 120ms ease;
+        }
+
+        .effort-label.fast .effort-fast { opacity: 1; }
+
+        .effort-endpoint {
+          position: absolute;
+          top: calc(3.6px * var(--text-scale));
+          color: #8e8e93;
+          font-size: calc(19px * var(--text-scale));
+          font-weight: 600;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+          opacity: 1;
+          white-space: nowrap;
+          transition: opacity 120ms ease;
+        }
+
+        .effort-endpoint.faster { left: -90px; }
+        .effort-endpoint.smarter { right: -47.5px; }
+        .effort-endpoint.obscured { opacity: 0; }
 
         .stage {
           position: relative;
@@ -561,19 +716,13 @@
           outline: none;
         }
 
-        .stage:focus-visible {
-          outline: 2px solid rgba(255, 255, 255, 0.32);
-          outline-offset: 6px;
-          border-radius: 14px;
-        }
-
         .selection {
           position: absolute;
           left: var(--start-inset);
           bottom: 0;
           width: 0;
           height: var(--row-h);
-          border-radius: 999px;
+          border-radius: 24px;
           --fill-light: var(--luna-light);
           --fill-base: var(--luna);
           background: linear-gradient(135deg, var(--fill-light) 0%, var(--fill-base) 100%);
@@ -585,10 +734,8 @@
           transition:
             width 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
             bottom 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
-            border-radius 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
             opacity 160ms ease,
-            --fill-light 240ms ease,
-            --fill-base 240ms ease;
+            background 240ms ease;
         }
 
         .selection.inactive { opacity: 0; }
@@ -597,7 +744,7 @@
           position: absolute;
           width: 7px;
           height: 7px;
-          border-radius: 999px;
+          border-radius: 50%;
           transform: translate(-50%, -50%);
           background: var(--dot);
           pointer-events: none;
@@ -610,7 +757,7 @@
           position: absolute;
           width: var(--thumb-size);
           height: var(--thumb-size);
-          border-radius: 999px;
+          border-radius: 50%;
           background: var(--thumb);
           transform: translate(-50%, -50%);
           opacity: 1;
@@ -633,34 +780,17 @@
           pointer-events: none;
         }
 
-        .thumb::before,
         .thumb::after {
           content: "";
           position: absolute;
-          left: 50%;
-          top: 50%;
-          width: 65%;
-          height: 65%;
-          pointer-events: none;
+          inset: 17%;
+          background: rgba(74, 74, 80, 0.28);
           opacity: 0;
-          -webkit-mask:
-            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.261 1.03462C12.6971 1.15253 13 1.54819 13 1.99997V8.99997H19C19.3581 8.99997 19.6888 9.19141 19.8671 9.50191C20.0455 9.8124 20.0442 10.1945 19.8638 10.5038L12.8638 22.5038C12.6361 22.8941 12.1751 23.0832 11.739 22.9653C11.3029 22.8474 11 22.4517 11 22V15H5C4.64193 15 4.3112 14.8085 4.13286 14.498C3.95452 14.1875 3.9558 13.8054 4.13622 13.4961L11.1362 1.4961C11.3639 1.10586 11.8249 0.916719 12.261 1.03462ZM6.74104 13H12C12.5523 13 13 13.4477 13 14V18.301L17.259 11H12C11.4477 11 11 10.5523 11 9.99997V5.69889L6.74104 13Z'/%3E%3C/svg%3E") center/contain no-repeat;
-          mask:
-            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.261 1.03462C12.6971 1.15253 13 1.54819 13 1.99997V8.99997H19C19.3581 8.99997 19.6888 9.19141 19.8671 9.50191C20.0455 9.8124 20.0442 10.1945 19.8638 10.5038L12.8638 22.5038C12.6361 22.8941 12.1751 23.0832 11.739 22.9653C11.3029 22.8474 11 22.4517 11 22V15H5C4.64193 15 4.3112 14.8085 4.13286 14.498C3.95452 14.1875 3.9558 13.8054 4.13622 13.4961L11.1362 1.4961C11.3639 1.10586 11.8249 0.916719 12.261 1.03462ZM6.74104 13H12C12.5523 13 13 13.4477 13 14V18.301L17.259 11H12C11.4477 11 11 10.5523 11 9.99997V5.69889L6.74104 13Z'/%3E%3C/svg%3E") center/contain no-repeat;
-          transition: opacity 160ms ease, transform 160ms ease;
+          -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 1.5V9h6.5L11 22.5V15H4.5L13 1.5Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 1.5V9h6.5L11 22.5V15H4.5L13 1.5Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+          transition: opacity 160ms ease;
         }
 
-        .thumb::before {
-          background: rgba(255, 255, 255, 0.72);
-          transform: translate(calc(-50% + 1px), calc(-50% + 1px));
-        }
-
-        .thumb::after {
-          background: rgba(72, 72, 78, 0.24);
-          transform: translate(calc(-50% - 0.7px), calc(-50% - 0.7px));
-        }
-
-        .thumb.fast::before,
         .thumb.fast::after { opacity: 1; }
 
         .stage.dragging .thumb {
@@ -668,6 +798,7 @@
         }
 
         .current-selection {
+          display: none;
           margin-top: 18px;
           padding-left: 90px;
           min-height: 26px;
@@ -719,7 +850,10 @@
             <div class="label">Luna</div>
           </div>
           <div class="stage-shell">
-            <div class="effort-labels" id="effortLabels"></div>
+            <div class="effort-labels" id="effortLabels">
+              <div class="effort-endpoint faster">Faster</div>
+              <div class="effort-endpoint smarter">Smarter</div>
+            </div>
             <div class="stage" id="stage" tabindex="0" aria-label="2D selector">
               <div class="selection" id="selection"></div>
               <div id="dots"></div>
@@ -741,7 +875,16 @@
     for (const [index, effort] of EFFORTS.entries()) {
       const label = document.createElement("div");
       label.className = `effort-label${effort === "ultra" ? " ultra" : ""}`;
-      label.textContent = effort;
+      const modelLabel = document.createElement("span");
+      modelLabel.className = "effort-model";
+      modelLabel.textContent = ROWS[state.currentRow ?? 0].name;
+      modelLabel.setAttribute("data-model", ROWS[state.currentRow ?? 0].name);
+      label.append(modelLabel);
+      label.append(document.createTextNode(effort));
+      const fastLabel = document.createElement("span");
+      fastLabel.className = "effort-fast";
+      fastLabel.textContent = "Fast";
+      label.append(fastLabel);
       label.style.left = `${COLUMN_CENTERS[index]}px`;
       effortLabels?.append(label);
     }
@@ -805,42 +948,6 @@
       pointerMoved = false;
     });
 
-    stage?.addEventListener("keydown", (event) => {
-      if (!event.key.startsWith("Arrow")) return;
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (!hasSelectorSelection()) {
-        state.currentRow = 0;
-        state.currentIndex = 0;
-        state.fastMode = false;
-        updateSelectorUI(host);
-        return;
-      }
-
-      if (event.key === "ArrowUp") {
-        state.currentRow = Math.max(0, state.currentRow - 1);
-        state.currentIndex = Math.min(
-          state.currentIndex,
-          ROWS[state.currentRow].dots.length - 1,
-        );
-      } else if (event.key === "ArrowDown") {
-        state.currentRow = Math.min(2, state.currentRow + 1);
-        state.currentIndex = Math.min(
-          state.currentIndex,
-          ROWS[state.currentRow].dots.length - 1,
-        );
-      } else if (event.key === "ArrowLeft") {
-        state.currentIndex = Math.max(0, state.currentIndex - 1);
-      } else if (event.key === "ArrowRight") {
-        state.currentIndex = Math.min(
-          ROWS[state.currentRow].dots.length - 1,
-          state.currentIndex + 1,
-        );
-      }
-      updateSelectorUI(host);
-    });
-
     shadow.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -860,6 +967,7 @@
     host.setAttribute("data-prototype", "false");
     host.setAttribute("data-visual-pending", "false");
     host.setAttribute("data-local-only", "true");
+    host.setAttribute("data-keyboard-navigation", "arrows-space");
     host.setAttribute("data-design-source", "preview.html");
     host.setAttribute("aria-hidden", "true");
     host.style.position = "fixed";
@@ -963,7 +1071,21 @@
     if (document.visibilityState === "hidden") state.dismissForCurrentOpen();
   };
   state.handleKeyDown = (event) => {
-    if (event.key === "Escape") state.dismissForCurrentOpen();
+    if (event.key === "Escape") {
+      state.dismissForCurrentOpen();
+      return;
+    }
+    const host = state.popoverHost;
+    if (
+      !host?.isConnected ||
+      host.getAttribute("aria-hidden") === "true" ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    handleSelectorKey(host, event);
   };
   state.dispose = () => {
     state.observer?.disconnect();

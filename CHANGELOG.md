@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-15 17:01:40 +0800
+
+- Ported the accepted compact Model Rail appearance into the runtime injector at a 289.75-by-134.75-pixel footprint, including the moving model/effort/Fast labels, endpoint labels, gradients, and hidden footer.
+- Added document-level arrow-key navigation and Space-based Fast toggling while the detached first-level rail is visible, with Luna limited to five effort levels.
+- Live-verified the injected design against Codex `26.810.41047` and recorded user acceptance of both visual parity and keyboard behavior.
+
 ## 2026-08-15 16:43:21 +0800
 
 - Clamped the preview fill to one full row height at the first effort stage so its 24-pixel end radius no longer collapses beneath the 56-pixel thumb.

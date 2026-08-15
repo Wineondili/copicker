@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). Version `0.7.0` applies the approved `MODEL_RAIL_TUNING_V1` geometry to the detached two-dimensional selector:
+The injection transport and first-level mount-target lifecycle are live-verified against Codex `26.810.41047` (build `6570`). Version `0.8.0` applies the approved compact rail design to the detached two-dimensional selector:
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -25,12 +25,11 @@ The injection transport and first-level mount-target lifecycle are live-verified
 - The scaffold uses the official popover rectangle only for positioning. It prefers left, then right, bottom, and top, with a 12-pixel gap and viewport padding.
 - Every placement candidate must fit the viewport and must not overlap the official popover. If none fits, the custom popover remains hidden.
 - The full model-list overlay identified by `[data-composer-overlay-floating-ui]` and multiple `button[data-list-navigation-item]` controls globally suppresses and removes the custom popover, even if the first-level menu remains mounted in the DOM.
-- The custom popover renders at 50% scale for a 280-by-151-pixel footprint. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
-- Model, effort, and current-selection text use the approved 1.2 scale; the model-to-stage grid gap is zero; and the effort-label offset begins from the approved internal `-22px` value.
-- A safe-area pass increases the internal top and side padding while compensating the label and stage offsets, so the dot grid and bottom status retain their chosen vertical positions without leaving the enlarged text against the popover boundary. The base background remains `rgb(44, 44, 44)`.
+- The custom popover renders at 50% scale for a 289.75-by-134.75-pixel footprint. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
+- The top row contains `Faster`, the moving model/effort/Fast labels, and `Smarter`; the old bottom status row is hidden. The shell background is `rgb(44, 44, 44)`.
 - Only Sol and Terra's six effort levels (`low` through `ultra`) and Luna's five levels (`low` through `max`) exist in the selector. No other model is offered as a switch target.
-- When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty selector state: the footer reads `Other`, and no fill, thumb, active effort label, or Fast state is shown until the user selects a valid cell.
-- This visual-review build keeps selector changes local to renderer memory. It does not click official model controls, call model APIs, or change the current Codex task model.
+- When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty `Other` state with no fill, thumb, or active moving labels until the user selects a valid cell.
+- While the rail is visible, the arrow keys move through model and effort cells, Luna is clamped to five effort levels, and Space toggles Fast. These changes remain local to renderer memory: the build does not click official model controls, call model APIs, or change the current Codex task model.
 - Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
 - All selector markup and styles are isolated in the detached Shadow DOM host.
 
@@ -74,9 +73,9 @@ The command performs these gates before it sends a signal:
 
 [`tools/model-rail-tuner.html`](tools/model-rail-tuner.html) is a standalone local tuning page for the selector geometry. It does not inject into Codex or change the runtime payload.
 
-The page keeps the preview at the current 280-by-151-pixel footprint and sets both horizontal and vertical dot spacing to 32 pixels. It provides synchronized sliders and numeric inputs for:
+The page keeps the preview at the current 289.75-by-134.75-pixel footprint and sets both horizontal and vertical dot spacing to 32 pixels.
 
-- the global text scale covering model, effort, and current-selection labels;
+- the global text scale covering model and effort labels;
 - the visible gap between the Sol/Terra/Luna column and the selector stage;
 - the visible distance from the top effort labels to the popover's top edge.
 
