@@ -325,7 +325,12 @@ struct CopickerCLI {
         stateStore: CopickerAutostartStateStore,
         watcherProcessIdentifier: pid_t
     ) async {
+        try? await Task.sleep(
+            for: .milliseconds(Int64(CopickerAutostart.startupGraceSeconds * 1_000))
+        )
+
         let delays = CopickerAutostart.retryDelaySeconds
+        var mayRecoverInspectorOpenedByThisAttempt = false
 
         for (attempt, delay) in delays.enumerated() {
             if delay > 0 {
@@ -363,7 +368,8 @@ struct CopickerCLI {
                     payload: payload,
                     expectedProcessIdentifier: processIdentifier,
                     quiet: true,
-                    targetTimeout: .seconds(10)
+                    targetTimeout: .seconds(10),
+                    allowExpectedProcessInspector: mayRecoverInspectorOpenedByThisAttempt
                 )
                 writeAutostartState(
                     CopickerAutostartState(
@@ -379,6 +385,9 @@ struct CopickerCLI {
                 watcherLog("Copicker injection succeeded for Codex process \(processIdentifier).")
                 return
             } catch {
+                if case .targetTimeout = error as? InspectorError {
+                    mayRecoverInspectorOpenedByThisAttempt = true
+                }
                 let failure = classifyAutostartFailure(error)
                 let hasAnotherAttempt = attempt < delays.count - 1
                 if failure.retryable && hasAnotherAttempt {
@@ -432,7 +441,7 @@ struct CopickerCLI {
             case .inspectorPortAlreadyInUse:
                 return .init(phase: .blocked, resultCode: .inspectorBusy, retryable: false)
             case .targetTimeout:
-                return .init(phase: .blocked, resultCode: .inspectorTimeout, retryable: false)
+                return .init(phase: .blocked, resultCode: .inspectorTimeout, retryable: true)
             default:
                 return .init(phase: .failed, resultCode: .injectionFailed, retryable: false)
             }
@@ -472,13 +481,15 @@ struct CopickerCLI {
         payload: String,
         expectedProcessIdentifier: pid_t? = nil,
         quiet: Bool = false,
-        targetTimeout: Duration = .seconds(5)
+        targetTimeout: Duration = .seconds(5),
+        allowExpectedProcessInspector: Bool = false
     ) async throws -> InjectionExecution {
         let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
         let context = try await openInspectorContext(
             expectedProcessIdentifier: expectedProcessIdentifier,
             quiet: quiet,
-            targetTimeout: targetTimeout
+            targetTimeout: targetTimeout,
+            allowExpectedProcessInspector: allowExpectedProcessInspector
         )
         do {
             let result = try await context.session.evaluate(expression: expression)
@@ -504,7 +515,8 @@ struct CopickerCLI {
     private static func openInspectorContext(
         expectedProcessIdentifier: pid_t? = nil,
         quiet: Bool = false,
-        targetTimeout: Duration = .seconds(5)
+        targetTimeout: Duration = .seconds(5),
+        allowExpectedProcessInspector: Bool = false
     ) async throws -> InspectorContext {
         let installation = try CodexInstallation.inspect()
         guard installation.fuseReport.nodeCLIInspectionEnabled else {
@@ -533,8 +545,37 @@ struct CopickerCLI {
         }
 
         let discovery = InspectorEndpointDiscovery()
-        if let targets = try? await discovery.fetchTargets(), !targets.isEmpty {
-            throw InspectorError.inspectorPortAlreadyInUse
+        let listeningProcessIdentifiers = try InspectorPortOwnership()
+            .listeningProcessIdentifiers()
+        let existingTargets = try? await discovery.fetchTargets()
+        if !listeningProcessIdentifiers.isEmpty || existingTargets?.isEmpty == false {
+            guard allowExpectedProcessInspector,
+                  let expectedProcessIdentifier,
+                  listeningProcessIdentifiers == [expectedProcessIdentifier]
+            else {
+                throw InspectorError.inspectorPortAlreadyInUse
+            }
+
+            let existingTarget = existingTargets?.first(where: {
+                $0.webSocketDebuggerURL != nil && ($0.type == "node" || $0.type.isEmpty)
+            })
+            let target: InspectorTarget
+            if let existingTarget {
+                target = existingTarget
+            } else {
+                target = try await discovery.waitForTarget(timeout: targetTimeout)
+            }
+            guard let webSocketURL = target.webSocketDebuggerURL else {
+                throw CLIError.inspectorTargetMissingWebSocket
+            }
+
+            let session = InspectorSession(url: webSocketURL)
+            await session.connect()
+            return InspectorContext(
+                session: session,
+                installation: installation,
+                process: process
+            )
         }
 
         if !quiet {
