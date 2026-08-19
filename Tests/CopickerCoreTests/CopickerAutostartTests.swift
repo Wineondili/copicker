@@ -125,5 +125,6 @@ import Testing
 }
 
 @Test func retryPolicyIsFiniteAndBacksOff() {
-    #expect(CopickerAutostart.retryDelaySeconds == [0.5, 1, 2, 4, 8])
+    #expect(CopickerAutostart.startupGraceSeconds == 5)
+    #expect(CopickerAutostart.retryDelaySeconds == [0, 1, 2, 4, 8])
 }

@@ -14,7 +14,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). The `0.9.3` renderer payload retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method. Copicker `0.10.0-dev` adds an opt-in user LaunchAgent and a guarded process watcher; those autostart paths are offline-tested but are not installed or enabled by default.
+The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). The `0.9.3` renderer payload retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method. Copicker `0.10.1-dev` adds an opt-in user LaunchAgent, a guarded process watcher, and bounded recovery for the login-time Codex/Inspector startup race; autostart is not installed or enabled by default.
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -90,7 +90,7 @@ The managed files are limited to:
 
 The LaunchAgent starts a long-running `copicker watch` process in the logged-in GUI session. The watcher polls only for the `com.openai.codex` process, injects once per new PID, and waits for the next PID after Codex quits. A restarted watcher may safely call the installer again because the renderer and Electron main-process hooks are versioned and idempotent.
 
-Transient process-start or signal races use the finite `0.5`, `1`, `2`, `4`, and `8` second retry schedule. An incompatible Codex installation, an unknown Inspector already occupying `127.0.0.1:9229`, an Inspector timeout, or an unconfirmed installer result stops retries for that PID and records a structured result code. The state file contains only Copicker/Codex versions, process identifiers, timestamps, phases, and result codes.
+After first seeing a new Codex PID, the watcher allows a five-second startup grace period, then uses the finite `0`, `1`, `2`, `4`, and `8` second retry schedule. An Inspector timeout is retried because Electron may finish opening the endpoint after the first attempt times out. A later attempt may reuse that endpoint only after `lsof` confirms that its sole listener is the exact Codex PID signaled by the same in-memory attempt; pre-existing or unknown Inspector ownership still fails closed. An incompatible Codex installation or an unconfirmed installer result stops retries for that PID and records a structured result code. The state file contains only Copicker/Codex versions, process identifiers, timestamps, phases, and result codes.
 
 Disable future automatic injection without changing the current Codex process:
 
@@ -113,7 +113,7 @@ Both manual and automatic injection perform these gates before sending a signal:
 1. Confirm `/Applications/ChatGPT.app` exists and decode its version.
 2. Read the Electron fuse wire and require `EnableNodeCliInspectArguments=1`.
 3. Confirm the running process has bundle identifier `com.openai.codex` and the expected executable path.
-4. Refuse to proceed if `127.0.0.1:9229` is already serving an Inspector target.
+4. Refuse to proceed if `127.0.0.1:9229` is already serving an unknown or pre-existing Inspector target. The watcher may recover only an endpoint opened late by its own immediately preceding timed-out signal and owned exclusively by the expected Codex PID.
 5. Send `SIGUSR1`, connect to the Electron main process, and inject through `webContents.executeJavaScript`.
 6. Schedule `inspector.close()` and disconnect the local client.
 

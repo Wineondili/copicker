@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-19 08:53:46 +0800
+
+- Fixed the login-time Codex/Copicker startup race by adding a five-second startup grace period and retrying bounded Inspector target timeouts.
+- Added fail-closed listener ownership verification so the watcher can recover an Inspector opened late by its own timed-out signal only when `lsof` confirms that the expected Codex PID is the sole listener; unknown or pre-existing Inspector endpoints remain blocked.
+- Added Inspector ownership parsing tests, documented the recovery behavior, and advanced the CLI version to `0.10.1-dev` without changing renderer payload `0.9.3`.
+
 ## 2026-08-16 02:32:22 +0800
 
 - Added opt-in `copicker autostart enable`, `disable`, `disable --remove`, and read-only `status` commands backed by a user LaunchAgent and a stable installed CLI/resource copy.

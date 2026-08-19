@@ -72,6 +72,65 @@ public struct InspectorEndpointDiscovery: Sendable {
     }
 }
 
+public struct InspectorPortOwnership: Sendable {
+    public let port: Int
+    public let lsofURL: URL
+
+    public init(
+        port: Int = 9229,
+        lsofURL: URL = URL(fileURLWithPath: "/usr/sbin/lsof")
+    ) {
+        self.port = port
+        self.lsofURL = lsofURL
+    }
+
+    public func listeningProcessIdentifiers() throws -> Set<pid_t> {
+        let process = Process()
+        process.executableURL = lsofURL
+        process.arguments = [
+            "-nP",
+            "-t",
+            "-a",
+            "-iTCP:\(port)",
+            "-sTCP:LISTEN",
+        ]
+
+        let output = Pipe()
+        let errors = Pipe()
+        process.standardOutput = output
+        process.standardError = errors
+        try process.run()
+
+        let outputData = output.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errors.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        let outputText = String(data: outputData, encoding: .utf8) ?? ""
+        if process.terminationStatus == 1 && outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return []
+        }
+        guard process.terminationStatus == 0 else {
+            let errorText = String(data: errorData, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            throw InspectorPortOwnershipError.lsofFailed(
+                exitStatus: process.terminationStatus,
+                output: errorText
+            )
+        }
+
+        return Self.parseProcessIdentifiers(outputText)
+    }
+
+    public static func parseProcessIdentifiers(_ output: String) -> Set<pid_t> {
+        Set(
+            output
+                .split(whereSeparator: \Character.isWhitespace)
+                .compactMap { pid_t($0) }
+                .filter { $0 > 0 }
+        )
+    }
+}
+
 public actor InspectorSession {
     private let task: URLSessionWebSocketTask
     private let session: URLSession
@@ -201,3 +260,13 @@ public enum InspectorError: LocalizedError {
     }
 }
 
+public enum InspectorPortOwnershipError: LocalizedError {
+    case lsofFailed(exitStatus: Int32, output: String)
+
+    public var errorDescription: String? {
+        switch self {
+        case let .lsofFailed(exitStatus, output):
+            "Could not inspect the owner of Inspector port 9229 (lsof exit \(exitStatus)): \(output.isEmpty ? "no diagnostic output" : output)"
+        }
+    }
+}

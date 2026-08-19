@@ -3,7 +3,8 @@ import Foundation
 public enum CopickerAutostart {
     public static let launchAgentLabel = "io.github.wineondili.copicker"
     public static let resourceBundleName = "Copicker_CopickerCLI.bundle"
-    public static let retryDelaySeconds: [TimeInterval] = [0.5, 1, 2, 4, 8]
+    public static let startupGraceSeconds: TimeInterval = 5
+    public static let retryDelaySeconds: [TimeInterval] = [0, 1, 2, 4, 8]
 }
 
 public struct CopickerAutostartPaths: Equatable, Sendable {
