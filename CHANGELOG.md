@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 02:06:52 +0800
+
+- Rebuilt the CoPicker settings right pane around the native Codex hierarchy: a standard page heading, grouped section labels, rounded settings cards, inset row separators, compact segmented controls, and 32-by-20 switches, removing the visually separate plugin-style header and action card.
+- Preserved the existing authoritative load, automatic save, conflict, last-visible-model, and immediate-apply behavior while adding explicit busy semantics and keeping the script-disabled fallback synchronized with the resolved Codex appearance.
+- Expanded settings and renderer contracts, documented the native-style local primitive boundary, and browser-verified dark, light, 420-pixel responsive, save, apply, and last-model-guard behavior before completing a production Swift build.
+
 ## 2026-08-27 01:27:58 +0800
 
 - Added a clearly labeled **立即应用** action to both the injected settings fallback and native MCP App controller while retaining automatic persistence and explicit next-start/next-injection default behavior.

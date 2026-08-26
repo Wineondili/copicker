@@ -439,6 +439,7 @@
       function setLoading(loading) {
         if (disposed) return;
         main.dataset.loading = String(loading);
+        main.setAttribute("aria-busy", String(loading));
         allInputs.forEach((input) => {
           input.disabled = loading;
         });
@@ -712,6 +713,8 @@
       integration.host.style.background = appearance === "light"
         ? "rgb(255, 255, 255)"
         : "rgb(30, 30, 30)";
+      const frameRoot = integration.frame?.contentDocument?.documentElement;
+      if (frameRoot) frameRoot.style.colorScheme = appearance;
       integration.frame?.contentWindow?.postMessage({
         method: "copicker/theme",
         params: { appearance },
