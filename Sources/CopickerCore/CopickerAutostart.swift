@@ -13,6 +13,7 @@ public struct CopickerAutostartPaths: Equatable, Sendable {
     public let installedExecutableURL: URL
     public let installedResourceBundleURL: URL
     public let stateFileURL: URL
+    public let settingsFileURL: URL
     public let logsDirectory: URL
     public let standardOutputLogURL: URL
     public let standardErrorLogURL: URL
@@ -39,6 +40,7 @@ public struct CopickerAutostartPaths: Equatable, Sendable {
             isDirectory: true
         )
         self.stateFileURL = applicationSupportDirectory.appendingPathComponent("autostart-state.json")
+        self.settingsFileURL = applicationSupportDirectory.appendingPathComponent("settings.json")
         self.logsDirectory = logsDirectory
         self.standardOutputLogURL = logsDirectory.appendingPathComponent("autostart.log")
         self.standardErrorLogURL = logsDirectory.appendingPathComponent("autostart-error.log")

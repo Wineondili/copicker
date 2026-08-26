@@ -37,6 +37,7 @@ Important paths:
 
 - `Sources/CopickerCore/`: reusable compatibility and injection infrastructure;
 - `Sources/CopickerCore/CopickerMCPProtocol.swift`: pure JSON-RPC contract for the app-only settings tool and resource;
+- `Sources/CopickerCore/CopickerSettings.swift`: versioned CoPicker preferences, validation, revision checks, and atomic local storage;
 - `Sources/CopickerCLI/CopickerCLI.swift`: command routing, live injection, probes, and watcher loop;
 - `Sources/CopickerCLI/CopickerMCPServer.swift`: newline-delimited stdio transport for the settings plugin;
 - `Sources/CopickerCLI/AutostartManager.swift`: explicit `launchctl` mutations;
@@ -48,7 +49,7 @@ Important paths:
 - `script/build_and_run.sh`: project-local development entrypoint;
 - `script/install.sh`: release build plus explicit installation of the real user LaunchAgent.
 
-The settings plugin is an independent distribution surface. Its current offline shell is documented in [plugin-settings.md](plugin-settings.md). It is deliberately not installed by `script/install.sh` until the setting controls and their persistence contract are finalized.
+The settings plugin is an independent distribution surface documented in [plugin-settings.md](plugin-settings.md). Its preference store is implemented, but the plugin remains deliberately excluded from `script/install.sh` until the interactive controls and injected-renderer integration are complete.
 
 ## Offline development commands
 

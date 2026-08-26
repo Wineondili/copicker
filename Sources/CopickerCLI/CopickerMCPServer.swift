@@ -11,7 +11,12 @@ enum CopickerMCPServer {
         }
 
         let settingsHTML = try String(contentsOf: settingsURL, encoding: .utf8)
-        let protocolHandler = CopickerMCPProtocol(settingsHTML: settingsHTML)
+        let protocolHandler = CopickerMCPProtocol(
+            settingsHTML: settingsHTML,
+            settingsStore: CopickerSettingsStore(
+                fileURL: CopickerAutostartPaths().settingsFileURL
+            )
+        )
         let newline = Data([0x0A])
 
         while let line = readLine(strippingNewline: true) {

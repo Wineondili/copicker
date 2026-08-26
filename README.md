@@ -124,6 +124,7 @@ The managed files are limited to:
 - `~/Library/Application Support/Copicker/bin/copicker`
 - `~/Library/Application Support/Copicker/bin/Copicker_CopickerCLI.bundle`
 - `~/Library/Application Support/Copicker/autostart-state.json`
+- `~/Library/Application Support/Copicker/settings.json`
 - `~/Library/LaunchAgents/io.github.wineondili.copicker.plist`
 - `~/Library/Logs/Copicker/autostart.log`
 - `~/Library/Logs/Copicker/autostart-error.log`

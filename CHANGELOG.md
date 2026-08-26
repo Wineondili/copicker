@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-26 22:11:59 +0800
+
+- Added versioned persistent CoPicker settings under the user Application Support directory with atomic `0600` writes, normalized model visibility, and optimistic revision checks.
+- Split the app-only settings surface into a read/render tool and an idempotent save tool, returning authoritative snapshots and current state on stale-write conflicts.
+
 ## 2026-08-26 21:56:53 +0800
 
 - Added a private stdio MCP server mode with an app-only `CoPicker` settings entrypoint, versioned MCP App resource, exact empty network allowlists, and themed data-URI server icons.
