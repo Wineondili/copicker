@@ -42,7 +42,7 @@ Important paths:
 - `Sources/CopickerCLI/CopickerMCPServer.swift`: newline-delimited stdio transport for the settings plugin;
 - `Sources/CopickerCLI/AutostartManager.swift`: explicit `launchctl` mutations;
 - `Sources/CopickerCLI/Resources/model-rail.js`: detached Shadow DOM UI and Codex renderer bridge;
-- `Sources/CopickerCLI/Resources/copicker-settings-v1.html`: network-free MCP App settings shell;
+- `Sources/CopickerCLI/Resources/copicker-settings-v2.html`: network-free interactive MCP App settings page;
 - `Plugin/copicker/`: repository-local plugin package, launcher, manifest, and themed icons;
 - `Tests/`: offline tests that must not attach to or signal Codex;
 - `tools/model-rail-tuner.html`: standalone visual tuning page;
@@ -115,7 +115,7 @@ Model IDs and the Fast service-tier ID must continue to come from `model/list`. 
 
 ## Resource packaging
 
-SwiftPM processes `Sources/CopickerCLI/Resources/model-rail.js` and `copicker-settings-v1.html` into `Copicker_CopickerCLI.bundle`. `Bundle.module` resolves that bundle at runtime. Any installation or packaging change must preserve both the executable and this adjacent resource bundle.
+SwiftPM processes `Sources/CopickerCLI/Resources/model-rail.js` and `copicker-settings-v2.html` into `Copicker_CopickerCLI.bundle`. `Bundle.module` resolves that bundle at runtime. Any installation or packaging change must preserve both the executable and this adjacent resource bundle.
 
 For a release build:
 
