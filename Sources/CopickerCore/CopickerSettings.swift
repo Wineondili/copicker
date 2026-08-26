@@ -4,8 +4,8 @@ public enum CopickerModel: String, Codable, CaseIterable, Sendable {
     case sol
     case terra
     case luna
-    case gpt55 = "gpt-5.5"
     case daybreakBlue = "daybreak-blue"
+    case gpt55 = "gpt-5.5"
     case codexSpark = "gpt-5.3-codex-spark"
 
     public var displayName: String {

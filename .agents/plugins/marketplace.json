@@ -1,0 +1,20 @@
+{
+  "name": "copicker-local",
+  "interface": {
+    "displayName": "CoPicker Local"
+  },
+  "plugins": [
+    {
+      "name": "copicker",
+      "source": {
+        "source": "local",
+        "path": "./Plugin/copicker"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Engineering"
+    }
+  ]
+}

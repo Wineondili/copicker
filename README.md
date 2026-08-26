@@ -1,6 +1,6 @@
 # Copicker
 
-Copicker is a local macOS CLI that adds a user-designed model-and-effort control in its own popover above the official Codex first-level model/reasoning popover.
+Copicker is a local macOS CLI that adds a user-designed model-and-effort control in its own popover beside the official Codex first-level model/reasoning popover.
 
 The project is designed around one non-negotiable safety property: it does not modify or re-sign `/Applications/ChatGPT.app`. The injector briefly connects to the Electron main-process Inspector on loopback, injects a self-contained DOM component through `webContents.executeJavaScript`, and closes the Inspector connection immediately afterward.
 
@@ -25,23 +25,25 @@ The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified o
 
 `v0.11.0` is the public pre-release baseline. The earlier `v0.10.1-dev` tag remains available only as an immutable historical development snapshot; it is not the recommended installation version.
 
+The current `main` branch is `0.12.0-dev`. It adds the native CoPicker settings surface, persistent preferences, configurable model rows, placement latching, and light appearance; it has not replaced the verified `v0.11.0` installation baseline yet.
+
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
 - The Inspector is bound to loopback, and shutdown is scheduled immediately after the renderer hook is installed.
 - The only accepted anchor lifecycle is the first-level popover opened from `[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]`.
 - A valid anchor surface must be an open menu containing `[data-reasoning-slider]` and the current model-picker controls.
 - The custom popover scaffold is appended directly to `document.body`; it is never inserted into, or made a child of, the official first-level popover.
-- The scaffold uses the official popover rectangle only for positioning. It prefers a horizontally centered position above that popover with a 12-pixel gap, then tries other above-aligned positions before side or bottom fallbacks.
+- The scaffold uses the official popover rectangle only for positioning. Its persisted preference can be top, left, or right, and every position keeps a 12-pixel separation from official surfaces.
 - Every placement candidate must fit the viewport and must not overlap either the official first-level popover or another visible Radix/`role="menu"` submenu, including nested model and reasoning-effort pickers. Those submenus remain open while the rail moves around their rectangles instead of disappearing.
 - The full-width model list opened directly above the composer input is intentionally not a placement obstacle. It may sit behind the higher-z-index rail and does not move the rail away from its normal above-primary position.
 - Opening and closing use a short opacity, scale, and vertical-motion transition; obstacle-driven position changes animate through the same 180-millisecond motion curve.
-- The custom popover renders at 50% scale for a 289.75-by-134.75-pixel footprint. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
+- The custom popover renders at 50% scale. The original three-row configuration retains its 289.75-by-134.75-pixel footprint, while the card grows to fit additional enabled rows and longer labels. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
 - The top row contains `Faster`, the moving model/effort/Fast labels, and `Smarter`; the old bottom status row is hidden. The shell background is `rgb(44, 44, 44)`.
-- Only Sol and Terra's six effort levels (`low` through `ultra`) and Luna's five levels (`low` through `max`) exist in the selector. No other model is offered as a switch target.
-- When the official trigger reports Sol, Terra, or Luna with a supported effort, the detached selector initializes to that cell. Any other official model produces an empty state with no fill, thumb, or active moving labels, plus a centered gray `Other` label on the top row until the user selects a valid cell.
-- While the rail is visible, the arrow keys move through model and effort cells, Luna is clamped to five effort levels, and Space toggles Fast. Arrow input is briefly coalesced, while pointer release and Space commit immediately.
+- Settings can expose Sol, Terra, Luna, Daybreak, GPT-5.5, and Codex Spark in that fixed order. Sol, Terra, and Daybreak have six efforts; Luna has five; GPT-5.5 and Codex Spark have four. GPT-5.4 and GPT-5.4 Mini remain unsupported.
+- When the official trigger reports any of those six adapted models with a supported effort, the detached selector recognizes it even when that model is hidden from the selectable rows. Unsupported official models produce an empty state with a centered gray `Other` label.
+- While the rail is visible, the arrow keys move through enabled model and effort cells. Space toggles Fast only for models that support it. Daybreak and Codex Spark clear Fast when selected and cannot toggle it.
 - The renderer reuses Codex's existing `electronBridge` and local app-server connection. It calls only `model/list` and `thread/settings/update`; it does not spawn another app-server process or proxy a click through the official model list.
-- Sol, Terra, and Luna model IDs are matched from their official catalog display names. Supported effort levels and the service tier named `Fast` are validated from that catalog before any write, and no model ID or tier ID is persisted.
+- Adapted model IDs are matched from their official catalog display names. Supported effort levels and the service tier named `Fast` are validated from that catalog before any write, and no model ID or tier ID is persisted. Daybreak and Codex Spark always submit the normal service tier.
 - A settings update is scoped to the active task identified by Codex's composer context. The rail waits for `thread/settings/updated` before marking a changed selection as confirmed, serializes rapid changes, and restores the last confirmed selection if the update fails.
 - On a new unsent task with no thread identifier, the rail remains visible but refuses to write until Codex creates the task. Model or effort changes may trigger the same compaction behavior as the official picker because both use the same current-task settings path.
 - Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
@@ -49,17 +51,17 @@ The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified o
 
 ## Quick use
 
-After automatic or manual injection, open an existing Codex task and click the composer control that displays the current model and reasoning effort. Copicker appears above the official first-level picker.
+After automatic or manual injection, open an existing Codex task and click the composer control that displays the current model and reasoning effort. Copicker appears at the configured top, left, or right side of the official first-level picker.
 
 | Input | Action |
 | --- | --- |
 | Click or drag | Select a supported model and effort |
-| Up / Down | Move between Sol, Terra, and Luna |
+| Up / Down | Move between models enabled in settings |
 | Left / Right | Change reasoning effort |
-| Space | Toggle Fast |
+| Space | Toggle Fast when the selected model supports it |
 | Escape or outside click | Close the combined picker |
 
-Sol and Terra expose six supported effort levels; Luna exposes five. An unsupported official model shows `Other` until a valid Copicker cell is selected. `Ctrl+Shift+M` opens a different, full-width composer model list and does not activate Copicker.
+The six adapted models, effort counts, Fast restrictions, and account-access notes are documented in [the usage guide](docs/usage.md#supported-selections). Unsupported models such as GPT-5.4 and GPT-5.4 Mini show `Other`. `Ctrl+Shift+M` opens a different, full-width composer model list and does not activate Copicker.
 
 See [docs/usage.md](docs/usage.md) for task requirements, confirmation behavior, supported selections, closing behavior, and troubleshooting.
 
@@ -125,11 +127,14 @@ The managed files are limited to:
 - `~/Library/Application Support/Copicker/bin/Copicker_CopickerCLI.bundle`
 - `~/Library/Application Support/Copicker/autostart-state.json`
 - `~/Library/Application Support/Copicker/settings.json`
+- `~/Library/Application Support/Copicker/plugin-marketplace`
 - `~/Library/LaunchAgents/io.github.wineondili.copicker.plist`
 - `~/Library/Logs/Copicker/autostart.log`
 - `~/Library/Logs/Copicker/autostart-error.log`
 
 The LaunchAgent starts a long-running `copicker watch` process in the logged-in GUI session. The watcher polls only for the `com.openai.codex` process, injects once per new PID, and waits for the next PID after Codex quits. A restarted watcher may safely call the installer again because the renderer and Electron main-process hooks are versioned and idempotent.
+
+The installer also registers the stable `copicker-local` marketplace and installs `copicker@copicker-local` through the Codex CLI. That plugin provides the CoPicker item in Codex settings; the source checkout is not required after installation.
 
 After first seeing a new Codex PID, the watcher allows a five-second startup grace period, then uses the finite `0`, `1`, `2`, `4`, and `8` second retry schedule. An Inspector timeout is retried because Electron may finish opening the endpoint after the first attempt times out. A later attempt may reuse that endpoint only after `lsof` confirms that its sole listener is the exact Codex PID signaled by the same in-memory attempt; pre-existing or unknown Inspector ownership still fails closed. An incompatible Codex installation or an unconfirmed installer result stops retries for that PID and records a structured result code. The state file contains only Copicker/Codex versions, process identifiers, timestamps, phases, and result codes.
 

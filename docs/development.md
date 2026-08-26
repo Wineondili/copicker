@@ -44,12 +44,13 @@ Important paths:
 - `Sources/CopickerCLI/Resources/model-rail.js`: detached Shadow DOM UI and Codex renderer bridge;
 - `Sources/CopickerCLI/Resources/copicker-settings-v2.html`: network-free interactive MCP App settings page;
 - `Plugin/copicker/`: repository-local plugin package, launcher, manifest, and themed icons;
+- `.agents/plugins/marketplace.json`: local marketplace descriptor for installing the settings plugin;
 - `Tests/`: offline tests that must not attach to or signal Codex;
 - `tools/model-rail-tuner.html`: standalone visual tuning page;
 - `script/build_and_run.sh`: project-local development entrypoint;
 - `script/install.sh`: release build plus explicit installation of the real user LaunchAgent.
 
-The settings plugin is an independent distribution surface documented in [plugin-settings.md](plugin-settings.md). Its preference store is implemented, but the plugin remains deliberately excluded from `script/install.sh` until the interactive controls and injected-renderer integration are complete.
+The settings plugin is an independent distribution surface documented in [plugin-settings.md](plugin-settings.md). `script/install.sh` copies its marketplace and package to the stable Application Support directory, then registers and installs it through `codex plugin`.
 
 ## Offline development commands
 
@@ -101,7 +102,7 @@ The following commands are not offline tests and require deliberate authorizatio
 | `./script/build_and_run.sh --probe-selector` | Writes a supported test selection, confirms it, and restores the original task settings |
 | `./script/build_and_run.sh --autostart-enable` | Replaces Copicker-managed artifacts and loads the real user LaunchAgent |
 | `./script/build_and_run.sh --autostart-disable` | Unloads and disables the real user LaunchAgent |
-| `./script/install.sh` | Builds release artifacts, performs read-only preflight, installs them, and loads the real user LaunchAgent |
+| `./script/install.sh` | Builds release artifacts, performs read-only preflight, installs them, loads the real user LaunchAgent, and registers the local settings plugin |
 
 Never run live commands from offline tests. Never restart or terminate Codex from an active Codex task without explicit approval. A settings probe may produce the same compaction behavior as the official picker because it uses the same task settings path.
 
@@ -115,7 +116,7 @@ Model IDs and the Fast service-tier ID must continue to come from `model/list`. 
 
 ## Resource packaging
 
-SwiftPM processes `Sources/CopickerCLI/Resources/model-rail.js` and `copicker-settings-v2.html` into `Copicker_CopickerCLI.bundle`. `Bundle.module` resolves that bundle at runtime. Any installation or packaging change must preserve both the executable and this adjacent resource bundle.
+SwiftPM processes `Sources/CopickerCLI/Resources/model-rail.js` and `copicker-settings-v2.html` into `Copicker_CopickerCLI.bundle`. `Bundle.module` resolves that bundle at runtime. Any installation or packaging change must preserve both the executable and this adjacent resource bundle. The settings plugin launcher invokes that stable executable, so the plugin package and bundle version must be installed together.
 
 For a release build:
 

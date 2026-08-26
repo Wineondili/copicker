@@ -1,8 +1,20 @@
 import Foundation
 
 public enum InjectionExpressionBuilder {
-    public static func makeInstallerExpression(payload: String) throws -> String {
-        let payloadData = try JSONEncoder().encode(payload)
+    public static func makeInstallerExpression(
+        payload: String,
+        settings: CopickerSettings = .defaults
+    ) throws -> String {
+        let encoder = JSONEncoder()
+        let settingsData = try encoder.encode(settings)
+        guard let settingsLiteral = String(data: settingsData, encoding: .utf8) else {
+            throw InjectionExpressionError.payloadEncodingFailed
+        }
+        let configuredPayload = """
+        globalThis.__COPICKER_CONFIG__ = \(settingsLiteral);
+        \(payload)
+        """
+        let payloadData = try encoder.encode(configuredPayload)
         guard let payloadLiteral = String(data: payloadData, encoding: .utf8) else {
             throw InjectionExpressionError.payloadEncodingFailed
         }
@@ -227,8 +239,8 @@ public enum InjectionExpressionBuilder {
           const officialFastControl = primarySurface?.querySelector(
             '[role="menuitemcheckbox"][data-fast-mode-enabled]'
           ) || null;
-          const previewWidth = 289.75;
-          const previewHeight = 134.75;
+          const previewWidth = popoverRect?.width || 289.75;
+          const previewHeight = popoverRect?.height || 134.75;
           const placementPreview = runtimeState?.previewPlacement?.(previewWidth, previewHeight) || null;
           const previewRect = placementPreview ? {
             left: placementPreview.x,
@@ -259,6 +271,10 @@ public enum InjectionExpressionBuilder {
               insidePrimarySurface: Boolean(primarySurface?.contains(popoverHost)),
               placement: popoverHost.getAttribute("data-placement"),
               placementVariant: popoverHost.getAttribute("data-placement-variant"),
+              preferredPlacement: popoverHost.getAttribute("data-preferred-placement"),
+              placementLatched: popoverHost.getAttribute("data-placement-latched") === "true",
+              appearance: popoverHost.getAttribute("data-appearance"),
+              resolvedAppearance: popoverHost.getAttribute("data-appearance-resolved"),
               positionState: popoverHost.getAttribute("data-position-state"),
               openState: popoverHost.getAttribute("data-open-state"),
               secondaryObstacleCount: Number(

@@ -50,7 +50,11 @@ struct CopickerCLI {
             bundleIdentifier: installation.bundleIdentifier
         )
         let payload = try loadPayload()
-        _ = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+        let settings = try loadSettings()
+        _ = try InjectionExpressionBuilder.makeInstallerExpression(
+            payload: payload,
+            settings: settings
+        )
 
         print("Copicker \(ProjectInfo.version)")
         print("App: \(installation.appURL.path)")
@@ -60,6 +64,10 @@ struct CopickerCLI {
         print("Node CLI Inspector: \(installation.fuseReport.nodeCLIInspectionEnabled ? "enabled" : "disabled")")
         print("ASAR integrity enforcement: \(installation.fuseReport.embeddedASARIntegrityEnabled ? "enabled" : "disabled")")
         print("Copicker payload: \(payload.utf8.count) bytes")
+        print("CoPicker enabled: \(settings.enabled ? "yes" : "no")")
+        print("Visible models: \(settings.visibleModels.map(\.displayName).joined(separator: ", "))")
+        print("Preferred placement: \(settings.preferredPlacement.rawValue)")
+        print("Appearance: \(settings.appearance.rawValue)")
         if let process {
             print("Running process: \(process.processIdentifier)")
             print("Executable: \(process.executableURL?.path ?? "unknown")")
@@ -71,7 +79,8 @@ struct CopickerCLI {
 
     private static func inject() async throws {
         let payload = try loadPayload()
-        let execution = try await performInjection(payload: payload)
+        let settings = try loadSettings()
+        let execution = try await performInjection(payload: payload, settings: settings)
         print("Injection result:")
         print(execution.result?.prettyPrinted() ?? "null")
         print("Inspector shutdown scheduled; the official application bundle was not modified.")
@@ -327,6 +336,37 @@ struct CopickerCLI {
         stateStore: CopickerAutostartStateStore,
         watcherProcessIdentifier: pid_t
     ) async {
+        let settings: CopickerSettings
+        do {
+            settings = try loadSettings()
+        } catch {
+            writeAutostartState(
+                CopickerAutostartState(
+                    phase: .failed,
+                    resultCode: .injectionFailed,
+                    watcherProcessIdentifier: watcherProcessIdentifier,
+                    codexProcessIdentifier: processIdentifier
+                ),
+                to: stateStore
+            )
+            watcherLog("CoPicker settings could not be read; injection was not attempted.", isError: true)
+            return
+        }
+
+        guard settings.enabled else {
+            writeAutostartState(
+                CopickerAutostartState(
+                    phase: .settingsDisabled,
+                    resultCode: .settingsDisabled,
+                    watcherProcessIdentifier: watcherProcessIdentifier,
+                    codexProcessIdentifier: processIdentifier
+                ),
+                to: stateStore
+            )
+            watcherLog("CoPicker is disabled in settings; no Inspector was opened for Codex process \(processIdentifier).")
+            return
+        }
+
         try? await Task.sleep(
             for: .milliseconds(Int64(CopickerAutostart.startupGraceSeconds * 1_000))
         )
@@ -368,6 +408,7 @@ struct CopickerCLI {
             do {
                 let execution = try await performInjection(
                     payload: payload,
+                    settings: settings,
                     expectedProcessIdentifier: processIdentifier,
                     quiet: true,
                     targetTimeout: .seconds(10),
@@ -481,12 +522,16 @@ struct CopickerCLI {
 
     private static func performInjection(
         payload: String,
+        settings: CopickerSettings,
         expectedProcessIdentifier: pid_t? = nil,
         quiet: Bool = false,
         targetTimeout: Duration = .seconds(5),
         allowExpectedProcessInspector: Bool = false
     ) async throws -> InjectionExecution {
-        let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+        let expression = try InjectionExpressionBuilder.makeInstallerExpression(
+            payload: payload,
+            settings: settings
+        )
         let context = try await openInspectorContext(
             expectedProcessIdentifier: expectedProcessIdentifier,
             quiet: quiet,
@@ -612,6 +657,12 @@ struct CopickerCLI {
             throw CLIError.payloadMissing
         }
         return try String(contentsOf: url, encoding: .utf8)
+    }
+
+    private static func loadSettings() throws -> CopickerSettings {
+        try CopickerSettingsStore(
+            fileURL: CopickerAutostartPaths().settingsFileURL
+        ).read()
     }
 
     private static func printUsage() {

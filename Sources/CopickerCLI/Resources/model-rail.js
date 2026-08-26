@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.9.3";
+  const VERSION = "0.10.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
@@ -23,54 +23,161 @@
   const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
   const KEYBOARD_COMMIT_DELAY_MS = 120;
   const POPOVER_ANIMATION_MS = 180;
+  const PLACEMENT_RETURN_DELAY_MS = 420;
   const EFFORTS = ["low", "medium", "high", "xhigh", "max", "ultra"];
-  const ROWS = [
+  const DEFAULT_CONFIG = {
+    enabled: true,
+    visibleModels: ["sol", "terra", "luna"],
+    preferredPlacement: "top",
+    appearance: "dark",
+  };
+  const ALL_ROWS = [
     {
+      id: "sol",
       name: "Sol",
       catalogDisplayName: "GPT-5.6-Sol",
+      catalogDisplayNames: ["GPT-5.6-Sol", "GPT-5.6 Sol"],
       dots: [1, 2, 3, 4, 5, 6],
       colors: ["#FBE1E5", "#F7C6CC"],
+      textColors: ["#f1c0c9", "#edb7c1"],
+      supportsFast: true,
     },
     {
+      id: "terra",
       name: "Terra",
       catalogDisplayName: "GPT-5.6-Terra",
+      catalogDisplayNames: ["GPT-5.6-Terra", "GPT-5.6 Terra"],
       dots: [1, 2, 3, 4, 5, 6],
       colors: ["#FFF1CF", "#FFE6B8"],
+      textColors: ["#f0d69b", "#ebcd90"],
+      supportsFast: true,
     },
     {
+      id: "luna",
       name: "Luna",
       catalogDisplayName: "GPT-5.6-Luna",
+      catalogDisplayNames: ["GPT-5.6-Luna", "GPT-5.6 Luna"],
       dots: [1, 2, 3, 4, 5],
       colors: ["#EEF9F1", "#DDF3E4"],
+      textColors: ["#c1e2cb", "#b7dcc3"],
+      supportsFast: true,
+    },
+    {
+      id: "daybreak-blue",
+      name: "Daybreak",
+      catalogDisplayName: "Daybreak Blue",
+      catalogDisplayNames: ["Daybreak Blue", "GPT Daybreak Blue"],
+      dots: [1, 2, 3, 4, 5, 6],
+      colors: ["#DDEEFF", "#C2E0FF"],
+      textColors: ["#afd2f2", "#9bc5eb"],
+      supportsFast: false,
+    },
+    {
+      id: "gpt-5.5",
+      name: "GPT-5.5",
+      catalogDisplayName: "GPT-5.5",
+      catalogDisplayNames: ["GPT-5.5"],
+      dots: [1, 2, 3, 4],
+      colors: ["#E3EDFF", "#CADCFF"],
+      textColors: ["#bad0f4", "#a9c3ee"],
+      supportsFast: true,
+    },
+    {
+      id: "gpt-5.3-codex-spark",
+      name: "Codex Spark",
+      catalogDisplayName: "GPT-5.3 Codex Spark",
+      catalogDisplayNames: ["GPT-5.3 Codex Spark", "GPT-5.3-Codex-Spark"],
+      dots: [1, 2, 3, 4],
+      colors: ["#F0E7FF", "#E0D1FA"],
+      textColors: ["#d4c0f2", "#c8afea"],
+      supportsFast: false,
     },
   ];
+
+  function normalizeConfig(rawConfig) {
+    const visibleModelIDs = new Set(
+      Array.isArray(rawConfig?.visibleModels)
+        ? rawConfig.visibleModels.filter((value) => typeof value === "string")
+        : DEFAULT_CONFIG.visibleModels,
+    );
+    const normalizedModels = ALL_ROWS
+      .map((row) => row.id)
+      .filter((id) => visibleModelIDs.has(id));
+    return {
+      enabled: typeof rawConfig?.enabled === "boolean"
+        ? rawConfig.enabled
+        : DEFAULT_CONFIG.enabled,
+      visibleModels: normalizedModels.length > 0
+        ? normalizedModels
+        : [...DEFAULT_CONFIG.visibleModels],
+      preferredPlacement: ["top", "left", "right"].includes(
+        rawConfig?.preferredPlacement,
+      )
+        ? rawConfig.preferredPlacement
+        : DEFAULT_CONFIG.preferredPlacement,
+      appearance: ["codex", "system", "light", "dark"].includes(
+        rawConfig?.appearance,
+      )
+        ? rawConfig.appearance
+        : DEFAULT_CONFIG.appearance,
+    };
+  }
+
+  const CONFIG = normalizeConfig(window.__COPICKER_CONFIG__);
+  delete window.__COPICKER_CONFIG__;
+  const CONFIG_SIGNATURE = JSON.stringify(CONFIG);
+  const ROWS = ALL_ROWS.filter((row) => CONFIG.visibleModels.includes(row.id));
 
   const ROW_HEIGHT = 48;
   const ROW_GAP = 16;
   const STAGE_WIDTH = 388;
-  const STAGE_HEIGHT = ROW_HEIGHT * 3 + ROW_GAP * 2;
+  const STAGE_HEIGHT = ROW_HEIGHT * ROWS.length + ROW_GAP * (ROWS.length - 1);
   const LEFT_PADDING = 34;
   const RIGHT_PADDING = 34;
   const USABLE_WIDTH = STAGE_WIDTH - LEFT_PADDING - RIGHT_PADDING;
   const START_INSET = 6;
   const RIGHT_INSET_IN_THUMB = 12;
-  const ROW_CENTERS = [
-    ROW_HEIGHT / 2,
-    ROW_HEIGHT + ROW_GAP + ROW_HEIGHT / 2,
-    ROW_HEIGHT * 2 + ROW_GAP * 2 + ROW_HEIGHT / 2,
-  ];
-  const ROW_BOTTOMS = [
-    STAGE_HEIGHT - ROW_HEIGHT,
-    STAGE_HEIGHT - (ROW_HEIGHT * 2 + ROW_GAP),
-    0,
-  ];
+  const MODEL_COLUMN_WIDTH = ROWS.some((row) => row.name.length > 7) ? 190 : 90;
+  const POPOVER_INNER_WIDTH = 579.5 + (MODEL_COLUMN_WIDTH - 90);
+  const HOST_WIDTH = POPOVER_INNER_WIDTH * 0.5;
+  const HOST_HEIGHT = 134.75 + Math.max(0, ROWS.length - 3) * 32;
+  const ROW_CENTERS = Array.from(
+    { length: ROWS.length },
+    (_, index) => index * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2,
+  );
+  const ROW_BOTTOMS = Array.from(
+    { length: ROWS.length },
+    (_, index) => STAGE_HEIGHT - (index + 1) * ROW_HEIGHT - index * ROW_GAP,
+  );
   const COLUMN_CENTERS = Array.from(
     { length: 6 },
     (_, index) => LEFT_PADDING + (USABLE_WIDTH / 5) * index,
   );
 
   const previous = window[GLOBAL_KEY];
-  if (previous?.version === VERSION) {
+  if (!CONFIG.enabled) {
+    previous?.dispose?.();
+    document.getElementById(LEGACY_HOST_ID)?.remove();
+    document.getElementById(POPOVER_HOST_ID)?.remove();
+    return {
+      installed: true,
+      disabled: true,
+      triggerFound: false,
+      primaryOnly: true,
+      secondaryExcluded: false,
+      secondaryAvoided: true,
+      prototype: false,
+      visualPending: false,
+      localOnly: false,
+      switchMode: "thread-settings-update",
+      design: "preview-2d",
+      version: VERSION,
+    };
+  }
+  if (
+    previous?.version === VERSION &&
+    previous?.configSignature === CONFIG_SIGNATURE
+  ) {
     previous.sync();
     return {
       installed: true,
@@ -91,6 +198,8 @@
 
   const state = {
     version: VERSION,
+    config: CONFIG,
+    configSignature: CONFIG_SIGNATURE,
     observer: null,
     scheduled: false,
     trigger: null,
@@ -100,9 +209,15 @@
     observedSurface: null,
     closeTimer: null,
     revealFrame: null,
+    placementReturnTimer: null,
+    latchedPlacement: null,
+    pointerInsidePopover: false,
+    pointerVisitedPopover: false,
     dismissedForCurrentOpen: false,
     currentRow: null,
     currentIndex: null,
+    recognizedRow: null,
+    recognizedEffort: null,
     fastMode: false,
     selectionRevision: 0,
     confirmedSelection: null,
@@ -117,6 +232,8 @@
     switchState: "idle",
     lastSwitchError: null,
     handleBridgeMessage: null,
+    appearanceObserver: null,
+    appearanceMedia: null,
     disposed: false,
   };
 
@@ -133,6 +250,7 @@
   }
 
   function removeDetachedPopover({ animated = true } = {}) {
+    resetPlacementSession();
     state.resizeObserver?.disconnect();
     state.resizeObserver = null;
     state.observedSurface = null;
@@ -273,11 +391,50 @@
     );
   }
 
+  function placementRect(placement, popoverWidth, popoverHeight) {
+    return {
+      left: placement.x,
+      top: placement.y,
+      right: placement.x + popoverWidth,
+      bottom: placement.y + popoverHeight,
+    };
+  }
+
+  function placementIsValid(
+    placement,
+    anchorRect,
+    popoverWidth,
+    popoverHeight,
+    obstacleRects = [],
+  ) {
+    if (!placement) return false;
+    const rect = placementRect(placement, popoverWidth, popoverHeight);
+    return (
+      rect.left >= VIEWPORT_PADDING &&
+      rect.top >= VIEWPORT_PADDING &&
+      rect.right <= window.innerWidth - VIEWPORT_PADDING &&
+      rect.bottom <= window.innerHeight - VIEWPORT_PADDING &&
+      !overlaps(rect, anchorRect) &&
+      obstacleRects.every((obstacleRect) => !overlaps(rect, obstacleRect))
+    );
+  }
+
+  function uniquePlacementCandidates(candidates) {
+    const seen = new Set();
+    return candidates.filter((candidate) => {
+      const key = `${Math.round(candidate.x * 100) / 100}:${Math.round(candidate.y * 100) / 100}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function computePlacement(
     anchorRect,
     popoverWidth,
     popoverHeight,
     obstacleRects = [],
+    preferredPlacement = CONFIG.preferredPlacement,
   ) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -288,25 +445,27 @@
       return null;
     }
 
+    const maximumX = viewportWidth - VIEWPORT_PADDING - popoverWidth;
+    const maximumY = viewportHeight - VIEWPORT_PADDING - popoverHeight;
     const centeredY = clamp(
       anchorRect.top + (anchorRect.height - popoverHeight) / 2,
       VIEWPORT_PADDING,
-      viewportHeight - VIEWPORT_PADDING - popoverHeight,
+      maximumY,
     );
     const centeredX = clamp(
       anchorRect.left + (anchorRect.width - popoverWidth) / 2,
       VIEWPORT_PADDING,
-      viewportWidth - VIEWPORT_PADDING - popoverWidth,
+      maximumX,
     );
     const topY = anchorRect.top - POPOVER_GAP - popoverHeight;
-    const proposedTopCandidates = [
+    const proposedTopCandidates = uniquePlacementCandidates([
       { placementVariant: "center", x: centeredX },
       {
         placementVariant: "align-right",
         x: clamp(
           anchorRect.right - popoverWidth,
           VIEWPORT_PADDING,
-          viewportWidth - VIEWPORT_PADDING - popoverWidth,
+          maximumX,
         ),
       },
       {
@@ -314,60 +473,98 @@
         x: clamp(
           anchorRect.left,
           VIEWPORT_PADDING,
-          viewportWidth - VIEWPORT_PADDING - popoverWidth,
+          maximumX,
         ),
       },
       { placementVariant: "viewport-left", x: VIEWPORT_PADDING },
       {
         placementVariant: "viewport-right",
-        x: viewportWidth - VIEWPORT_PADDING - popoverWidth,
+        x: maximumX,
       },
-    ];
-    const seenTopX = new Set();
-    const topCandidates = proposedTopCandidates.flatMap((candidate) => {
-      const roundedX = Math.round(candidate.x * 100) / 100;
-      if (seenTopX.has(roundedX)) return [];
-      seenTopX.add(roundedX);
-      return [{ placement: "top", ...candidate, x: roundedX, y: topY }];
-    });
-    const candidates = [
-      ...topCandidates,
+    ]).map((candidate) => ({
+      placement: "top",
+      ...candidate,
+      x: Math.round(candidate.x * 100) / 100,
+      y: topY,
+    }));
+    const directLeftX = anchorRect.left - POPOVER_GAP - popoverWidth;
+    const clampedLeftX = clamp(directLeftX, VIEWPORT_PADDING, maximumX);
+    const directRightX = anchorRect.right + POPOVER_GAP;
+    const clampedRightX = clamp(directRightX, VIEWPORT_PADDING, maximumX);
+    const raisedY = Math.min(
+      anchorRect.top,
+      ...obstacleRects.map((obstacleRect) => obstacleRect.top),
+    ) - POPOVER_GAP - popoverHeight;
+    const leftCandidates = uniquePlacementCandidates([
       {
-        placement: "right",
+        placement: "left",
         placementVariant: "center",
-        x: anchorRect.right + POPOVER_GAP,
+        x: directLeftX,
         y: centeredY,
       },
       {
         placement: "left",
-        placementVariant: "center",
-        x: anchorRect.left - POPOVER_GAP - popoverWidth,
+        placementVariant: "viewport-clamped",
+        x: clampedLeftX,
         y: centeredY,
       },
       {
-        placement: "bottom",
-        placementVariant: "center",
-        x: centeredX,
-        y: anchorRect.bottom + POPOVER_GAP,
+        placement: "left",
+        placementVariant: "raised",
+        x: clampedLeftX,
+        y: raisedY,
       },
-    ];
+    ]);
+    const obstacleShiftCandidates = obstacleRects.map((obstacleRect) => ({
+      placement: "right",
+      placementVariant: "obstacle-left",
+      x: obstacleRect.left - POPOVER_GAP - popoverWidth,
+      y: centeredY,
+    }));
+    const rightCandidates = uniquePlacementCandidates([
+      {
+        placement: "right",
+        placementVariant: "center",
+        x: directRightX,
+        y: centeredY,
+      },
+      {
+        placement: "right",
+        placementVariant: "viewport-clamped",
+        x: clampedRightX,
+        y: centeredY,
+      },
+      ...obstacleShiftCandidates,
+      {
+        placement: "right",
+        placementVariant: "raised",
+        x: clampedRightX,
+        y: raisedY,
+      },
+    ]);
+    const bottomCandidates = [{
+      placement: "bottom",
+      placementVariant: "center",
+      x: centeredX,
+      y: anchorRect.bottom + POPOVER_GAP,
+    }];
+    const orderedCandidates = preferredPlacement === "left"
+      ? [...leftCandidates, ...proposedTopCandidates, ...rightCandidates, ...bottomCandidates]
+      : preferredPlacement === "right"
+        ? [...rightCandidates, ...proposedTopCandidates, ...leftCandidates, ...bottomCandidates]
+        : [...proposedTopCandidates, ...rightCandidates, ...leftCandidates, ...bottomCandidates];
 
+    const candidates = uniquePlacementCandidates(orderedCandidates);
     for (const candidate of candidates) {
-      const rect = {
-        left: candidate.x,
-        top: candidate.y,
-        right: candidate.x + popoverWidth,
-        bottom: candidate.y + popoverHeight,
-      };
-      const withinViewport =
-        rect.left >= VIEWPORT_PADDING &&
-        rect.top >= VIEWPORT_PADDING &&
-        rect.right <= viewportWidth - VIEWPORT_PADDING &&
-        rect.bottom <= viewportHeight - VIEWPORT_PADDING;
-      const clearsObstacles = obstacleRects.every(
-        (obstacleRect) => !overlaps(rect, obstacleRect),
-      );
-      if (withinViewport && !overlaps(rect, anchorRect) && clearsObstacles) {
+      if (
+        placementIsValid(
+          candidate,
+          anchorRect,
+          popoverWidth,
+          popoverHeight,
+          obstacleRects,
+        )
+      ) {
         return { ...candidate, width: popoverWidth, height: popoverHeight };
       }
     }
@@ -375,23 +572,51 @@
     return null;
   }
 
+  function normalizedDisplayName(value) {
+    return String(value || "")
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function rowMatchesDisplayName(row, value) {
+    const normalizedValue = normalizedDisplayName(value);
+    return row.catalogDisplayNames.some(
+      (displayName) => normalizedDisplayName(displayName) === normalizedValue,
+    );
+  }
+
+  function rowMatchesTriggerText(row, text) {
+    const normalizedText = normalizedDisplayName(text);
+    return [row.name, ...row.catalogDisplayNames].some((name) =>
+      normalizedText.includes(normalizedDisplayName(name)),
+    );
+  }
+
   function initializeSelectorFromTrigger(trigger) {
     const triggerText = String(trigger?.textContent || "")
       .replace(/\s+/g, " ")
       .trim();
-    const rowIndex = ROWS.findIndex((row) =>
-      new RegExp(`\\b${row.name}\\b`, "i").test(triggerText),
-    );
+    const recognizedRow = ALL_ROWS.find((row) => rowMatchesTriggerText(row, triggerText)) || null;
+    const rowIndex = recognizedRow
+      ? ROWS.findIndex((row) => row.id === recognizedRow.id)
+      : -1;
     const effort = trigger?.getAttribute("data-selected-reasoning-effort") || "";
     const effortIndex = EFFORTS.indexOf(effort);
-    const isValid =
-      rowIndex >= 0 &&
+    const isRecognized =
+      Boolean(recognizedRow) &&
       effortIndex >= 0 &&
-      ROWS[rowIndex].dots.includes(effortIndex + 1);
+      recognizedRow.dots.includes(effortIndex + 1);
+    const isVisibleSelection = isRecognized && rowIndex >= 0;
 
-    state.currentRow = isValid ? rowIndex : null;
-    state.currentIndex = isValid ? effortIndex : null;
-    state.fastMode = readOfficialFastMode(state.primarySurface);
+    state.currentRow = isVisibleSelection ? rowIndex : null;
+    state.currentIndex = isVisibleSelection ? effortIndex : null;
+    state.recognizedRow = isRecognized ? recognizedRow : null;
+    state.recognizedEffort = isRecognized ? effort : null;
+    state.fastMode = Boolean(
+      isRecognized &&
+      recognizedRow.supportsFast &&
+      readOfficialFastMode(state.primarySurface),
+    );
     state.selectionRevision += 1;
     state.confirmedSelection = snapshotSelection();
     state.currentThreadID = resolveCurrentThreadID(trigger);
@@ -421,6 +646,15 @@
 
   function snapshotSelection() {
     if (!hasSelectorSelection()) {
+      if (state.recognizedRow && state.recognizedEffort) {
+        return {
+          rowIndex: null,
+          indexInRow: null,
+          modelName: state.recognizedRow.name,
+          effort: state.recognizedEffort,
+          fastMode: false,
+        };
+      }
       return {
         rowIndex: null,
         indexInRow: null,
@@ -446,6 +680,7 @@
     return Boolean(left && right) &&
       left.rowIndex === right.rowIndex &&
       left.indexInRow === right.indexInRow &&
+      left.modelName === right.modelName &&
       left.effort === right.effort &&
       Boolean(left.fastMode) === Boolean(right.fastMode);
   }
@@ -454,24 +689,45 @@
     const rowIndex = Number.isInteger(selection?.rowIndex)
       ? selection.rowIndex
       : ROWS.findIndex((row) =>
-          [row.name, row.catalogDisplayName]
-            .map((value) => value.toLocaleLowerCase())
-            .includes(String(selection?.modelName || "").toLocaleLowerCase()),
+          rowMatchesDisplayName(row, selection?.modelName) ||
+          row.name.toLocaleLowerCase() ===
+            String(selection?.modelName || "").toLocaleLowerCase(),
         );
     const effortIndex = EFFORTS.indexOf(String(selection?.effort || ""));
     const valid =
       rowIndex >= 0 &&
       effortIndex >= 0 &&
       ROWS[rowIndex].dots.includes(effortIndex + 1);
+    const recognizedRow = valid
+      ? ROWS[rowIndex]
+      : ALL_ROWS.find((row) =>
+          rowMatchesDisplayName(row, selection?.modelName) ||
+          row.name.toLocaleLowerCase() ===
+            String(selection?.modelName || "").toLocaleLowerCase(),
+        ) || null;
+    const recognized =
+      Boolean(recognizedRow) &&
+      effortIndex >= 0 &&
+      recognizedRow.dots.includes(effortIndex + 1);
 
     state.currentRow = valid ? rowIndex : null;
     state.currentIndex = valid ? effortIndex : null;
-    state.fastMode = valid && Boolean(selection?.fastMode);
+    state.recognizedRow = recognized ? recognizedRow : null;
+    state.recognizedEffort = recognized ? EFFORTS[effortIndex] : null;
+    state.fastMode = Boolean(
+      valid && ROWS[rowIndex].supportsFast && selection?.fastMode,
+    );
     if (render && state.popoverHost) updateSelectorUI(state.popoverHost);
     return valid;
   }
 
   function markSelectionChanged(host) {
+    if (hasSelectorSelection()) {
+      const row = ROWS[state.currentRow];
+      state.recognizedRow = row;
+      state.recognizedEffort = EFFORTS[row.dots[state.currentIndex] - 1];
+      if (!row.supportsFast) state.fastMode = false;
+    }
     state.selectionRevision += 1;
     state.lastSwitchError = null;
     updateSelectorUI(host);
@@ -573,13 +829,11 @@
         ? result.models
         : [];
     return ROWS.map((row, rowIndex) => {
-      const model = models.find(
-        (candidate) =>
-          String(candidate?.displayName || "").toLocaleLowerCase() ===
-          row.catalogDisplayName.toLocaleLowerCase(),
+      const model = models.find((candidate) =>
+        rowMatchesDisplayName(row, candidate?.displayName),
       );
       if (!model || typeof model.model !== "string" || model.model.length === 0) {
-        throw new Error(`Required model ${row.catalogDisplayName} is unavailable.`);
+        return null;
       }
 
       const supportedEfforts = new Set(
@@ -593,7 +847,7 @@
       );
       const requiredEfforts = row.dots.map((dotNumber) => EFFORTS[dotNumber - 1]);
       if (requiredEfforts.some((effort) => !supportedEfforts.has(effort))) {
-        throw new Error(`Required effort levels for ${row.catalogDisplayName} are unavailable.`);
+        return null;
       }
 
       const fastTier = (model.serviceTiers || []).find(
@@ -604,7 +858,9 @@
         model: model.model,
         displayName: model.displayName,
         supportedEfforts,
-        fastTierID: fastTier?.id || fastTier?.serviceTier || null,
+        fastTierID: row.supportsFast
+          ? fastTier?.id || fastTier?.serviceTier || null
+          : null,
       };
     });
   }
@@ -638,7 +894,7 @@
   function selectionFromThreadSettings(settings) {
     if (!settings || !state.modelCatalog) return null;
     const catalogEntry = state.modelCatalog.find(
-      (entry) => entry.model === settings.model,
+      (entry) => entry?.model === settings.model,
     );
     if (!catalogEntry) {
       return {
@@ -660,7 +916,9 @@
       modelName: row.name,
       effort,
       fastMode: Boolean(
-        catalogEntry.fastTierID && settings.serviceTier === catalogEntry.fastTierID,
+        row.supportsFast &&
+        catalogEntry.fastTierID &&
+        settings.serviceTier === catalogEntry.fastTierID,
       ),
     };
   }
@@ -743,9 +1001,7 @@
     const trigger = state.trigger?.isConnected ? state.trigger : findOpenTrigger();
     if (!trigger) return null;
     const text = String(trigger.textContent || "").replace(/\s+/g, " ").trim();
-    const rowIndex = ROWS.findIndex((row) =>
-      new RegExp(`\\b${row.name}\\b`, "i").test(text),
-    );
+    const rowIndex = ROWS.findIndex((row) => rowMatchesTriggerText(row, text));
     const effort = trigger.getAttribute("data-selected-reasoning-effort") || "";
     const effortIndex = EFFORTS.indexOf(effort);
     if (
@@ -760,7 +1016,9 @@
       indexInRow: effortIndex,
       modelName: ROWS[rowIndex].name,
       effort,
-      fastMode: readOfficialFastMode(state.primarySurface),
+      fastMode: Boolean(
+        ROWS[rowIndex].supportsFast && readOfficialFastMode(state.primarySurface),
+      ),
     };
   }
 
@@ -894,6 +1152,37 @@
     }
   }
 
+  function configureModelText(element, row) {
+    if (!element || !row) return;
+    element.textContent = row.name;
+    element.setAttribute("data-model", row.name);
+    element.classList.toggle("daybreak", row.id === "daybreak-blue");
+    if (row.id === "daybreak-blue") {
+      element.style.removeProperty("--model-text-light");
+      element.style.removeProperty("--model-text-dark");
+      return;
+    }
+    element.style.setProperty("--model-text-light", row.textColors[0]);
+    element.style.setProperty("--model-text-dark", row.textColors[1]);
+  }
+
+  function renderInactiveStatus(element, row, effort) {
+    if (!element) return;
+    element.replaceChildren();
+    element.classList.toggle("recognized", Boolean(row && effort));
+    if (!row || !effort) {
+      element.textContent = "Other";
+      return;
+    }
+    const model = document.createElement("span");
+    model.className = `recognized-model${row.id === "daybreak-blue" ? " daybreak" : ""}`;
+    model.textContent = row.name;
+    const effortLabel = document.createElement("span");
+    effortLabel.className = "recognized-effort";
+    effortLabel.textContent = effort;
+    element.append(model, effortLabel);
+  }
+
   function updateSelectorUI(host) {
     const shadow = host.shadowRoot;
     if (!shadow) return;
@@ -905,17 +1194,23 @@
     const effortElement = shadow.querySelector(".current-selection .effort");
     const fastElement = shadow.querySelector(".current-selection .fast-status");
     const selected = hasSelectorSelection();
+    const recognizedRow = state.recognizedRow;
+    const recognizedEffort = state.recognizedEffort;
     otherElement?.classList.toggle("active", !selected);
     otherElement?.setAttribute("aria-hidden", String(selected));
 
     if (!selected) {
-      host.setAttribute("data-selector-model", "Other");
-      host.setAttribute("data-selector-effort", "");
+      const recognized = Boolean(recognizedRow && recognizedEffort);
+      host.setAttribute("data-selector-model", recognized ? recognizedRow.name : "Other");
+      host.setAttribute("data-selector-effort", recognized ? recognizedEffort : "");
       host.setAttribute("data-selector-fast", "false");
+      host.setAttribute("data-selector-fast-available", "false");
       host.setAttribute("data-selector-has-selection", "false");
+      host.setAttribute("data-selector-recognized", String(recognized));
       selection?.classList.add("inactive");
       thumb?.classList.add("inactive");
       thumb?.classList.remove("fast");
+      thumb?.classList.remove("fast-unavailable");
       for (const dot of shadow.querySelectorAll(".dot")) {
         dot.classList.remove("inside");
       }
@@ -924,13 +1219,19 @@
         label.classList.remove("fast");
       }
       updateEndpointVisibility(shadow);
-      if (modelElement) modelElement.textContent = "Other";
+      renderInactiveStatus(otherElement, recognizedRow, recognizedEffort);
+      if (modelElement) modelElement.textContent = recognized ? recognizedRow.name : "Other";
       if (effortElement) {
-        effortElement.textContent = "";
-        effortElement.classList.remove("ultra");
+        effortElement.textContent = recognized ? recognizedEffort : "";
+        effortElement.classList.toggle("ultra", recognizedEffort === "ultra");
       }
       fastElement?.classList.remove("active");
-      shadow.querySelector("#stage")?.setAttribute("aria-label", "2D selector, no selection");
+      shadow.querySelector("#stage")?.setAttribute(
+        "aria-label",
+        recognized
+          ? `${recognizedRow.name}, ${recognizedEffort}, hidden from selector`
+          : "2D selector, no recognized selection",
+      );
       return;
     }
 
@@ -947,11 +1248,14 @@
     host.setAttribute("data-selector-model", row.name);
     host.setAttribute("data-selector-effort", effort);
     host.setAttribute("data-selector-fast", String(state.fastMode));
+    host.setAttribute("data-selector-fast-available", String(row.supportsFast));
     host.setAttribute("data-selector-has-selection", "true");
+    host.setAttribute("data-selector-recognized", "true");
 
     if (thumb) {
       thumb.classList.remove("inactive");
       thumb.classList.toggle("fast", state.fastMode);
+      thumb.classList.toggle("fast-unavailable", !row.supportsFast);
       thumb.style.left = `${x}px`;
       thumb.style.top = `${y}px`;
     }
@@ -974,8 +1278,7 @@
       dot.classList.toggle("inside", inside);
     }
     for (const modelLabel of shadow.querySelectorAll(".effort-model")) {
-      modelLabel.textContent = row.name;
-      modelLabel.setAttribute("data-model", row.name);
+      configureModelText(modelLabel, row);
     }
     for (const [index, label] of [...shadow.querySelectorAll(".effort-label")].entries()) {
       const active = index === dotNumber - 1;
@@ -992,7 +1295,11 @@
     fastElement?.classList.toggle("active", state.fastMode);
     shadow.querySelector("#stage")?.setAttribute(
       "aria-label",
-      `${row.name}, ${effort}${state.fastMode ? ", Fast" : ""}`,
+      `${row.name}, ${effort}${
+        row.supportsFast
+          ? state.fastMode ? ", Fast" : ""
+          : ", Fast unavailable"
+      }`,
     );
   }
 
@@ -1047,7 +1354,13 @@
     event.stopImmediatePropagation();
 
     if (isSpace) {
-      if (!hasSelectorSelection() || event.repeat) return true;
+      if (
+        !hasSelectorSelection() ||
+        !ROWS[state.currentRow].supportsFast ||
+        event.repeat
+      ) {
+        return true;
+      }
       state.fastMode = !state.fastMode;
       markSelectionChanged(host);
       window.clearTimeout(state.commitTimer);
@@ -1115,15 +1428,18 @@
         :host {
           all: initial;
           display: block;
-          width: 289.75px;
-          height: 134.75px;
+          width: ${HOST_WIDTH}px;
+          height: ${HOST_HEIGHT}px;
           color-scheme: dark;
           --popover: rgb(44, 44, 44);
           --border: #444448;
           --text: #f3f3f4;
+          --effort-text: #fff;
+          --secondary-text: #8e8e93;
           --dot: #7e7e83;
           --dot-active: rgba(255, 255, 255, 0.36);
           --thumb: #f5f5f6;
+          --daybreak-label: #70b9ff;
           --sol: #F7C6CC;
           --sol-light: #FBE1E5;
           --terra: #FFE6B8;
@@ -1132,8 +1448,10 @@
           --luna-light: #EEF9F1;
           --row-h: 48px;
           --row-gap: 16px;
+          --row-count: ${ROWS.length};
           --thumb-size: 56px;
           --stage-w: 388px;
+          --model-column-w: ${MODEL_COLUMN_WIDTH}px;
           --start-inset: 6px;
           --text-scale: 1.2;
           color: var(--text);
@@ -1141,12 +1459,25 @@
             "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
         }
 
+        :host([data-appearance-resolved="light"]) {
+          color-scheme: light;
+          --popover: rgb(255, 255, 255);
+          --border: #d8d8dc;
+          --text: #242426;
+          --effort-text: #2f3033;
+          --secondary-text: #77777d;
+          --dot: #a1a1a7;
+          --dot-active: rgba(35, 35, 40, 0.30);
+          --thumb: #f8f8f9;
+          --daybreak-label: #176fbd;
+        }
+
         * { box-sizing: border-box; }
 
         .popover {
           position: relative;
           top: -4px;
-          width: 579.5px;
+          width: ${POPOVER_INNER_WIDTH}px;
           padding: 40px 26px 17.5px;
           background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
@@ -1161,28 +1492,39 @@
           user-select: none;
         }
 
+        :host([data-appearance-resolved="light"]) .popover {
+          background: rgb(255, 255, 255);
+          box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.80);
+        }
+
         .main {
           display: grid;
-          grid-template-columns: 90px var(--stage-w);
+          grid-template-columns: var(--model-column-w) var(--stage-w);
           column-gap: 0;
           align-items: start;
         }
 
         .labels {
-          height: calc(var(--row-h) * 3 + var(--row-gap) * 2);
+          height: ${STAGE_HEIGHT}px;
           margin-top: 34px;
           display: grid;
-          grid-template-rows: repeat(3, var(--row-h));
+          grid-template-rows: repeat(var(--row-count), var(--row-h));
           row-gap: var(--row-gap);
         }
 
         .label {
           display: flex;
           align-items: center;
+          justify-content: flex-end;
+          padding-right: 28px;
           font-size: calc(22px * var(--text-scale));
           font-weight: 650;
           letter-spacing: -0.03em;
         }
+
+        .label.daybreak { color: var(--daybreak-label); }
 
         .stage-shell {
           position: relative;
@@ -1202,7 +1544,7 @@
         .effort-label {
           position: absolute;
           top: 0;
-          color: #fff;
+          color: var(--effort-text);
           font-size: calc(22px * var(--text-scale));
           font-weight: 650;
           letter-spacing: -0.03em;
@@ -1221,7 +1563,7 @@
           left: 50%;
           top: 18px;
           z-index: 1;
-          color: #8e8e93;
+          color: var(--secondary-text);
           font-size: calc(22px * var(--text-scale));
           font-weight: 650;
           letter-spacing: -0.03em;
@@ -1234,6 +1576,15 @@
         }
 
         .other-label.active { opacity: 1; }
+
+        .other-label.recognized {
+          display: flex;
+          align-items: baseline;
+          gap: 7px;
+        }
+
+        .recognized-model.daybreak { color: var(--daybreak-label); }
+        .recognized-effort { color: var(--secondary-text); }
 
         .effort-model {
           position: absolute;
@@ -1269,6 +1620,12 @@
           --model-text-dark: #b7dcc3;
         }
 
+        .effort-model.daybreak {
+          color: var(--daybreak-label);
+          background: none;
+          -webkit-text-fill-color: currentColor;
+        }
+
         .effort-fast {
           position: absolute;
           left: calc(100% + 7px);
@@ -1287,7 +1644,7 @@
         .effort-endpoint {
           position: absolute;
           top: calc(3.6px * var(--text-scale));
-          color: #8e8e93;
+          color: var(--secondary-text);
           font-size: calc(19px * var(--text-scale));
           font-weight: 600;
           letter-spacing: -0.02em;
@@ -1304,7 +1661,7 @@
         .stage {
           position: relative;
           width: var(--stage-w);
-          height: calc(var(--row-h) * 3 + var(--row-gap) * 2);
+          height: ${STAGE_HEIGHT}px;
           cursor: pointer;
           touch-action: none;
           outline: none;
@@ -1333,6 +1690,12 @@
         }
 
         .selection.inactive { opacity: 0; }
+
+        :host([data-appearance-resolved="light"]) .selection {
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.40),
+            0 10px 24px rgba(0, 0, 0, 0.08);
+        }
 
         .dot {
           position: absolute;
@@ -1374,6 +1737,13 @@
           pointer-events: none;
         }
 
+        :host([data-appearance-resolved="light"]) .thumb {
+          box-shadow:
+            0 10px 22px rgba(0, 0, 0, 0.18),
+            0 2px 6px rgba(0, 0, 0, 0.10),
+            inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+        }
+
         .thumb::after {
           content: "";
           position: absolute;
@@ -1386,6 +1756,7 @@
         }
 
         .thumb.fast::after { opacity: 1; }
+        .thumb.fast-unavailable::after { opacity: 0; }
 
         .stage.dragging .thumb {
           transform: translate(-50%, -50%) scale(1.02);
@@ -1406,7 +1777,7 @@
 
         .current-selection .effort {
           margin-left: 7px;
-          color: #8e8e93;
+          color: var(--secondary-text);
           transition: color 180ms ease;
         }
 
@@ -1440,11 +1811,7 @@
       <section class="popover" data-design="preview-2d" aria-label="Copicker">
         <div class="other-label" aria-hidden="true">Other</div>
         <div class="main">
-          <div class="labels">
-            <div class="label">Sol</div>
-            <div class="label">Terra</div>
-            <div class="label">Luna</div>
-          </div>
+          <div class="labels" id="modelLabels"></div>
           <div class="stage-shell">
             <div class="effort-labels" id="effortLabels">
               <div class="effort-endpoint faster">Faster</div>
@@ -1466,15 +1833,22 @@
     const stage = shadow.querySelector("#stage");
     const dots = shadow.querySelector("#dots");
     const effortLabels = shadow.querySelector("#effortLabels");
+    const modelLabels = shadow.querySelector("#modelLabels");
     const thumb = shadow.querySelector("#thumb");
+
+    for (const row of ROWS) {
+      const label = document.createElement("div");
+      label.className = `label${row.id === "daybreak-blue" ? " daybreak" : ""}`;
+      label.textContent = row.name;
+      modelLabels?.append(label);
+    }
 
     for (const [index, effort] of EFFORTS.entries()) {
       const label = document.createElement("div");
       label.className = `effort-label${effort === "ultra" ? " ultra" : ""}`;
       const modelLabel = document.createElement("span");
       modelLabel.className = "effort-model";
-      modelLabel.textContent = ROWS[state.currentRow ?? 0].name;
-      modelLabel.setAttribute("data-model", ROWS[state.currentRow ?? 0].name);
+      configureModelText(modelLabel, ROWS[state.currentRow ?? 0]);
       label.append(modelLabel);
       label.append(document.createTextNode(effort));
       const fastLabel = document.createElement("span");
@@ -1525,16 +1899,21 @@
 
     stage?.addEventListener("pointerup", (event) => {
       if (stage.hasPointerCapture(event.pointerId)) {
+        let shouldCommit = true;
         if (pointerDownOnThumb && !pointerMoved) {
-          state.fastMode = !state.fastMode;
-          markSelectionChanged(host);
+          if (ROWS[state.currentRow]?.supportsFast) {
+            state.fastMode = !state.fastMode;
+            markSelectionChanged(host);
+          } else {
+            shouldCommit = false;
+          }
         } else {
           updateFromPointer(host, event.clientX, event.clientY);
         }
         stage.releasePointerCapture(event.pointerId);
         window.clearTimeout(state.commitTimer);
         state.commitTimer = null;
-        void enqueueSelectionCommit().catch(() => {});
+        if (shouldCommit) void enqueueSelectionCommit().catch(() => {});
       }
       stage.classList.remove("dragging");
       pointerDownOnThumb = false;
@@ -1553,6 +1932,89 @@
     });
     shadow.addEventListener("click", (event) => event.stopPropagation());
     updateSelectorUI(host);
+  }
+
+  function systemAppearance() {
+    return window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark";
+  }
+
+  function codexAppearance() {
+    const root = document.documentElement;
+    const explicitTheme = [
+      root.getAttribute("data-theme"),
+      root.getAttribute("data-color-scheme"),
+      root.className,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase();
+    if (/(^|\s)light($|\s)/.test(explicitTheme)) return "light";
+    if (/(^|\s)dark($|\s)/.test(explicitTheme)) return "dark";
+
+    const colorScheme = getComputedStyle(root).colorScheme.toLocaleLowerCase();
+    if (colorScheme === "light") return "light";
+    if (colorScheme === "dark") return "dark";
+
+    const background = getComputedStyle(document.body).backgroundColor;
+    const channels = background.match(/[\d.]+/g)?.slice(0, 3).map(Number) || [];
+    if (channels.length === 3) {
+      const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+      return luminance >= 170 ? "light" : "dark";
+    }
+    return systemAppearance();
+  }
+
+  function resolvedAppearance() {
+    if (CONFIG.appearance === "light" || CONFIG.appearance === "dark") {
+      return CONFIG.appearance;
+    }
+    return CONFIG.appearance === "system" ? systemAppearance() : codexAppearance();
+  }
+
+  function updatePopoverAppearance() {
+    const host = state.popoverHost;
+    if (!host) return;
+    host.setAttribute("data-appearance", CONFIG.appearance);
+    host.setAttribute("data-appearance-resolved", resolvedAppearance());
+  }
+
+  function placementsEqual(left, right) {
+    return Boolean(left && right) &&
+      left.placement === right.placement &&
+      left.placementVariant === right.placementVariant &&
+      Math.abs(left.x - right.x) < 1 &&
+      Math.abs(left.y - right.y) < 1;
+  }
+
+  function cancelPlacementReturn() {
+    window.clearTimeout(state.placementReturnTimer);
+    state.placementReturnTimer = null;
+  }
+
+  function resetPlacementSession() {
+    cancelPlacementReturn();
+    state.latchedPlacement = null;
+    state.pointerInsidePopover = false;
+    state.pointerVisitedPopover = false;
+  }
+
+  function schedulePlacementReturn() {
+    if (
+      CONFIG.preferredPlacement === "top" ||
+      state.pointerInsidePopover ||
+      !state.pointerVisitedPopover ||
+      state.placementReturnTimer
+    ) {
+      return;
+    }
+    state.placementReturnTimer = window.setTimeout(() => {
+      state.placementReturnTimer = null;
+      if (state.pointerInsidePopover) return;
+      state.latchedPlacement = null;
+      scheduleSync();
+    }, PLACEMENT_RETURN_DELAY_MS);
   }
 
   function ensureDetachedPopover() {
@@ -1574,6 +2036,8 @@
     host.setAttribute("data-switch-state", state.switchState);
     host.setAttribute("data-keyboard-navigation", "arrows-space");
     host.setAttribute("data-design-source", "preview.html");
+    host.setAttribute("data-preferred-placement", CONFIG.preferredPlacement);
+    host.setAttribute("data-config-signature", CONFIG_SIGNATURE);
     host.style.position = "fixed";
     host.style.margin = "0";
     host.style.zIndex = "2147483000";
@@ -1594,11 +2058,21 @@
       host.style.pointerEvents = "none";
       host.style.transform = "translateY(6px) scale(0.98)";
       host.style.visibility = "hidden";
+      host.addEventListener("pointerenter", () => {
+        state.pointerInsidePopover = true;
+        cancelPlacementReturn();
+      });
+      host.addEventListener("pointerleave", () => {
+        state.pointerInsidePopover = false;
+        state.pointerVisitedPopover = true;
+        scheduleSync();
+      });
     }
 
     if (host.parentElement !== document.body) document.body.append(host);
     render2DSelector(host);
     state.popoverHost = host;
+    updatePopoverAppearance();
     return host;
   }
 
@@ -1646,11 +2120,49 @@
     const obstacleRects = obstacleSurfaces.map((obstacleSurface) =>
       obstacleSurface.getBoundingClientRect(),
     );
-    const placement = computePlacement(
+    const basePlacement = computePlacement(
       anchorRect,
       popoverWidth,
       popoverHeight,
-      obstacleRects,
+      [],
+      CONFIG.preferredPlacement,
+    );
+    let placement = state.latchedPlacement;
+    if (
+      !placementIsValid(
+        placement,
+        anchorRect,
+        popoverWidth,
+        popoverHeight,
+        obstacleRects,
+      )
+    ) {
+      cancelPlacementReturn();
+      placement = computePlacement(
+        anchorRect,
+        popoverWidth,
+        popoverHeight,
+        obstacleRects,
+        CONFIG.preferredPlacement,
+      );
+      state.latchedPlacement = placement;
+    } else if (
+      CONFIG.preferredPlacement !== "top" &&
+      basePlacement &&
+      !placementsEqual(placement, basePlacement) &&
+      placementIsValid(
+        basePlacement,
+        anchorRect,
+        popoverWidth,
+        popoverHeight,
+        obstacleRects,
+      )
+    ) {
+      schedulePlacementReturn();
+    }
+    host.setAttribute(
+      "data-placement-latched",
+      String(Boolean(placement && !placementsEqual(placement, basePlacement))),
     );
     host.setAttribute("data-secondary-obstacle-count", String(obstacleRects.length));
     if (!placement) {
@@ -1665,6 +2177,7 @@
       host.style.transform = "translateY(6px) scale(0.98)";
       host.style.pointerEvents = "none";
       host.style.visibility = "hidden";
+      state.latchedPlacement = null;
       return;
     }
 
@@ -1697,7 +2210,10 @@
     }
 
     const shouldInitialize = state.observedSurface !== target.surface;
-    if (shouldInitialize) initializeSelectorFromTrigger(target.trigger);
+    if (shouldInitialize) {
+      resetPlacementSession();
+      initializeSelectorFromTrigger(target.trigger);
+    }
     const host = ensureDetachedPopover();
     if (shouldInitialize) updateSelectorUI(host);
 
@@ -1717,6 +2233,12 @@
     requestAnimationFrame(syncNow);
   }
 
+  function handleWindowResize() {
+    cancelPlacementReturn();
+    state.latchedPlacement = null;
+    scheduleSync();
+  }
+
   state.observer = new MutationObserver(scheduleSync);
   state.observer.observe(document.documentElement, {
     subtree: true,
@@ -1726,6 +2248,10 @@
   });
 
   state.sync = scheduleSync;
+  state.getConfig = () => ({
+    ...CONFIG,
+    visibleModels: [...CONFIG.visibleModels],
+  });
   state.hasPrimaryTarget = () => Boolean(currentPrimaryTarget());
   state.getAnchorSurface = () => state.primarySurface;
   state.getPopoverHost = () => state.popoverHost;
@@ -1747,7 +2273,11 @@
     return enqueueSelectionCommit();
   };
   state.commitCurrentSelection = (options = {}) => enqueueSelectionCommit(options);
-  state.previewPlacement = (width, height) => {
+  state.previewPlacement = (
+    width,
+    height,
+    preferredPlacement = CONFIG.preferredPlacement,
+  ) => {
     if (!state.primarySurface) return null;
     return computePlacement(
       state.primarySurface.getBoundingClientRect(),
@@ -1756,6 +2286,7 @@
       findSecondaryMenuObstacleSurfaces(state.primarySurface).map((surface) =>
         surface.getBoundingClientRect(),
       ),
+      preferredPlacement,
     );
   };
   state.dismissForCurrentOpen = () => {
@@ -1786,10 +2317,13 @@
   state.dispose = () => {
     state.disposed = true;
     state.observer?.disconnect();
+    state.appearanceObserver?.disconnect();
+    state.appearanceMedia?.removeEventListener?.("change", updatePopoverAppearance);
     window.clearTimeout(state.commitTimer);
     state.commitTimer = null;
+    cancelPlacementReturn();
     window.removeEventListener("message", state.handleBridgeMessage, true);
-    window.removeEventListener("resize", scheduleSync);
+    window.removeEventListener("resize", handleWindowResize);
     window.removeEventListener("scroll", scheduleSync, true);
     window.removeEventListener("blur", state.handleWindowBlur);
     document.removeEventListener("visibilitychange", state.handleVisibilityChange);
@@ -1811,7 +2345,14 @@
     if (window[GLOBAL_KEY] === state) delete window[GLOBAL_KEY];
   };
 
-  window.addEventListener("resize", scheduleSync);
+  state.appearanceMedia = window.matchMedia("(prefers-color-scheme: light)");
+  state.appearanceMedia.addEventListener?.("change", updatePopoverAppearance);
+  state.appearanceObserver = new MutationObserver(updatePopoverAppearance);
+  state.appearanceObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "style", "data-theme", "data-color-scheme"],
+  });
+  window.addEventListener("resize", handleWindowResize);
   window.addEventListener("scroll", scheduleSync, true);
   window.addEventListener("blur", state.handleWindowBlur);
   document.addEventListener("visibilitychange", state.handleVisibilityChange);
