@@ -41,7 +41,7 @@ struct CopickerMCPProtocolTests {
         let response = try send(method: "tools/list")
         let result = try dictionary(response["result"])
         let tools = try array(result["tools"]).map { try dictionary($0) }
-        #expect(tools.count == 2)
+        #expect(tools.count == 3)
         let tool = try #require(
             tools.first(where: { $0["name"] as? String == CopickerMCPProtocol.settingsToolName })
         )
@@ -67,6 +67,16 @@ struct CopickerMCPProtocolTests {
         let saveAnnotations = try dictionary(saveTool["annotations"])
         #expect(saveAnnotations["readOnlyHint"] as? Bool == false)
         #expect(saveAnnotations["idempotentHint"] as? Bool == true)
+
+        let applyTool = try #require(
+            tools.first(where: { $0["name"] as? String == CopickerMCPProtocol.settingsApplyToolName })
+        )
+        let applyAnnotations = try dictionary(applyTool["annotations"])
+        #expect(applyAnnotations["readOnlyHint"] as? Bool == false)
+        #expect(applyAnnotations["openWorldHint"] as? Bool == false)
+        let applyMetadata = try dictionary(applyTool["_meta"])
+        let applyUI = try dictionary(applyMetadata["ui"])
+        #expect(applyUI["visibility"] as? [String] == ["app"])
     }
 
     @Test
@@ -158,6 +168,43 @@ struct CopickerMCPProtocolTests {
     }
 
     @Test
+    func applyToolRunsOnlyItsExplicitHandlerAndReportsCurrentProcessMode() throws {
+        var invocationCount = 0
+        let handler = CopickerMCPProtocol(
+            settingsHTML: "<html><body>CoPicker test settings</body></html>",
+            settingsStore: settingsStore,
+            applySettings: {
+                invocationCount += 1
+            }
+        )
+
+        let response = try send(
+            method: "tools/call",
+            params: [
+                "name": CopickerMCPProtocol.settingsApplyToolName,
+                "arguments": [String: Any](),
+            ],
+            using: handler
+        )
+        let result = try dictionary(response["result"])
+        let applied = try dictionary(result["structuredContent"])
+        #expect(invocationCount == 1)
+        #expect(result["isError"] as? Bool == false)
+        #expect(applied["applied"] as? Bool == true)
+        #expect(applied["applyMode"] as? String == "current-process")
+    }
+
+    @Test
+    func applyToolFailsClosedWhenNoLiveHandlerIsInstalled() throws {
+        let result = try callTool(CopickerMCPProtocol.settingsApplyToolName)
+        #expect(result["isError"] as? Bool == true)
+        let metadata = try dictionary(result["_meta"])
+        #expect(metadata["copicker/errorCode"] as? Int == -32010)
+        let applied = try dictionary(result["structuredContent"])
+        #expect(applied["applied"] as? Bool == false)
+    }
+
+    @Test
     func notificationsDoNotProduceResponses() throws {
         let data = try JSONSerialization.data(withJSONObject: [
             "jsonrpc": "2.0",
@@ -175,7 +222,8 @@ struct CopickerMCPProtocolTests {
 
     private func send(
         method: String,
-        params: [String: Any] = [:]
+        params: [String: Any] = [:],
+        using handler: CopickerMCPProtocol? = nil
     ) throws -> [String: Any] {
         let data = try JSONSerialization.data(withJSONObject: [
             "jsonrpc": "2.0",
@@ -183,7 +231,9 @@ struct CopickerMCPProtocolTests {
             "method": method,
             "params": params,
         ])
-        let responseData = try #require(protocolHandler.response(to: data))
+        let responseData = try #require(
+            (handler ?? protocolHandler).response(to: data)
+        )
         return try #require(
             JSONSerialization.jsonObject(with: responseData) as? [String: Any]
         )

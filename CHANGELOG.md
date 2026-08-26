@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-27 01:19:20 +0800
+
+- Added an app-only `copicker_settings_apply` MCP tool that runs only through an explicit settings action and reuses the existing guarded `copicker inject` command for the current Codex process.
+- Kept the live path fail-closed when no apply handler is installed, returned structured current-process success and error results, and covered tool visibility, explicit invocation, and unavailable-host behavior without signaling or attaching to Codex in tests.
+
 ## 2026-08-27 01:07:06 +0800
 
 - Fixed the injected settings fallback remaining permanently at `正在读取设置…` because Codex's top-level CSP blocks inline scripts inherited by `about:srcdoc` frames.

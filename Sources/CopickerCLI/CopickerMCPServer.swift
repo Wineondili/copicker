@@ -11,11 +11,20 @@ enum CopickerMCPServer {
         }
 
         let settingsHTML = try String(contentsOf: settingsURL, encoding: .utf8)
+        guard let executableURL = Bundle.main.executableURL else {
+            throw CopickerMCPServerError.executableURLUnavailable
+        }
+
         let protocolHandler = CopickerMCPProtocol(
             settingsHTML: settingsHTML,
             settingsStore: CopickerSettingsStore(
                 fileURL: CopickerAutostartPaths().settingsFileURL
-            )
+            ),
+            applySettings: {
+                try CopickerSettingsApplier.apply(
+                    executableURL: executableURL.standardizedFileURL.resolvingSymlinksInPath()
+                )
+            }
         )
         let newline = Data([0x0A])
 
@@ -34,11 +43,14 @@ enum CopickerMCPServer {
 
 private enum CopickerMCPServerError: LocalizedError {
     case settingsResourceMissing
+    case executableURLUnavailable
 
     var errorDescription: String? {
         switch self {
         case .settingsResourceMissing:
             "Bundled copicker-settings-v2.html resource is missing."
+        case .executableURLUnavailable:
+            "The current Copicker executable could not be resolved."
         }
     }
 }
