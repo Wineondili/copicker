@@ -24,19 +24,19 @@ The page exposes native, keyboard-accessible controls for:
 - selecting a top, left, or right preferred placement;
 - following Codex, following macOS, or forcing a light or dark rail.
 
-Autosaves are serialized and always use the last authoritative revision. A stale window displays the newer stored values instead of overwriting them. The UI never uses browser storage, and settings take effect on the next injection rather than opening Inspector from the settings page.
+Autosaves are serialized and always use the last authoritative revision. A stale window displays the newer stored values instead of overwriting them. The UI never uses browser storage. By default, saved settings take effect when Codex is next started and the next process injection runs. The explicit **Apply now** button is enabled only after saving finishes and applies the persisted snapshot to the current Codex process without restarting it.
 
 The settings copy records the non-Fast contracts for Daybreak and Codex Spark, the possible Codex Trusted Access for Cyber requirement for Daybreak, and the possible ChatGPT Pro 5x / 20x requirement for Codex Spark. These notices do not grant model access; availability still comes from the signed-in account's official `model/list` catalog.
 
 ## Runtime contract
 
-Both settings tools are host-only. Their `_meta.ui.visibility` contains only `app`, so they are not offered as normal model-callable tools. `copicker_settings` is the read-only render entrypoint and declares the standard MCP App resource through `_meta.ui.resourceUri`; `copicker_settings_save` accepts a complete preference snapshot plus the caller's expected revision. Repeating an already-applied save is idempotent, while a stale save returns the current authoritative snapshot.
+All three settings tools are host-only. Their `_meta.ui.visibility` contains only `app`, so they are not offered as normal model-callable tools. `copicker_settings` is the read-only render entrypoint and declares the standard MCP App resource through `_meta.ui.resourceUri`; `copicker_settings_save` accepts a complete preference snapshot plus the caller's expected revision. Repeating an already-applied save is idempotent, while a stale save returns the current authoritative snapshot. `copicker_settings_apply` is called only by the explicit UI action and launches the installed executable's existing guarded `inject` command.
 
 The current Codex settings sidebar additionally discovers `_meta["openai/ui"].entrypoints` entries whose type is `settings`. That metadata and server-icon handling are private Codex compatibility points and must be rechecked after desktop updates.
 
 Codex `26.820.60940` parses that metadata but filters local plugin settings views behind a remote rollout gate and plugin allowlist. CoPicker therefore also installs a renderer-side compatibility entry when the native item is absent. The fallback clones the built-in Browser navigation control, replaces only its icon and label, and opens the same bundled settings document over the right settings pane. If a later Codex build admits the native CoPicker entry, the fallback removes itself instead of creating a duplicate.
 
-The fallback does not add a port or a second settings store. Codex's top-level CSP blocks inline scripts inherited by `about:srcdoc`, so the fallback removes scripts from its frame copy, keeps the frame in a script-disabled same-origin sandbox, and attaches the form controller from the already injected parent world. The parent controller permits only the two CoPicker tool names, resolves an already loaded task, and uses the documented `mcpServer/tool/call` app-server method to reach the same native stdio server and atomic preference store. The original MCP App resource keeps its inline controller for a future native settings entry, along with networking and nested frames disabled by CSP.
+The fallback does not add a port or a second settings store. Codex's top-level CSP blocks inline scripts inherited by `about:srcdoc`, so the fallback removes scripts from its frame copy, keeps the frame in a script-disabled same-origin sandbox, and attaches the form controller from the already injected parent world. The parent controller permits only the three CoPicker tool names, resolves an already loaded task, and uses the documented `mcpServer/tool/call` app-server method to reach the same native stdio server and atomic preference store. The original MCP App resource keeps its inline controller for a future native settings entry, along with networking and nested frames disabled by CSP.
 
 The server advertises the supplied icon as `data:` SVGs with separate `light` and `dark` themes. It serves the settings page with `text/html;profile=mcp-app`, an empty network CSP allowlist, and no iframe or external-resource domains.
 
@@ -55,13 +55,13 @@ printf '%s\n' \
   | .build/debug/copicker mcp-server
 ```
 
-Expected output is three newline-delimited JSON-RPC responses. They should report the `CoPicker` server, app-only `copicker_settings` and `copicker_settings_save` tools, and the versioned HTML resource with the MCP App MIME type.
+Expected output is three newline-delimited JSON-RPC responses. They should report the `CoPicker` server, app-only `copicker_settings`, `copicker_settings_save`, and `copicker_settings_apply` tools, and the versioned HTML resource with the MCP App MIME type. This listing does not call the apply tool and therefore does not open Inspector.
 
 ## Installation
 
 `script/install.sh` copies the marketplace descriptor and plugin package to `~/Library/Application Support/Copicker/plugin-marketplace`, registers the `copicker-local` marketplace, and installs `copicker@copicker-local` through the Codex CLI. This stable copy keeps the settings entry working after the source checkout is removed. Reinstallation refreshes the same plugin ID.
 
-The settings page does not open Inspector or mutate a live task. Saved changes are consumed by the watcher on the next Codex process injection. Disabling CoPicker prevents the watcher from opening Inspector for that Codex process.
+Reading and autosaving settings do not open Inspector or mutate a live task. Saved changes are consumed by the watcher on the next Codex process injection. Clicking **Apply now** is the sole settings-page action that deliberately opens the temporary loopback Inspector through the existing guarded injection path; it does not restart Codex, and Inspector shutdown is scheduled immediately afterward. Disabling CoPicker prevents the watcher from opening Inspector for a later Codex process, while applying that disabled snapshot removes the active rail behavior from the current renderer.
 
 ## Remaining host-loop validation
 

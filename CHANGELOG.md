@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 01:27:58 +0800
+
+- Added a clearly labeled **立即应用** action to both the injected settings fallback and native MCP App controller while retaining automatic persistence and explicit next-start/next-injection default behavior.
+- Disabled immediate application during loading, autosave, conflicts, and active application; added bounded current-process wait time, one-click retry, and separate success and fallback messaging without restarting Codex.
+- Advanced the renderer compatibility identifier to `0.12.2`, expanded settings and payload contracts, documented the only Inspector-opening settings action, and browser-verified CSP loading, save gating, one apply call, success feedback, layout, and a clean console with a local mock rather than a live injection.
+
 ## 2026-08-27 01:19:20 +0800
 
 - Added an app-only `copicker_settings_apply` MCP tool that runs only through an explicit settings action and reuses the existing guarded `copicker inject` command for the current Codex process.

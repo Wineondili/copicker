@@ -86,7 +86,7 @@ Placement avoidance is latched. Repeated submenu mutations do not move CoPicker 
 
 ## Settings
 
-After the `0.12.0-dev` settings plugin is installed, open **Settings → Integrations → CoPicker**. Changes save automatically and apply on the next injection, usually the next time Codex is opened.
+After the `0.12.0-dev` settings plugin is installed, open **Settings → Integrations → CoPicker**. Changes save automatically. By default they apply on the next injection, usually the next time Codex is opened. After saving completes, **立即应用** applies the saved snapshot to the currently running Codex without restarting it; if that action fails, the saved settings still apply on the next normal injection.
 
 Available settings are:
 

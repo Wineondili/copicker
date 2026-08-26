@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.1";
+  const VERSION = "0.12.2";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -11,6 +11,7 @@
   const SETTINGS_SERVER_NAME = "copicker";
   const SETTINGS_READ_TOOL = "copicker_settings";
   const SETTINGS_SAVE_TOOL = "copicker_settings_save";
+  const SETTINGS_APPLY_TOOL = "copicker_settings_apply";
   const POPOVER_GAP = 12;
   const VIEWPORT_PADDING = 12;
   const TRIGGER_SELECTOR =
@@ -26,6 +27,7 @@
   const FAST_MODE_SELECTOR = '[role="menuitemcheckbox"][data-fast-mode-enabled]';
   const APP_SERVER_HOST_ID = "local";
   const APP_SERVER_REQUEST_TIMEOUT_MS = 5000;
+  const SETTINGS_APPLY_REQUEST_TIMEOUT_MS = 12000;
   const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
   const KEYBOARD_COMMIT_DELAY_MS = 120;
   const POPOVER_ANIMATION_MS = 180;
@@ -194,7 +196,11 @@
       return `copicker-settings-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
-    function sendSettingsAppServerRequest(method, params) {
+    function sendSettingsAppServerRequest(
+      method,
+      params,
+      timeoutMs = APP_SERVER_REQUEST_TIMEOUT_MS,
+    ) {
       const allowedMethods = new Set(["thread/loaded/list", "mcpServer/tool/call"]);
       if (!allowedMethods.has(method)) {
         return Promise.reject(new Error("CoPicker rejected an unsupported settings method."));
@@ -210,7 +216,7 @@
         const timeoutID = window.setTimeout(() => {
           integration.pendingRequests.delete(id);
           reject(new Error(`${method} timed out.`));
-        }, APP_SERVER_REQUEST_TIMEOUT_MS);
+        }, timeoutMs);
         integration.pendingRequests.set(id, { method, resolve, reject, timeoutID });
 
         try {
@@ -220,8 +226,8 @@
             request: { id, method, params },
             priority: "background",
             source: "mcp",
-            timeoutMs: APP_SERVER_REQUEST_TIMEOUT_MS,
-            expiresAtMs: Date.now() + APP_SERVER_REQUEST_TIMEOUT_MS,
+            timeoutMs,
+            expiresAtMs: Date.now() + timeoutMs,
           });
         } catch (error) {
           window.clearTimeout(timeoutID);
@@ -250,16 +256,25 @@
     }
 
     async function callSettingsTool(name, args) {
-      if (name !== SETTINGS_READ_TOOL && name !== SETTINGS_SAVE_TOOL) {
+      if (
+        name !== SETTINGS_READ_TOOL && name !== SETTINGS_SAVE_TOOL &&
+        name !== SETTINGS_APPLY_TOOL
+      ) {
         throw new Error("Unsupported CoPicker settings tool.");
       }
       const threadID = await resolveSettingsThreadID();
-      return sendSettingsAppServerRequest("mcpServer/tool/call", {
-        threadId: threadID,
-        server: SETTINGS_SERVER_NAME,
-        tool: name,
-        arguments: args && typeof args === "object" ? args : {},
-      });
+      return sendSettingsAppServerRequest(
+        "mcpServer/tool/call",
+        {
+          threadId: threadID,
+          server: SETTINGS_SERVER_NAME,
+          tool: name,
+          arguments: args && typeof args === "object" ? args : {},
+        },
+        name === SETTINGS_APPLY_TOOL
+          ? SETTINGS_APPLY_REQUEST_TIMEOUT_MS
+          : APP_SERVER_REQUEST_TIMEOUT_MS,
+      );
     }
 
     function settingsSnapshotCandidate(value) {
@@ -302,6 +317,14 @@
       };
     }
 
+    function normalizedSettingsApplyResult(value) {
+      const candidate = settingsSnapshotCandidate(value);
+      return candidate?.applied === true &&
+        candidate?.applyMode === "current-process"
+        ? candidate
+        : null;
+    }
+
     function settingsToolFailure(value) {
       const candidates = [value, value?.result, value?.toolOutput];
       const failed = candidates.find((candidate) => candidate?.isError === true);
@@ -335,6 +358,8 @@
       const errorPanel = frameDocument?.querySelector("#error-panel");
       const errorMessage = frameDocument?.querySelector("#error-message");
       const retryButton = frameDocument?.querySelector("#retry");
+      const applyButton = frameDocument?.querySelector("#apply-now");
+      const applyResult = frameDocument?.querySelector("#apply-result");
       const enabledInput = frameDocument?.querySelector("#enabled");
       const modelInputs = [
         ...(frameDocument?.querySelectorAll('input[name="visible-model"]') || []),
@@ -347,6 +372,7 @@
       ];
       if (
         !main || !saveState || !errorPanel || !errorMessage || !retryButton ||
+        !applyButton || !applyResult ||
         !enabledInput || modelInputs.length === 0 || placementInputs.length === 0 ||
         appearanceInputs.length === 0
       ) {
@@ -363,6 +389,8 @@
       let authoritative = null;
       let draft = null;
       let saving = false;
+      let applying = false;
+      let retryApply = false;
       let blockedByConflict = false;
       let disposed = false;
 
@@ -377,10 +405,11 @@
         saveState.dataset.tone = tone;
       }
 
-      function showError(message, retryLabel = "重新读取") {
+      function showError(message, retryLabel = "重新读取", applyRetry = false) {
         if (disposed) return;
         errorMessage.textContent = message;
         retryButton.textContent = retryLabel;
+        retryApply = applyRetry;
         errorPanel.dataset.visible = "true";
       }
 
@@ -388,6 +417,23 @@
         if (disposed) return;
         errorPanel.dataset.visible = "false";
         errorMessage.textContent = "";
+        retryApply = false;
+      }
+
+      function setApplyResult(message = "", tone = "normal") {
+        if (disposed) return;
+        applyResult.textContent = message;
+        applyResult.dataset.tone = tone;
+      }
+
+      function updateApplyAvailability() {
+        if (disposed) return;
+        const ready = Boolean(authoritative && draft) &&
+          sameSettingsPreferences(authoritative, draft) &&
+          !saving && !applying && !blockedByConflict &&
+          main.dataset.loading !== "true";
+        applyButton.disabled = !ready;
+        applyButton.textContent = applying ? "正在应用…" : "立即应用";
       }
 
       function setLoading(loading) {
@@ -396,6 +442,7 @@
         allInputs.forEach((input) => {
           input.disabled = loading;
         });
+        updateApplyAvailability();
       }
 
       function readForm() {
@@ -444,6 +491,7 @@
           return;
         }
         saving = true;
+        updateApplyAvailability();
         clearError();
         try {
           while (!disposed && !sameSettingsPreferences(authoritative, draft)) {
@@ -484,6 +532,7 @@
           }
         } finally {
           saving = false;
+          updateApplyAvailability();
         }
       }
 
@@ -497,7 +546,50 @@
           return;
         }
         draft = nextDraft;
+        setApplyResult();
+        updateApplyAvailability();
         void flushSaveQueue();
+      }
+
+      async function applySettingsNow() {
+        if (
+          disposed || applying || saving || blockedByConflict ||
+          !authoritative || !draft ||
+          !sameSettingsPreferences(authoritative, draft)
+        ) {
+          return;
+        }
+        applying = true;
+        updateApplyAvailability();
+        clearError();
+        setApplyResult();
+        setStatus("正在应用到当前 Codex…");
+        try {
+          const result = await callSettingsTool(SETTINGS_APPLY_TOOL, {});
+          if (disposed) return;
+          const failure = settingsToolFailure(result);
+          if (failure) throw failure;
+          if (!normalizedSettingsApplyResult(result)) {
+            throw new Error("应用响应缺少有效结果。");
+          }
+          setStatus("已应用到当前 Codex");
+          setApplyResult("当前窗口已更新，无需重启。", "success");
+        } catch (error) {
+          if (disposed) return;
+          setStatus("立即应用失败", "error");
+          setApplyResult(
+            "未立即应用；已保存设置仍会在下次启动时生效。",
+            "error",
+          );
+          showError(
+            error?.message || "无法应用到当前 Codex。",
+            "重试应用",
+            true,
+          );
+        } finally {
+          applying = false;
+          updateApplyAvailability();
+        }
       }
 
       async function loadSettings() {
@@ -526,10 +618,16 @@
       }
 
       function onRetry() {
+        if (retryApply) {
+          clearError();
+          void applySettingsNow();
+          return;
+        }
         if (blockedByConflict) {
           blockedByConflict = false;
           clearError();
           setStatus("已保存 · 下次注入生效");
+          updateApplyAvailability();
           return;
         }
         if (
@@ -544,6 +642,9 @@
       }
 
       allInputs.forEach((input) => listen(input, "change", onPreferenceChange));
+      listen(applyButton, "click", () => {
+        void applySettingsNow();
+      });
       listen(retryButton, "click", onRetry);
       void loadSettings();
 

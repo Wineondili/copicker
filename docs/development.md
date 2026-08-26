@@ -40,6 +40,7 @@ Important paths:
 - `Sources/CopickerCore/CopickerSettings.swift`: versioned CoPicker preferences, validation, revision checks, and atomic local storage;
 - `Sources/CopickerCLI/CopickerCLI.swift`: command routing, live injection, probes, and watcher loop;
 - `Sources/CopickerCLI/CopickerMCPServer.swift`: newline-delimited stdio transport for the settings plugin;
+- `Sources/CopickerCLI/CopickerSettingsApplier.swift`: explicit settings-button adapter to the guarded `inject` command;
 - `Sources/CopickerCLI/AutostartManager.swift`: explicit `launchctl` mutations;
 - `Sources/CopickerCLI/Resources/model-rail.js`: detached Shadow DOM UI and Codex renderer bridge;
 - `Sources/CopickerCLI/Resources/copicker-settings-v2.html`: network-free interactive MCP App settings page;
@@ -103,6 +104,7 @@ The following commands are not offline tests and require deliberate authorizatio
 | `./script/build_and_run.sh --autostart-enable` | Replaces Copicker-managed artifacts and loads the real user LaunchAgent |
 | `./script/build_and_run.sh --autostart-disable` | Unloads and disables the real user LaunchAgent |
 | `./script/install.sh` | Builds release artifacts, performs read-only preflight, installs them, loads the real user LaunchAgent, and registers the local settings plugin |
+| Settings → CoPicker → **Apply now** | Calls the app-only apply tool, briefly opens the guarded loopback Inspector, and injects the saved snapshot into the current Codex process without restarting it |
 
 Never run live commands from offline tests. Never restart or terminate Codex from an active Codex task without explicit approval. A settings probe may produce the same compaction behavior as the official picker because it uses the same task settings path.
 
