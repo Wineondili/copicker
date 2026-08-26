@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "copicker": {
+      "command": "./bin/copicker-mcp",
+      "args": [],
+      "cwd": ".",
+      "env_vars": [
+        "HOME"
+      ]
+    }
+  }
+}

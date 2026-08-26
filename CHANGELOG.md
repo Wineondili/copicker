@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-26 21:52:34 +0800
+
+- Added a distributable CoPicker plugin package with an MCP server launcher, repository metadata, and a validated Codex plugin manifest.
+- Preserved the supplied model-picker grid SVG as the source asset and added explicit dark-on-light and light-on-dark variants for reliable host rendering.
+
 ## 2026-08-26 14:15:42 +0800
 
 - Added a focused user guide for opening Copicker, pointer and keyboard controls, supported model and effort states, Fast behavior, task requirements, dismissal, and interaction troubleshooting.
