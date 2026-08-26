@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 01:07:06 +0800
+
+- Fixed the injected settings fallback remaining permanently at `正在读取设置…` because Codex's top-level CSP blocks inline scripts inherited by `about:srcdoc` frames.
+- Moved fallback form loading, validation, saving, stale-write handling, and retry behavior into the parent injection layer while keeping the frame script-disabled, same-origin, network-free, and isolated from the native MCP App controller.
+- Advanced the renderer compatibility identifier to `0.12.1` so reinstalling replaces the already injected stalled `0.12.0` settings integration in the current or next Codex process.
+
 ## 2026-08-27 00:33:03 +0800
 
 - Added an injected CoPicker settings-sidebar fallback for Codex builds that parse local MCP settings entrypoints but hide them behind a remote plugin allowlist, while automatically yielding when a native CoPicker entry is available.
