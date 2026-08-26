@@ -14,7 +14,9 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The injection transport, first-level mount-target lifecycle, and direct current-task settings path are live-verified against Codex `26.810.41047` (build `6570`). The `0.9.3` renderer payload retains the approved compact rail design and connects it to Codex's documented `thread/settings/update` app-server method. Copicker `0.10.1-dev` adds an opt-in user LaunchAgent, a guarded process watcher, and bounded recovery for the login-time Codex/Inspector startup race; autostart is not installed or enabled by default.
+The selector and watcher behavior frozen in Copicker `0.9.0` is live-verified on Apple silicon against Codex `26.818.41705` (build `6971`), including guarded automatic injection after Codex restarts and Inspector shutdown after injection. The renderer payload keeps its independent `0.9.3` compatibility identifier so an already injected hook remains idempotent across this CLI release. Autostart remains opt-in and is never enabled by the default read-only command.
+
+`v0.9.0` is the public pre-release baseline. The numerically higher `v0.10.1-dev` tag remains available only as an immutable historical development snapshot; it is not the recommended installation version.
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -37,6 +39,21 @@ The injection transport, first-level mount-target lifecycle, and direct current-
 - On a new unsent task with no thread identifier, the rail remains visible but refuses to write until Codex creates the task. Model or effort changes may trigger the same compaction behavior as the official picker because both use the same current-task settings path.
 - Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
 - All selector markup and styles are isolated in the detached Shadow DOM host.
+
+## Install on another Mac
+
+Copicker `0.9.0` is distributed as source in this pre-release. The recommended installation pins the exact release tag, builds a native release executable with SwiftPM, performs the read-only compatibility check, and then explicitly enables the user LaunchAgent:
+
+```bash
+xcode-select --install
+git clone --branch v0.9.0 --depth 1 https://github.com/Wineondili/copicker.git
+cd copicker
+./script/install.sh
+```
+
+Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`. Enabling autostart may inject the currently running Codex process; the installer never terminates Codex and never modifies or re-signs its application bundle.
+
+See [docs/installation.md](docs/installation.md) for prerequisites, verification, updates, rollback, managed paths, and troubleshooting on another device.
 
 ## Build and test
 
