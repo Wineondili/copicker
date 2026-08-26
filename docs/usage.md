@@ -1,0 +1,98 @@
+# Using Copicker
+
+Copicker appears only with the official first-level model and reasoning picker. It does not replace the full-width model list opened from the composer input.
+
+## Before opening the selector
+
+Copicker must already be present in the current Codex process through one of these paths:
+
+- the opt-in user LaunchAgent installed by `./script/install.sh`;
+- a manual, current-process injection with `./script/build_and_run.sh --inject`.
+
+The automatic path injects once for each new Codex process. The manual path lasts only until that Codex process exits.
+
+Check the automatic installation without opening Inspector or changing Codex:
+
+```bash
+"$HOME/Library/Application Support/Copicker/bin/copicker" autostart status
+```
+
+`LaunchAgent service: loaded` confirms that the watcher is active. `Last result: injection-succeeded` confirms the most recently handled Codex process. When Codex is not running, `waiting-for-codex` is expected.
+
+## Open Copicker
+
+1. Open an existing Codex task, or send the first message in a new task so Codex has created its task identifier.
+2. Click the composer control that displays the current model and reasoning effort, such as `5.6 Sol / High`.
+3. Wait for the official first-level model and reasoning picker to open. Copicker appears in its own popover above that picker.
+
+`Ctrl+Shift+M` opens the full-width composer model list. That list is intentionally not Copicker's activation surface.
+
+## Controls
+
+| Input | Action |
+| --- | --- |
+| Click a dot or rail cell | Select that model and effort |
+| Drag horizontally on a model row | Move through supported effort levels |
+| Up / Down | Move between Sol, Terra, and Luna |
+| Left / Right | Decrease or increase reasoning effort |
+| Space | Toggle the catalog service tier named `Fast` |
+| Escape | Close the official picker and Copicker |
+
+Arrow-key input is briefly coalesced before it is committed. Pointer release and Space commit immediately. Copicker waits for Codex's official settings confirmation before treating a changed selection as final; a failed update restores the last confirmed selection.
+
+## Supported selections
+
+Copicker intentionally offers only:
+
+- Sol: `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`;
+- Terra: `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`;
+- Luna: `low`, `medium`, `high`, `xhigh`, and `max`.
+
+The model IDs, supported efforts, and Fast service-tier ID are resolved from the current Codex model catalog. Copicker does not persist or hard-code account-specific IDs.
+
+When the official picker is on another model, Copicker shows a centered gray `Other` label with no active rail cell. Select a valid Sol, Terra, or Luna cell to leave that state.
+
+If an account does not currently expose a requested model, effort, or Fast tier in its Codex catalog, Copicker refuses that update and restores the last confirmed selection.
+
+## Task and compaction behavior
+
+Model, effort, and Fast changes apply to the active Codex task through the same current-task settings path used by the official picker. The active task must already have a Codex task identifier.
+
+Changing model or effort may trigger the same compaction behavior as an equivalent change made with the official picker. This is expected Codex behavior rather than a separate Copicker compaction mechanism.
+
+## Closing behavior
+
+Copicker closes when any of the following happens:
+
+- the official first-level picker closes;
+- the combined picker loses focus;
+- the user clicks outside both picker surfaces;
+- the user presses Escape;
+- the document becomes hidden;
+- the Codex window loses focus.
+
+Opening an official nested model or reasoning-effort menu does not close Copicker. The custom popover repositions to avoid that submenu.
+
+## If Copicker does not appear
+
+1. Confirm that the official first-level picker, rather than the full-width composer model list, is open.
+2. Check automatic-injection state:
+
+   ```bash
+   "$HOME/Library/Application Support/Copicker/bin/copicker" autostart status
+   ```
+
+3. Check that Inspector port `9229` has closed after injection:
+
+   ```bash
+   lsof -nP -iTCP:9229 -sTCP:LISTEN
+   ```
+
+   No output is the expected idle result.
+
+4. Compare the reported Codex version with the compatibility notes for the installed Copicker release.
+5. Review [installation troubleshooting](installation.md#troubleshooting) before enabling the watcher again. Do not repeatedly enable autostart to bypass a blocked or incompatible result.
+
+## Privacy boundary
+
+Copicker does not modify or re-sign the official Codex application bundle. Its payload makes no external network request and does not log conversation content, task contents, authentication data, cookies, or tokens. The private DOM and renderer compatibility points remain version-sensitive and fail closed when required anchors are absent.
