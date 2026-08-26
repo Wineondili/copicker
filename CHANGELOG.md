@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-26 22:17:02 +0800
+
+- Replaced the placeholder settings shell with an accessible, network-free MCP App for CoPicker enablement, supported-model visibility, top/left/right placement, and Codex/system/light/dark appearance preferences.
+- Added authoritative read/save synchronization, queued autosaves, stale-window conflict recovery, a last-visible-model guard, Spark subscription guidance, and next-injection status messaging.
+- Advanced the versioned settings resource to `ui://copicker/settings/v2.html` and added offline HTML, JavaScript syntax, privacy, and control-contract coverage.
+
 ## 2026-08-26 22:11:59 +0800
 
 - Added versioned persistent CoPicker settings under the user Application Support directory with atomic `0600` writes, normalized model visibility, and optimistic revision checks.

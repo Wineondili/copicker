@@ -63,12 +63,23 @@ func settingsShellHasNoExternalNetworkDependency() throws {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
     let settingsURL = repositoryRoot.appendingPathComponent(
-        "Sources/CopickerCLI/Resources/copicker-settings-v1.html"
+        "Sources/CopickerCLI/Resources/copicker-settings-v2.html"
     )
     let settingsHTML = try String(contentsOf: settingsURL, encoding: .utf8)
 
     #expect(settingsHTML.contains("<h1>CoPicker</h1>"))
     #expect(settingsHTML.contains("background: transparent"))
+    #expect(settingsHTML.contains("copicker_settings_save"))
+    #expect(settingsHTML.contains("tools/call"))
+    #expect(settingsHTML.contains("GPT-5.5"))
+    #expect(settingsHTML.contains("Daybreak Blue"))
+    #expect(settingsHTML.contains("GPT-5.3 Codex Spark"))
+    #expect(settingsHTML.contains("仅 ChatGPT Pro 订阅可用"))
+    #expect(settingsHTML.contains("跟随 Codex"))
+    #expect(settingsHTML.contains("跟随系统"))
+    #expect(settingsHTML.contains("下次注入生效"))
+    #expect(settingsHTML.contains("type=\"checkbox\""))
+    #expect(settingsHTML.contains("type=\"radio\""))
     #expect(!settingsHTML.contains("fetch("))
     #expect(!settingsHTML.contains("XMLHttpRequest"))
     #expect(!settingsHTML.contains("localStorage"))

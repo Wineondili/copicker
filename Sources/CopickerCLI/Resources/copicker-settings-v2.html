@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CoPicker 设置</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        font-synthesis: none;
+        --text: light-dark(#1e1f20, #f3f3f4);
+        --muted: light-dark(rgb(30 31 32 / 58%), rgb(243 243 244 / 56%));
+        --faint: light-dark(rgb(30 31 32 / 42%), rgb(243 243 244 / 38%));
+        --divider: light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 10%));
+        --surface: light-dark(rgb(0 0 0 / 4%), rgb(255 255 255 / 6%));
+        --surface-hover: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 9%));
+        --accent: light-dark(#087cf0, #69a9ff);
+        --accent-contrast: #fff;
+        --warning: light-dark(#925f00, #e2ae51);
+        --error: light-dark(#b42318, #ff8a80);
+        --focus: light-dark(#006edc, #8bbcff);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: transparent;
+        color: var(--text);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      main {
+        width: min(100%, 780px);
+        padding: 30px 36px 52px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        min-height: 28px;
+        gap: 12px;
+      }
+
+      .icon {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: -0.012em;
+      }
+
+      .save-state {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+        text-align: right;
+      }
+
+      .save-state[data-tone="error"] {
+        color: var(--error);
+      }
+
+      .section {
+        padding: 24px 0;
+        border-top: 1px solid var(--divider);
+      }
+
+      header + .section {
+        margin-top: 22px;
+      }
+
+      .section-heading,
+      .setting-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 22px;
+      }
+
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h2 {
+        font-size: 15px;
+        font-weight: 620;
+        letter-spacing: -0.005em;
+      }
+
+      h3 {
+        font-size: 14px;
+        font-weight: 590;
+      }
+
+      .description,
+      .model-efforts,
+      .apply-note {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.52;
+      }
+
+      .section-heading .description,
+      .setting-copy .description {
+        margin-top: 4px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-flex;
+        width: 38px;
+        height: 22px;
+        flex: 0 0 auto;
+      }
+
+      .switch input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      .switch-track {
+        width: 100%;
+        height: 100%;
+        border: 1px solid var(--divider);
+        border-radius: 999px;
+        background: light-dark(rgb(0 0 0 / 17%), rgb(255 255 255 / 18%));
+      }
+
+      .switch-track::after {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
+        content: "";
+      }
+
+      .switch input:checked + .switch-track {
+        border-color: var(--accent);
+        background: var(--accent);
+      }
+
+      .switch input:checked + .switch-track::after {
+        left: 18px;
+      }
+
+      .switch input:focus-visible + .switch-track {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .switch input:disabled + .switch-track {
+        opacity: 0.45;
+      }
+
+      .model-list {
+        margin-top: 17px;
+        border-top: 1px solid var(--divider);
+      }
+
+      .model-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        min-height: 61px;
+        gap: 22px;
+        border-bottom: 1px solid var(--divider);
+      }
+
+      .model-row:last-child {
+        border-bottom: 0;
+      }
+
+      .model-efforts {
+        margin-top: 3px;
+      }
+
+      .model-warning {
+        margin-top: 4px;
+        color: var(--warning);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      fieldset {
+        min-width: 0;
+        margin: 17px 0 0;
+        padding: 0;
+        border: 0;
+      }
+
+      legend {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+        gap: 4px;
+        padding: 4px;
+        border-radius: 9px;
+        background: var(--surface);
+      }
+
+      .segment {
+        position: relative;
+      }
+
+      .segment input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      .segment span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 4px 10px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 550;
+        text-align: center;
+      }
+
+      .segment input:checked + span {
+        border-color: var(--divider);
+        background: light-dark(#fff, rgb(255 255 255 / 11%));
+        color: var(--text);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+      }
+
+      .segment input:focus-visible + span {
+        outline: 2px solid var(--focus);
+        outline-offset: 1px;
+      }
+
+      .segment:hover span {
+        background: var(--surface-hover);
+      }
+
+      .apply-note {
+        margin-top: 12px;
+      }
+
+      .error-panel {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--divider);
+        color: var(--error);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .error-panel[data-visible="true"] {
+        display: flex;
+      }
+
+      .retry {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border: 1px solid var(--divider);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .retry:hover {
+        background: var(--surface-hover);
+      }
+
+      .retry:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      [data-loading="true"] .settings-content {
+        opacity: 0.54;
+        pointer-events: none;
+      }
+
+      @media (max-width: 560px) {
+        main {
+          padding: 24px 22px 40px;
+        }
+
+        .segmented {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main data-loading="true">
+      <header>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2.25" y="2.25" width="19.5" height="19.5" rx="4.25"
+                stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+          <g fill="currentColor">
+            <circle cx="7" cy="7" r="1.15" />
+            <circle cx="12" cy="7" r="1.15" />
+            <circle cx="17" cy="7" r="1.15" />
+            <circle cx="7" cy="12" r="1.15" />
+            <circle cx="12" cy="12" r="1.15" />
+            <circle cx="17" cy="12" r="1.15" />
+            <circle cx="7" cy="17" r="1.15" />
+            <circle cx="12" cy="17" r="1.15" />
+            <circle cx="17" cy="17" r="1.15" />
+          </g>
+        </svg>
+        <h1>CoPicker</h1>
+        <div id="save-state" class="save-state" aria-live="polite">正在读取设置…</div>
+      </header>
+
+      <div class="settings-content">
+        <section class="section" aria-labelledby="general-title">
+          <div class="setting-row">
+            <div class="setting-copy">
+              <h2 id="general-title">启用 CoPicker</h2>
+              <p class="description">在官方模型选择器打开时显示快捷模型与推理强度选择器。</p>
+            </div>
+            <label class="switch">
+              <input id="enabled" type="checkbox" aria-label="启用 CoPicker" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="models-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="models-title">模型配置</h2>
+              <p class="description">选择要显示在 Model Picker 里的已适配模型。至少保留一个模型。</p>
+            </div>
+          </div>
+
+          <div class="model-list">
+            <div class="model-row">
+              <div>
+                <h3>GPT-5.6 Sol</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="sol" aria-label="显示 GPT-5.6 Sol" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="model-row">
+              <div>
+                <h3>GPT-5.6 Terra</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="terra" aria-label="显示 GPT-5.6 Terra" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="model-row">
+              <div>
+                <h3>GPT-5.6 Luna</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="luna" aria-label="显示 GPT-5.6 Luna" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="model-row">
+              <div>
+                <h3>GPT-5.5</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="gpt-5.5" aria-label="显示 GPT-5.5" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="model-row">
+              <div>
+                <h3>Daybreak Blue</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="daybreak-blue" aria-label="显示 Daybreak Blue" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="model-row">
+              <div>
+                <h3>GPT-5.3 Codex Spark</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High</p>
+                <p class="model-warning">仅 ChatGPT Pro 订阅可用；未出现在当前账户的官方模型列表时无法切换。</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="gpt-5.3-codex-spark" aria-label="显示 GPT-5.3 Codex Spark" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="placement-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="placement-title">默认出现位置</h2>
+              <p class="description">选择 CoPicker 相对官方菜单的首选位置；空间不足或菜单遮挡时仍会自动避让。</p>
+            </div>
+          </div>
+          <fieldset>
+            <legend>默认出现位置</legend>
+            <div class="segmented" style="--count: 3">
+              <label class="segment"><input type="radio" name="placement" value="top" /><span>上方</span></label>
+              <label class="segment"><input type="radio" name="placement" value="left" /><span>左侧</span></label>
+              <label class="segment"><input type="radio" name="placement" value="right" /><span>右侧</span></label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="section" aria-labelledby="appearance-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="appearance-title">外观</h2>
+              <p class="description">浅色模式使用纯白背景；彩色模型轨道保持不变。</p>
+            </div>
+          </div>
+          <fieldset>
+            <legend>外观</legend>
+            <div class="segmented" style="--count: 4">
+              <label class="segment"><input type="radio" name="appearance" value="codex" /><span>跟随 Codex</span></label>
+              <label class="segment"><input type="radio" name="appearance" value="system" /><span>跟随系统</span></label>
+              <label class="segment"><input type="radio" name="appearance" value="light" /><span>浅色</span></label>
+              <label class="segment"><input type="radio" name="appearance" value="dark" /><span>深色</span></label>
+            </div>
+          </fieldset>
+          <p class="apply-note">修改会持久化保存，并在下次注入时生效；通常重新打开 Codex 后即可看到。</p>
+          <div id="error-panel" class="error-panel" data-visible="false" role="alert">
+            <span id="error-message"></span>
+            <button id="retry" class="retry" type="button">重新读取</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const READ_TOOL = "copicker_settings";
+        const SAVE_TOOL = "copicker_settings_save";
+        const MODEL_IDS = [
+          "sol",
+          "terra",
+          "luna",
+          "gpt-5.5",
+          "daybreak-blue",
+          "gpt-5.3-codex-spark",
+        ];
+        const PLACEMENTS = ["top", "left", "right"];
+        const APPEARANCES = ["codex", "system", "light", "dark"];
+        const BRIDGE_TIMEOUT_MS = 1800;
+
+        const main = document.querySelector("main");
+        const saveState = document.querySelector("#save-state");
+        const errorPanel = document.querySelector("#error-panel");
+        const errorMessage = document.querySelector("#error-message");
+        const retryButton = document.querySelector("#retry");
+        const enabledInput = document.querySelector("#enabled");
+        const modelInputs = [...document.querySelectorAll('input[name="visible-model"]')];
+        const placementInputs = [...document.querySelectorAll('input[name="placement"]')];
+        const appearanceInputs = [...document.querySelectorAll('input[name="appearance"]')];
+        const allInputs = [enabledInput, ...modelInputs, ...placementInputs, ...appearanceInputs];
+
+        let nextRequestID = 1;
+        const pendingRequests = new Map();
+        let authoritative = null;
+        let draft = null;
+        let saving = false;
+        let blockedByConflict = false;
+
+        function setStatus(message, tone = "normal") {
+          saveState.textContent = message;
+          saveState.dataset.tone = tone;
+        }
+
+        function showError(message, retryLabel = "重新读取") {
+          errorMessage.textContent = message;
+          retryButton.textContent = retryLabel;
+          errorPanel.dataset.visible = "true";
+        }
+
+        function clearError() {
+          errorPanel.dataset.visible = "false";
+          errorMessage.textContent = "";
+        }
+
+        function setLoading(loading) {
+          main.dataset.loading = String(loading);
+          allInputs.forEach((input) => {
+            input.disabled = loading;
+          });
+        }
+
+        function rpc(method, params) {
+          const id = nextRequestID++;
+          return new Promise((resolve, reject) => {
+            const timeout = window.setTimeout(() => {
+              pendingRequests.delete(id);
+              const error = new Error("CoPicker settings bridge timed out.");
+              error.code = "BRIDGE_TIMEOUT";
+              reject(error);
+            }, BRIDGE_TIMEOUT_MS);
+            pendingRequests.set(id, { resolve, reject, timeout });
+            window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+          });
+        }
+
+        async function callTool(name, args = {}) {
+          try {
+            return await rpc("tools/call", { name, arguments: args });
+          } catch (rpcError) {
+            if (window.openai && typeof window.openai.callTool === "function") {
+              return window.openai.callTool(name, args);
+            }
+            throw rpcError;
+          }
+        }
+
+        function completeRequest(message) {
+          const request = pendingRequests.get(message.id);
+          if (!request) return;
+          pendingRequests.delete(message.id);
+          window.clearTimeout(request.timeout);
+          if (message.error) {
+            const error = new Error(message.error.message || "CoPicker settings request failed.");
+            error.code = message.error.code;
+            error.data = message.error.data;
+            request.reject(error);
+          } else {
+            request.resolve(message.result);
+          }
+        }
+
+        function snapshotCandidate(value) {
+          const candidates = [
+            value && value.structuredContent,
+            value && value.result && value.result.structuredContent,
+            value && value.toolOutput && value.toolOutput.structuredContent,
+            value && value.data,
+            value,
+          ];
+          return candidates.find((candidate) => candidate && typeof candidate === "object") || null;
+        }
+
+        function normalizedSnapshot(value) {
+          const candidate = snapshotCandidate(value);
+          if (!candidate) return null;
+          const visibleModels = Array.isArray(candidate.visibleModels)
+            ? MODEL_IDS.filter((id) => candidate.visibleModels.includes(id))
+            : [];
+          if (
+            !Number.isInteger(candidate.schemaVersion) ||
+            !Number.isInteger(candidate.revision) ||
+            typeof candidate.enabled !== "boolean" ||
+            visibleModels.length === 0 ||
+            !PLACEMENTS.includes(candidate.preferredPlacement) ||
+            !APPEARANCES.includes(candidate.appearance)
+          ) {
+            return null;
+          }
+          return {
+            schemaVersion: candidate.schemaVersion,
+            revision: candidate.revision,
+            enabled: candidate.enabled,
+            visibleModels,
+            preferredPlacement: candidate.preferredPlacement,
+            appearance: candidate.appearance,
+          };
+        }
+
+        function samePreferences(left, right) {
+          return Boolean(left && right) &&
+            left.enabled === right.enabled &&
+            left.preferredPlacement === right.preferredPlacement &&
+            left.appearance === right.appearance &&
+            left.visibleModels.length === right.visibleModels.length &&
+            left.visibleModels.every((model, index) => model === right.visibleModels[index]);
+        }
+
+        function readForm() {
+          return {
+            schemaVersion: authoritative ? authoritative.schemaVersion : 1,
+            revision: authoritative ? authoritative.revision : 0,
+            enabled: enabledInput.checked,
+            visibleModels: MODEL_IDS.filter((id) =>
+              modelInputs.some((input) => input.value === id && input.checked)
+            ),
+            preferredPlacement:
+              placementInputs.find((input) => input.checked)?.value || "top",
+            appearance:
+              appearanceInputs.find((input) => input.checked)?.value || "dark",
+          };
+        }
+
+        function writeForm(snapshot) {
+          enabledInput.checked = snapshot.enabled;
+          modelInputs.forEach((input) => {
+            input.checked = snapshot.visibleModels.includes(input.value);
+          });
+          placementInputs.forEach((input) => {
+            input.checked = input.value === snapshot.preferredPlacement;
+          });
+          appearanceInputs.forEach((input) => {
+            input.checked = input.value === snapshot.appearance;
+          });
+        }
+
+        function saveArguments(snapshot) {
+          return {
+            expectedRevision: authoritative.revision,
+            enabled: snapshot.enabled,
+            visibleModels: snapshot.visibleModels,
+            preferredPlacement: snapshot.preferredPlacement,
+            appearance: snapshot.appearance,
+          };
+        }
+
+        async function flushSaveQueue() {
+          if (saving || blockedByConflict || !authoritative || !draft) return;
+          saving = true;
+          clearError();
+          try {
+            while (!samePreferences(authoritative, draft)) {
+              const requested = {
+                ...draft,
+                visibleModels: [...draft.visibleModels],
+              };
+              setStatus("正在保存…");
+              const result = await callTool(SAVE_TOOL, saveArguments(requested));
+              const saved = normalizedSnapshot(result);
+              if (!saved) throw new Error("保存响应缺少有效设置快照。");
+              authoritative = saved;
+              if (samePreferences(requested, draft)) {
+                draft = saved;
+              }
+            }
+            setStatus("已保存 · 下次注入生效");
+          } catch (error) {
+            const current = normalizedSnapshot(error && error.data);
+            if (error && error.code === -32009 && current) {
+              authoritative = current;
+              draft = current;
+              blockedByConflict = true;
+              writeForm(current);
+              setStatus("发现更新冲突", "error");
+              showError("设置已在另一个窗口中修改，已显示最新版本。请确认后再修改。", "继续编辑");
+            } else {
+              setStatus("保存失败", "error");
+              showError(error && error.message ? error.message : "设置无法保存。", "重试保存");
+            }
+          } finally {
+            saving = false;
+          }
+        }
+
+        function onPreferenceChange(event) {
+          if (!authoritative || blockedByConflict) return;
+          const nextDraft = readForm();
+          if (nextDraft.visibleModels.length === 0) {
+            event.target.checked = true;
+            setStatus("至少保留一个模型", "error");
+            showError("Model Picker 至少需要保留一个已适配模型。", "知道了");
+            return;
+          }
+          draft = nextDraft;
+          void flushSaveQueue();
+        }
+
+        async function loadSettings() {
+          setLoading(true);
+          clearError();
+          setStatus("正在读取设置…");
+          try {
+            const result = await callTool(READ_TOOL);
+            const loaded = normalizedSnapshot(result);
+            if (!loaded) throw new Error("读取响应缺少有效设置快照。");
+            authoritative = loaded;
+            draft = loaded;
+            blockedByConflict = false;
+            writeForm(loaded);
+            setStatus("已保存 · 下次注入生效");
+          } catch (error) {
+            setStatus("无法读取设置", "error");
+            showError(
+              error && error.message ? error.message : "CoPicker 设置服务不可用。",
+              "重新读取"
+            );
+          } finally {
+            setLoading(false);
+          }
+        }
+
+        window.addEventListener("message", (event) => {
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") return;
+          if (
+            Object.prototype.hasOwnProperty.call(message, "id") &&
+            (Object.prototype.hasOwnProperty.call(message, "result") || message.error)
+          ) {
+            completeRequest(message);
+            return;
+          }
+          if (message.method === "ui/notifications/tool-result") {
+            const received = normalizedSnapshot(message.params);
+            if (received && !authoritative) {
+              authoritative = received;
+              draft = received;
+              writeForm(received);
+              setLoading(false);
+              setStatus("已保存 · 下次注入生效");
+            }
+          }
+        });
+
+        allInputs.forEach((input) => input.addEventListener("change", onPreferenceChange));
+        retryButton.addEventListener("click", () => {
+          if (blockedByConflict) {
+            blockedByConflict = false;
+            clearError();
+            setStatus("已保存 · 下次注入生效");
+            return;
+          }
+          if (authoritative && draft && !samePreferences(authoritative, draft)) {
+            clearError();
+            void flushSaveQueue();
+            return;
+          }
+          void loadSettings();
+        });
+
+        const initialOutput = window.openai && window.openai.toolOutput;
+        const initialSnapshot = normalizedSnapshot(initialOutput);
+        if (initialSnapshot) {
+          authoritative = initialSnapshot;
+          draft = initialSnapshot;
+          writeForm(initialSnapshot);
+          setLoading(false);
+          setStatus("已保存 · 下次注入生效");
+        }
+        void loadSettings();
+      })();
+    </script>
+  </body>
+</html>

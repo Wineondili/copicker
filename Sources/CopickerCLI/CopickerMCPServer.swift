@@ -4,7 +4,7 @@ import Foundation
 enum CopickerMCPServer {
     static func run() throws {
         guard let settingsURL = Bundle.module.url(
-            forResource: "copicker-settings-v1",
+            forResource: "copicker-settings-v2",
             withExtension: "html"
         ) else {
             throw CopickerMCPServerError.settingsResourceMissing
@@ -38,7 +38,7 @@ private enum CopickerMCPServerError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .settingsResourceMissing:
-            "Bundled copicker-settings-v1.html resource is missing."
+            "Bundled copicker-settings-v2.html resource is missing."
         }
     }
 }

@@ -12,10 +12,19 @@ The repository currently contains the offline integration and persistence founda
 - `copicker mcp-server`: a private stdio MCP server mode;
 - `ui://copicker/settings/v2.html`: the versioned MCP App resource;
 - a `CoPicker` settings entrypoint intended to appear after the built-in Plugins and Browser entries;
-- a transparent, network-free settings page shell;
+- a transparent, network-free interactive settings page;
 - a versioned preference store at `~/Library/Application Support/Copicker/settings.json`.
 
 The store contains only CoPicker enablement, visible supported-model keys, preferred placement, appearance, schema version, and revision. Writes are validated, atomic, permissioned `0600`, and protected by an optimistic revision check so a stale settings page cannot silently replace a newer edit. The plugin package is not yet installed by `script/install.sh`, and this phase does not change a personal plugin marketplace or the running Codex application.
+
+The page exposes native, keyboard-accessible controls for:
+
+- enabling or disabling the injected rail;
+- showing GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, Daybreak Blue, and GPT-5.3 Codex Spark;
+- selecting a top, left, or right preferred placement;
+- following Codex, following macOS, or forcing a light or dark rail.
+
+Autosaves are serialized and always use the last authoritative revision. A stale window displays the newer stored values instead of overwriting them. The UI never uses browser storage, and settings take effect on the next injection rather than opening Inspector from the settings page.
 
 ## Runtime contract
 
@@ -46,7 +55,7 @@ Expected output is three newline-delimited JSON-RPC responses. They should repor
 
 After the settings contents are approved:
 
-1. implement the interactive controls and connect authoritative read/save snapshots to the MCP App;
+1. connect the stored settings to the injected renderer and implement the new model, placement, appearance, and latching behavior;
 2. add installation, update, and removal for the plugin package;
 3. install it explicitly on a test device;
 4. restart Codex only outside an active Codex task;
