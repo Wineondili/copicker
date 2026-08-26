@@ -25,6 +25,9 @@ This repository builds Copicker, a local macOS CLI that adds a model-selection r
 - `Tests/`: offline unit tests; tests must not signal or attach to the running Codex process.
 - `script/install.sh`: release-build and explicit user LaunchAgent installation entrypoint for a tagged source checkout.
 - `script/build_and_run.sh`: single build/run/debug entrypoint.
+- `docs/usage.md`: user interaction, supported selection, task, closing, and troubleshooting behavior.
+- `docs/installation.md`: cross-device prerequisites, install, update, reinstall, recovery, permissions, and uninstall guidance.
+- `docs/development.md`: SwiftPM onboarding, command mutation boundaries, compatibility contracts, cross-device validation, and release checklist.
 - `.codex/environments/environment.toml`: Codex Run action.
 
 The existing `codex-model-rail` state keys, host IDs, and log subsystem are legacy runtime compatibility identifiers. Do not rename them without an explicit migration that can remove an already injected older payload.

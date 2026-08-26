@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-26 14:15:42 +0800
+
+- Added a focused user guide for opening Copicker, pointer and keyboard controls, supported model and effort states, Fast behavior, task requirements, dismissal, and interaction troubleshooting.
+- Expanded cross-device installation documentation with environment checks, signature and permission behavior, same-version reinstall, clean-tag upgrades, interrupted-install recovery, asynchronous watcher-version verification, and complete uninstall steps.
+- Added a SwiftPM development handoff covering branch setup, package structure, offline and live command boundaries, renderer compatibility contracts, resource packaging, cross-device gates, release discipline, and current license status.
+- Replaced machine-local temporary screenshot paths in design QA with explicit historical provenance and linked the new documentation from the repository index and agent context.
+
 ## 2026-08-26 13:29:37 +0800
 
 - Corrected the public pre-release baseline from the mistakenly published `0.9.0` version to `0.11.0`, preserving monotonic version ordering after the historical `v0.10.1-dev` development snapshot.

@@ -4,6 +4,12 @@ Copicker is a local macOS CLI that adds a user-designed model-and-effort control
 
 The project is designed around one non-negotiable safety property: it does not modify or re-sign `/Applications/ChatGPT.app`. The injector briefly connects to the Electron main-process Inspector on loopback, injects a self-contained DOM component through `webContents.executeJavaScript`, and closes the Inspector connection immediately afterward.
 
+## Documentation
+
+- [Install, update, reinstall, recover, or uninstall](docs/installation.md)
+- [Use the model and effort selector](docs/usage.md)
+- [Build, test, and continue development](docs/development.md)
+
 ## Goals
 
 - Preserve the official OpenAI signature, Team ID, permissions, Keychain access, App Groups, and update path.
@@ -40,6 +46,22 @@ The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified o
 - Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
 - All selector markup and styles are isolated in the detached Shadow DOM host.
 
+## Quick use
+
+After automatic or manual injection, open an existing Codex task and click the composer control that displays the current model and reasoning effort. Copicker appears above the official first-level picker.
+
+| Input | Action |
+| --- | --- |
+| Click or drag | Select a supported model and effort |
+| Up / Down | Move between Sol, Terra, and Luna |
+| Left / Right | Change reasoning effort |
+| Space | Toggle Fast |
+| Escape or outside click | Close the combined picker |
+
+Sol and Terra expose six supported effort levels; Luna exposes five. An unsupported official model shows `Other` until a valid Copicker cell is selected. `Ctrl+Shift+M` opens a different, full-width composer model list and does not activate Copicker.
+
+See [docs/usage.md](docs/usage.md) for task requirements, confirmation behavior, supported selections, closing behavior, and troubleshooting.
+
 ## Install on another Mac
 
 Copicker `0.11.0` is distributed as source in this pre-release. The recommended installation pins the exact release tag, builds a native release executable with SwiftPM, performs the read-only compatibility check, and then explicitly enables the user LaunchAgent:
@@ -53,7 +75,7 @@ cd copicker
 
 Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`. Enabling autostart may inject the currently running Codex process; the installer never terminates Codex and never modifies or re-signs its application bundle.
 
-See [docs/installation.md](docs/installation.md) for prerequisites, verification, updates, rollback, managed paths, and troubleshooting on another device.
+See [docs/installation.md](docs/installation.md) for prerequisites, environment checks, verification, permissions, repeat installation, updates, recovery, complete uninstall, and troubleshooting on another device.
 
 ## Build and test
 
@@ -176,4 +198,4 @@ For a direct settings round trip that first verifies a same-value write, switche
 
 The payload makes no external network request and performs no storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors and sends the two allowlisted app-server methods through Codex's existing renderer bridge. Selector and catalog state exist only in renderer memory and disappear with the Codex process. The diagnostic probe reports control metadata, supported selection state, and task-marker counts without returning task identifiers, conversation body text, or composer text.
 
-The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. Use `copicker autostart disable` to stop future automatic injection. The official application bundle is never changed.
+The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. Use the installed executable's `autostart disable` command to stop future automatic injection. The official application bundle is never changed.

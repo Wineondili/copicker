@@ -12,13 +12,27 @@ Copicker `0.11.0` is a source-distributed pre-release. Building it on the target
 
 Copicker does not edit, replace, unpack into, or re-sign the official Codex application bundle. Its user LaunchAgent starts only after the user logs into the Aqua session.
 
-## Install the pinned pre-release
+## Check the target Mac
 
-Install Apple's command-line developer tools if the target Mac does not already have them:
+Inspect the target before cloning or enabling anything:
+
+```bash
+sw_vers -productVersion
+uname -m
+xcode-select -p
+swift --version
+test -d /Applications/ChatGPT.app && echo "Codex app found"
+```
+
+The currently verified architecture reports `arm64`. `swift --version` must report Swift 6 or later. If `xcode-select -p` or `swift --version` fails, install the Xcode Command Line Tools before continuing:
 
 ```bash
 xcode-select --install
 ```
+
+The installation script also checks for Swift and the official application path. It runs the CLI's read-only compatibility status before it changes the user LaunchAgent.
+
+## Install the pinned pre-release
 
 Clone the exact release tag and run the installer as the logged-in user:
 
@@ -27,6 +41,8 @@ git clone --branch v0.11.0 --depth 1 https://github.com/Wineondili/copicker.git
 cd copicker
 ./script/install.sh
 ```
+
+Checking out an exact tag produces a detached HEAD. That is expected and desirable for a reproducible installation. Do not use this shallow installation checkout for ongoing development; follow [docs/development.md](development.md) instead.
 
 Do not use `sudo`. The installer performs these steps:
 
@@ -59,7 +75,7 @@ Last watcher phase: injected
 Last result: injection-succeeded
 ```
 
-When Codex is not running, `waiting-for-codex` is expected. Open Codex, wait a few seconds, then open its first-level model/reasoning picker and confirm that Copicker appears above it.
+When Codex is not running, `waiting-for-codex` is expected. Open Codex, wait a few seconds, then follow [the usage guide](usage.md) and confirm that Copicker appears above the official first-level model/reasoning picker.
 
 The Inspector should close after injection:
 
@@ -82,17 +98,84 @@ Installation is limited to these user-scoped paths:
 
 The source checkout may be removed after installation. The stable executable and resource bundle under `Application Support` are what the LaunchAgent runs.
 
-## Update to a later release
+## Permissions and signatures
 
-From an existing checkout, fetch the desired tag, check it out, and rerun the installer:
+Reinstalling or updating Copicker on the same Mac does not change the official Codex bundle, signature, Team ID, bundle identifier, Keychain groups, App Groups, or designated requirement. Existing permissions granted to the official Codex app are therefore not reset by a Copicker reinstall.
+
+On a different Mac, Codex may request its normal first-use permissions for that device. Those prompts belong to the official app and are independent of Copicker. Copicker itself does not use Accessibility or Screen Recording to proxy UI clicks.
+
+## Reinstall the same version
+
+For the smallest repeat-installation window, stop the existing watcher before replacing its managed artifacts. This does not remove an already injected hook from the current Codex process:
 
 ```bash
-git fetch origin --tags
-git checkout v0.11.0
+COPICKER_BIN="$HOME/Library/Application Support/Copicker/bin/copicker"
+
+if [[ -x "$COPICKER_BIN" ]]; then
+  "$COPICKER_BIN" autostart disable
+fi
+
 ./script/install.sh
 ```
 
-Rerunning the installer replaces only Copicker-managed artifacts and reloads the user LaunchAgent. It does not modify the official Codex bundle. Check the release notes before moving to a newer tag because Codex compatibility is version-sensitive.
+The installer rebuilds the tagged source, replaces the managed executable and resource bundle, recreates the plist, and loads a new watcher. Confirm both the installed version and watcher version afterward:
+
+```bash
+"$HOME/Library/Application Support/Copicker/bin/copicker" version
+"$HOME/Library/Application Support/Copicker/bin/copicker" autostart status
+```
+
+The status file is written asynchronously by the watcher. Immediately after installation it may briefly show a previous state; wait several seconds and check again. The final `Watcher Copicker version` must match the installed executable version.
+
+## Update to a later release
+
+Use a clean, exact-tag checkout rather than switching an active development worktree into detached HEAD. Replace the example version with the release you intend to install:
+
+```bash
+COPICKER_VERSION=v0.11.0
+COPICKER_BIN="$HOME/Library/Application Support/Copicker/bin/copicker"
+
+git clone --branch "$COPICKER_VERSION" --depth 1 \
+  https://github.com/Wineondili/copicker.git \
+  "copicker-$COPICKER_VERSION"
+
+cd "copicker-$COPICKER_VERSION"
+
+if [[ -x "$COPICKER_BIN" ]]; then
+  "$COPICKER_BIN" autostart disable
+fi
+
+./script/install.sh
+```
+
+Rerunning the installer replaces only Copicker-managed artifacts and reloads the user LaunchAgent. It does not modify the official Codex bundle. Check the release notes before moving to a newer tag because Codex compatibility is version-sensitive. Keep the previous tagged checkout until the new watcher and UI have been verified so the previous release remains easy to rebuild.
+
+## Recover from an interrupted or failed install
+
+The installation script stops at the first failed command. It does not automatically restore an earlier Copicker binary or LaunchAgent when artifact replacement or `launchctl bootstrap` fails. It still never changes the official Codex bundle.
+
+Use this recovery sequence:
+
+1. Do not repeatedly run `autostart enable` while Inspector port `9229` has an unknown listener.
+2. Check the exact managed state and operational result:
+
+   ```bash
+   "$HOME/Library/Application Support/Copicker/bin/copicker" autostart status
+   ```
+
+3. Confirm the intended tagged checkout is clean and its release build succeeds:
+
+   ```bash
+   git status --short
+   swift build -c release
+   swift test
+   ```
+
+4. Fix the reported compatibility, build, filesystem, or `launchctl` problem.
+5. Rerun `./script/install.sh` from that exact tagged checkout.
+6. Verify the installed executable version, watcher version, Codex version, result code, UI behavior, and Inspector closure independently.
+
+If no installed executable is available, skip its status command and rebuild from a fresh tagged checkout. A failed install may leave Copicker-managed binary, resource, state, or log files for diagnosis even when the LaunchAgent plist has been removed.
 
 ## Disable automatic injection
 
@@ -109,6 +192,27 @@ Disable the LaunchAgent and also remove the active hook from the currently runni
 ```
 
 The second command briefly uses the guarded loopback Inspector path when Codex is running. Neither command modifies the Codex application bundle. The stable Copicker binary, structured state, and privacy-safe logs remain available for inspection or later re-enabling.
+
+## Completely uninstall Copicker
+
+`autostart disable` is intentionally reversible and does not delete the stable executable, resource bundle, state, or logs. For a complete uninstall, first disable future injection and remove the current-process hook when possible:
+
+```bash
+COPICKER_BIN="$HOME/Library/Application Support/Copicker/bin/copicker"
+"$COPICKER_BIN" autostart disable --remove
+```
+
+If Codex is not running, there is no current-process hook to remove. If guarded removal cannot complete, quitting Codex clears the in-memory hook.
+
+After reviewing the exact targets, remove only Copicker-managed files:
+
+```bash
+rm -f -- "$HOME/Library/LaunchAgents/io.github.wineondili.copicker.plist"
+rm -rf -- "$HOME/Library/Application Support/Copicker"
+rm -rf -- "$HOME/Library/Logs/Copicker"
+```
+
+These commands permanently remove Copicker's installed binary, resource bundle, structured state, and operational logs. They do not touch `/Applications/ChatGPT.app`. Reinstall later by repeating the clean tagged-source installation.
 
 ## Troubleshooting
 
@@ -134,3 +238,5 @@ Useful result codes include:
 - `inspector-timeout`: the bounded Inspector startup/recovery attempts did not complete.
 
 Do not repeatedly enable autostart to bypass a blocked result. Record the Codex version, Copicker version, structured status, and operational result code before reporting a compatibility issue. Do not include conversation content, authentication information, cookies, tokens, or task contents in a report.
+
+For interaction-specific checks, including the difference between the first-level picker and the full-width composer model list, see [docs/usage.md](usage.md).
