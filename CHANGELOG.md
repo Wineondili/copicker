@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 00:33:03 +0800
+
+- Added an injected CoPicker settings-sidebar fallback for Codex builds that parse local MCP settings entrypoints but hide them behind a remote plugin allowlist, while automatically yielding when a native CoPicker entry is available.
+- Reused the sandboxed, network-free settings document and the existing native preference store through `thread/loaded/list` and `mcpServer/tool/call`, without adding a port, helper process, alternate settings file, or application-bundle modification.
+- Bundled the fallback settings document with every renderer injection, kept the entry available when the model rail itself is disabled, preserved concurrent-write conflicts as standard MCP error tool results, expanded removal cleanup and compatibility contracts, and documented the native/fallback boundary.
+
 ## 2026-08-26 22:47:24 +0800
 
 - Connected persisted settings to manual and automatic injection, added read-only status reporting, and made a disabled watcher record `settings-disabled` without opening Inspector for a new Codex process.

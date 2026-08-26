@@ -148,9 +148,11 @@ struct CopickerMCPProtocolTests {
                 ],
             ]
         )
-        let error = try dictionary(response["error"])
-        #expect(error["code"] as? Int == -32009)
-        let current = try dictionary(error["data"])
+        let result = try dictionary(response["result"])
+        #expect(result["isError"] as? Bool == true)
+        let metadata = try dictionary(result["_meta"])
+        #expect(metadata["copicker/errorCode"] as? Int == -32009)
+        let current = try dictionary(result["structuredContent"])
         #expect(current["revision"] as? Int == 1)
         #expect(current["preferredPlacement"] as? String == "right")
     }

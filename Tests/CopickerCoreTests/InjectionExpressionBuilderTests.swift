@@ -16,13 +16,16 @@ import Testing
     )
     let expression = try InjectionExpressionBuilder.makeInstallerExpression(
         payload: payload,
-        settings: settings
+        settings: settings,
+        settingsHTML: "<main>CoPicker settings   fallback</main>"
     )
 
     #expect(expression.contains("executeJavaScript"))
     #expect(expression.contains("com.jonas.codex-model-rail.main-state"))
     #expect(expression.contains("quote:"))
     #expect(expression.contains("__COPICKER_CONFIG__"))
+    #expect(expression.contains("__COPICKER_SETTINGS_HTML__"))
+    #expect(expression.contains("CoPicker settings"))
     #expect(expression.contains("gpt-5.5"))
     #expect(expression.contains("preferredPlacement"))
     #expect(expression.contains("light"))
@@ -102,6 +105,8 @@ import Testing
     let expression = InjectionExpressionBuilder.removalExpression
 
     #expect(expression.contains("current?.dispose?.()"))
+    #expect(expression.contains("settingsIntegration?.dispose?.()"))
+    #expect(expression.contains("copicker-settings-host"))
     #expect(expression.contains("state.source = cleanupSource"))
     #expect(expression.contains("state.disabled = true"))
     #expect(!expression.contains("innerText"))

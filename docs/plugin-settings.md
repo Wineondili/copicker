@@ -11,7 +11,7 @@ The repository currently contains the offline integration and persistence founda
 - explicit light and dark icon variants for plugin surfaces;
 - `copicker mcp-server`: a private stdio MCP server mode;
 - `ui://copicker/settings/v2.html`: the versioned MCP App resource;
-- a `CoPicker` settings entrypoint intended to appear after the built-in Plugins and Browser entries;
+- a native `CoPicker` MCP settings entrypoint plus an injected sidebar fallback placed after the built-in Plugins and Browser entries;
 - a transparent, network-free interactive settings page;
 - a versioned preference store at `~/Library/Application Support/Copicker/settings.json`.
 
@@ -33,6 +33,10 @@ The settings copy records the non-Fast contracts for Daybreak and Codex Spark, t
 Both settings tools are host-only. Their `_meta.ui.visibility` contains only `app`, so they are not offered as normal model-callable tools. `copicker_settings` is the read-only render entrypoint and declares the standard MCP App resource through `_meta.ui.resourceUri`; `copicker_settings_save` accepts a complete preference snapshot plus the caller's expected revision. Repeating an already-applied save is idempotent, while a stale save returns the current authoritative snapshot.
 
 The current Codex settings sidebar additionally discovers `_meta["openai/ui"].entrypoints` entries whose type is `settings`. That metadata and server-icon handling are private Codex compatibility points and must be rechecked after desktop updates.
+
+Codex `26.820.60940` parses that metadata but filters local plugin settings views behind a remote rollout gate and plugin allowlist. CoPicker therefore also installs a renderer-side compatibility entry when the native item is absent. The fallback clones the built-in Browser navigation control, replaces only its icon and label, and opens the same bundled settings document over the right settings pane. If a later Codex build admits the native CoPicker entry, the fallback removes itself instead of creating a duplicate.
+
+The fallback does not add a port or a second settings store. Its sandboxed `srcdoc` frame can send only the two CoPicker tool names to the parent integration. The parent resolves an already loaded task and uses the documented `mcpServer/tool/call` app-server method to reach the same native stdio server and atomic preference store. The page retains an inline-only CSP with networking and nested frames disabled.
 
 The server advertises the supplied icon as `data:` SVGs with separate `light` and `dark` themes. It serves the settings page with `text/html;profile=mcp-app`, an empty network CSP allowlist, and no iframe or external-resource domains.
 
@@ -65,7 +69,7 @@ After the settings contents are approved:
 
 1. install it explicitly on a test device;
 2. restart Codex only outside an active Codex task;
-3. verify sidebar order, light and dark icons, settings rendering, persistence, each configured model shape, all three placements, latching, and existing selection behavior separately;
+3. verify sidebar order, fallback/native deduplication, light and dark icons, settings rendering, persistence, each configured model shape, all three placements, latching, and existing selection behavior separately;
 4. record the exact Codex version and build used for host-loop acceptance.
 
-Until those gates are complete, the current work establishes a validated source package and MCP runtime, not a live-installed settings entry.
+The offline suite and a standalone app-server smoke test validate the package, MCP runtime, read path, and non-mutating stale-write conflict transport. A real Codex restart is still required to accept the injected sidebar placement and end-to-end save behavior for each desktop build.
