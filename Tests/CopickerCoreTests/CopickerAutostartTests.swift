@@ -112,7 +112,7 @@ import Testing
         codexProcessIdentifier: 200,
         codexVersion: "26.810.41047",
         codexBuildVersion: "6570",
-        copickerVersion: "0.9.0"
+        copickerVersion: "0.11.0"
     )
 
     try store.write(state)

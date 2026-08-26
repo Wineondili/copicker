@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-26 13:29:37 +0800
+
+- Corrected the public pre-release baseline from the mistakenly published `0.9.0` version to `0.11.0`, preserving monotonic version ordering after the historical `v0.10.1-dev` development snapshot.
+- Updated release metadata, tests, installation commands, and cross-device documentation to pin `v0.11.0`; the renderer compatibility identifier remains `0.9.3`.
+- Retired the mistaken `v0.9.0` GitHub pre-release and tag as part of the corrected publication while retaining its commit in repository history.
+
 ## 2026-08-26 11:32:40 +0800
 
 - Established `0.9.0` as the public pre-release baseline while retaining `v0.10.1-dev` as an immutable historical development snapshot and keeping renderer compatibility identifier `0.9.3` unchanged.
