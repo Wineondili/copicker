@@ -53,6 +53,8 @@ Do not use `sudo`. The installer performs these steps:
 5. Creates and loads the opt-in user LaunchAgent.
 6. Prints the resulting watcher status.
 
+The published `v0.11.0` tag stops there. The current `0.12.0-dev` branch additionally copies and registers the CoPicker settings plugin through the Codex CLI. Do not treat `0.12.0-dev` as the cross-device release baseline until it receives its own tag.
+
 If Codex is already running, loading the watcher may inject it immediately. The installer does not quit or restart Codex.
 
 ## Verify the installation
@@ -93,11 +95,14 @@ Installation is limited to these user-scoped paths:
 - `~/Library/Application Support/Copicker/bin/Copicker_CopickerCLI.bundle`
 - `~/Library/Application Support/Copicker/autostart-state.json`
 - `~/Library/Application Support/Copicker/settings.json`
+- `~/Library/Application Support/Copicker/plugin-marketplace`
 - `~/Library/LaunchAgents/io.github.wineondili.copicker.plist`
 - `~/Library/Logs/Copicker/autostart.log`
 - `~/Library/Logs/Copicker/autostart-error.log`
 
-The source checkout may be removed after installation. The stable executable and resource bundle under `Application Support` are what the LaunchAgent runs. `settings.json` contains only CoPicker UI preferences, is written with user-only `0600` permissions, and persists across ordinary reinstalls and watcher disable/enable cycles.
+The source checkout may be removed after installation. The stable executable, resource bundle, and local plugin marketplace under `Application Support` are what the LaunchAgent and settings plugin use. `settings.json` contains only CoPicker UI preferences, is written with user-only `0600` permissions, and persists across ordinary reinstalls and watcher disable/enable cycles.
+
+Starting with the current `0.12.0-dev` installer, the script registers `copicker-local` with the Codex CLI and installs `copicker@copicker-local`. The settings entry appears the next time Codex is opened. Updating with a newer CoPicker installer refreshes the stable plugin package and reinstalls that same plugin ID; it does not create duplicate settings entries. The published `v0.11.0` installer does not create the marketplace directory or settings entry.
 
 ## Permissions and signatures
 
@@ -208,12 +213,14 @@ If Codex is not running, there is no current-process hook to remove. If guarded 
 After reviewing the exact targets, remove only Copicker-managed files:
 
 ```bash
+codex plugin remove copicker@copicker-local
+codex plugin marketplace remove copicker-local
 rm -f -- "$HOME/Library/LaunchAgents/io.github.wineondili.copicker.plist"
 rm -rf -- "$HOME/Library/Application Support/Copicker"
 rm -rf -- "$HOME/Library/Logs/Copicker"
 ```
 
-These commands permanently remove Copicker's installed binary, resource bundle, preferences, structured state, and operational logs. They do not touch `/Applications/ChatGPT.app`. Reinstall later by repeating the clean tagged-source installation.
+These commands permanently remove Copicker's settings plugin registration, installed binary, resource bundle, preferences, structured state, and operational logs. They do not touch `/Applications/ChatGPT.app`. Reinstall later by repeating the clean tagged-source installation.
 
 ## Troubleshooting
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-26 22:47:24 +0800
+
+- Connected persisted settings to manual and automatic injection, added read-only status reporting, and made a disabled watcher record `settings-disabled` without opening Inspector for a new Codex process.
+- Added configurable Sol, Terra, Luna, Daybreak, GPT-5.5, and Codex Spark rows with exact effort counts, fixed display order, right-aligned labels, hidden-model recognition, and account-access guidance while leaving GPT-5.4 and GPT-5.4 Mini as `Other`.
+- Made Daybreak and Codex Spark explicitly non-Fast, clearing Fast when either is selected and disabling their Fast interactions; added theme-adaptive Daybreak blue text and exact-white light appearance without changing the accepted colored fills.
+- Added latched top, left, and right placement with viewport clamping, obstacle-aware vertical and horizontal avoidance, and pointer-gated restoration so repeated submenu mutations do not make the rail oscillate.
+- Added a stable local plugin marketplace installation path, advanced the development package to `0.12.0-dev`, and expanded offline contracts, release-build validation, settings documentation, and cross-device installation guidance.
+
 ## 2026-08-26 22:17:02 +0800
 
 - Replaced the placeholder settings shell with an accessible, network-free MCP App for CoPicker enablement, supported-model visibility, top/left/right placement, and Codex/system/light/dark appearance preferences.

@@ -7,11 +7,25 @@ import Testing
     (() => ({ text: "quote: \\\" and newline\\n", installed: true }))();
     """
 
-    let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: payload)
+    let settings = CopickerSettings(
+        revision: 4,
+        enabled: true,
+        visibleModels: [.sol, .gpt55],
+        preferredPlacement: .left,
+        appearance: .light
+    )
+    let expression = try InjectionExpressionBuilder.makeInstallerExpression(
+        payload: payload,
+        settings: settings
+    )
 
     #expect(expression.contains("executeJavaScript"))
     #expect(expression.contains("com.jonas.codex-model-rail.main-state"))
     #expect(expression.contains("quote:"))
+    #expect(expression.contains("__COPICKER_CONFIG__"))
+    #expect(expression.contains("gpt-5.5"))
+    #expect(expression.contains("preferredPlacement"))
+    #expect(expression.contains("light"))
     #expect(!expression.contains("conversation"))
 }
 
@@ -49,6 +63,9 @@ import Testing
     #expect(expression.contains("overlapsSecondarySurface"))
     #expect(expression.contains("secondaryObstacleCount"))
     #expect(expression.contains("placementVariant"))
+    #expect(expression.contains("preferredPlacement"))
+    #expect(expression.contains("placementLatched"))
+    #expect(expression.contains("resolvedAppearance"))
     #expect(expression.contains("openState"))
     #expect(expression.contains("selectorOtherVisible"))
     #expect(expression.contains("selectorOtherColor"))
@@ -63,8 +80,8 @@ import Testing
     #expect(expression.contains("switchState"))
     #expect(expression.contains("bridgeAvailable"))
     #expect(expression.contains("validConversationContextMarkers"))
-    #expect(expression.contains("const previewWidth = 289.75"))
-    #expect(expression.contains("const previewHeight = 134.75"))
+    #expect(expression.contains("const previewWidth = popoverRect?.width || 289.75"))
+    #expect(expression.contains("const previewHeight = popoverRect?.height || 134.75"))
     #expect(expression.contains("popoverPadding"))
     #expect(!expression.contains("document.body.innerText"))
     #expect(!expression.contains("document.body.textContent"))

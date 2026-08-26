@@ -413,6 +413,17 @@
             </div>
             <div class="model-row">
               <div>
+                <h3>Daybreak Blue</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra · 不支持 Fast</p>
+                <p class="model-warning">可能需要申请 Codex Trusted Access for Cyber，并允许所需的网络访问。</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="daybreak-blue" aria-label="显示 Daybreak Blue" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="model-row">
+              <div>
                 <h3>GPT-5.5</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High</p>
               </div>
@@ -423,19 +434,9 @@
             </div>
             <div class="model-row">
               <div>
-                <h3>Daybreak Blue</h3>
-                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" name="visible-model" value="daybreak-blue" aria-label="显示 Daybreak Blue" />
-                <span class="switch-track" aria-hidden="true"></span>
-              </label>
-            </div>
-            <div class="model-row">
-              <div>
                 <h3>GPT-5.3 Codex Spark</h3>
-                <p class="model-efforts">Light · Medium · High · Extra High</p>
-                <p class="model-warning">仅 ChatGPT Pro 订阅可用；未出现在当前账户的官方模型列表时无法切换。</p>
+                <p class="model-efforts">Light · Medium · High · Extra High · 不支持 Fast</p>
+                <p class="model-warning">可能需要 ChatGPT Pro 订阅（Pro 5x / 20x）；未出现在当前账户的官方模型列表时无法切换。</p>
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="gpt-5.3-codex-spark" aria-label="显示 GPT-5.3 Codex Spark" />
@@ -497,8 +498,8 @@
           "sol",
           "terra",
           "luna",
-          "gpt-5.5",
           "daybreak-blue",
+          "gpt-5.5",
           "gpt-5.3-codex-spark",
         ];
         const PLACEMENTS = ["top", "left", "right"];

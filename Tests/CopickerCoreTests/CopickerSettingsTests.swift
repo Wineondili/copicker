@@ -24,7 +24,7 @@ func settingsStorePersistsAValidatedPrivateSnapshot() throws {
     )
 
     #expect(saved.revision == 1)
-    #expect(saved.visibleModels == [.sol, .gpt55, .daybreakBlue])
+    #expect(saved.visibleModels == [.sol, .daybreakBlue, .gpt55])
     #expect(try store.read() == saved)
     let attributes = try fileManager.attributesOfItem(atPath: store.fileURL.path)
     #expect(attributes[.posixPermissions] as? Int == 0o600)
@@ -88,6 +88,16 @@ func settingsStoreRejectsEmptyModelVisibilityAndStaleWrites() throws {
 
 @Test
 func settingsModelContractsMatchRequestedEffortCounts() {
+    #expect(
+        CopickerModel.allCases == [
+            .sol,
+            .terra,
+            .luna,
+            .daybreakBlue,
+            .gpt55,
+            .codexSpark,
+        ]
+    )
     #expect(CopickerModel.gpt55.effortLabels.count == 4)
     #expect(CopickerModel.codexSpark.effortLabels.count == 4)
     #expect(CopickerModel.daybreakBlue.effortLabels.count == 6)

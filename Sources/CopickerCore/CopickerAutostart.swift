@@ -55,6 +55,7 @@ public enum CopickerAutostartPhase: String, Codable, Sendable {
     case disabled
     case starting
     case waitingForCodex = "waiting-for-codex"
+    case settingsDisabled = "settings-disabled"
     case injecting
     case injected
     case blocked
@@ -65,6 +66,7 @@ public enum CopickerAutostartResultCode: String, Codable, Sendable {
     case disabled
     case watcherStarted = "watcher-started"
     case codexNotRunning = "codex-not-running"
+    case settingsDisabled = "settings-disabled"
     case injectionStarted = "injection-started"
     case injectionSucceeded = "injection-succeeded"
     case processChanged = "process-changed"

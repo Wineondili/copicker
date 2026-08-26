@@ -29,6 +29,7 @@ This repository builds Copicker, a local macOS CLI that adds a model-selection r
 - `script/install.sh`: release-build and explicit user LaunchAgent installation entrypoint for a tagged source checkout.
 - `script/build_and_run.sh`: single build/run/debug entrypoint.
 - `Plugin/copicker/`: repository-local Codex plugin package, launcher, and themed icon assets.
+- `.agents/plugins/marketplace.json`: local marketplace descriptor used to install the settings plugin from a stable user-scoped copy.
 - `docs/usage.md`: user interaction, supported selection, task, closing, and troubleshooting behavior.
 - `docs/installation.md`: cross-device prerequisites, install, update, reinstall, recovery, permissions, and uninstall guidance.
 - `docs/development.md`: SwiftPM onboarding, command mutation boundaries, compatibility contracts, cross-device validation, and release checklist.
