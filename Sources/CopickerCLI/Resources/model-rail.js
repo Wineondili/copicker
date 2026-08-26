@@ -1,10 +1,16 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.10.0";
+  const VERSION = "0.12.0";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
+  const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
   const POPOVER_HOST_ID = "codex-model-rail-popover-host";
+  const SETTINGS_HOST_ID = "copicker-settings-host";
+  const SETTINGS_BUTTON_ID = "copicker-settings-nav-button";
+  const SETTINGS_SERVER_NAME = "copicker";
+  const SETTINGS_READ_TOOL = "copicker_settings";
+  const SETTINGS_SAVE_TOOL = "copicker_settings_save";
   const POPOVER_GAP = 12;
   const VIEWPORT_PADDING = 12;
   const TRIGGER_SELECTOR =
@@ -124,8 +130,529 @@
   }
 
   const CONFIG = normalizeConfig(window.__COPICKER_CONFIG__);
+  const SETTINGS_HTML = typeof window.__COPICKER_SETTINGS_HTML__ === "string"
+    ? window.__COPICKER_SETTINGS_HTML__
+    : "";
   delete window.__COPICKER_CONFIG__;
+  delete window.__COPICKER_SETTINGS_HTML__;
   const CONFIG_SIGNATURE = JSON.stringify(CONFIG);
+  installSettingsIntegration(SETTINGS_HTML);
+
+  function installSettingsIntegration(settingsHTML) {
+    if (window.top !== window.self || settingsHTML.length === 0) return null;
+
+    const existing = window[SETTINGS_GLOBAL_KEY];
+    if (existing?.version === VERSION && existing?.settingsHTML === settingsHTML) {
+      existing.sync?.();
+      return existing;
+    }
+    existing?.dispose?.();
+
+    const integration = {
+      version: VERSION,
+      settingsHTML,
+      observer: null,
+      themeObserver: null,
+      scheduled: false,
+      active: false,
+      button: null,
+      host: null,
+      frame: null,
+      currentThreadID: null,
+      pendingRequests: new Map(),
+      suppressedButtons: new Map(),
+      disposed: false,
+    };
+
+    function validThreadID(value) {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        String(value || ""),
+      );
+    }
+
+    function rememberVisibleThreadID() {
+      for (const marker of document.querySelectorAll(CONVERSATION_CONTEXT_SELECTOR)) {
+        const threadID = marker.getAttribute("data-above-composer-conversation-id");
+        if (validThreadID(threadID)) {
+          integration.currentThreadID = threadID;
+          return threadID;
+        }
+      }
+      return integration.currentThreadID;
+    }
+
+    function makeSettingsRequestID() {
+      if (typeof crypto?.randomUUID === "function") {
+        return `copicker-settings-${crypto.randomUUID()}`;
+      }
+      return `copicker-settings-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function sendSettingsAppServerRequest(method, params) {
+      const allowedMethods = new Set(["thread/loaded/list", "mcpServer/tool/call"]);
+      if (!allowedMethods.has(method)) {
+        return Promise.reject(new Error("CoPicker rejected an unsupported settings method."));
+      }
+
+      const bridge = window.electronBridge;
+      if (typeof bridge?.sendMessageFromView !== "function") {
+        return Promise.reject(new Error("Codex renderer bridge is unavailable."));
+      }
+
+      const id = makeSettingsRequestID();
+      return new Promise((resolve, reject) => {
+        const timeoutID = window.setTimeout(() => {
+          integration.pendingRequests.delete(id);
+          reject(new Error(`${method} timed out.`));
+        }, APP_SERVER_REQUEST_TIMEOUT_MS);
+        integration.pendingRequests.set(id, { method, resolve, reject, timeoutID });
+
+        try {
+          bridge.sendMessageFromView({
+            type: "mcp-request",
+            hostId: APP_SERVER_HOST_ID,
+            request: { id, method, params },
+            priority: "background",
+            source: "mcp",
+            timeoutMs: APP_SERVER_REQUEST_TIMEOUT_MS,
+            expiresAtMs: Date.now() + APP_SERVER_REQUEST_TIMEOUT_MS,
+          });
+        } catch (error) {
+          window.clearTimeout(timeoutID);
+          integration.pendingRequests.delete(id);
+          reject(error);
+        }
+      });
+    }
+
+    async function resolveSettingsThreadID() {
+      const remembered = rememberVisibleThreadID();
+      if (validThreadID(remembered)) return remembered;
+
+      const loaded = await sendSettingsAppServerRequest("thread/loaded/list", {
+        cursor: null,
+        limit: 100,
+      });
+      const threadID = Array.isArray(loaded?.data)
+        ? loaded.data.find(validThreadID) || null
+        : null;
+      if (!threadID) {
+        throw new Error("Open a Codex task before changing CoPicker settings.");
+      }
+      integration.currentThreadID = threadID;
+      return threadID;
+    }
+
+    async function callSettingsTool(name, args) {
+      if (name !== SETTINGS_READ_TOOL && name !== SETTINGS_SAVE_TOOL) {
+        throw new Error("Unsupported CoPicker settings tool.");
+      }
+      const threadID = await resolveSettingsThreadID();
+      return sendSettingsAppServerRequest("mcpServer/tool/call", {
+        threadId: threadID,
+        server: SETTINGS_SERVER_NAME,
+        tool: name,
+        arguments: args && typeof args === "object" ? args : {},
+      });
+    }
+
+    function respondToSettingsFrame(target, id, response) {
+      try {
+        target?.postMessage({ jsonrpc: "2.0", id, ...response }, "*");
+      } catch {
+        // The settings frame may have been removed while a request was in flight.
+      }
+    }
+
+    function handleSettingsMessage(event) {
+      const envelope = event.data;
+      if (
+        envelope?.hostId === APP_SERVER_HOST_ID &&
+        envelope?.type === "mcp-response"
+      ) {
+        const response = envelope.message;
+        const pending = integration.pendingRequests.get(response?.id);
+        if (!pending) return;
+        event.stopImmediatePropagation();
+        window.clearTimeout(pending.timeoutID);
+        integration.pendingRequests.delete(response.id);
+        if (response.error) {
+          const error = new Error(response.error.message || `${pending.method} failed.`);
+          error.code = response.error.code;
+          error.data = response.error.data;
+          pending.reject(error);
+        } else {
+          pending.resolve(response.result);
+        }
+        return;
+      }
+
+      const frameWindow = integration.frame?.contentWindow;
+      if (event.source !== frameWindow || envelope?.jsonrpc !== "2.0") return;
+      if (!Object.prototype.hasOwnProperty.call(envelope, "id")) return;
+      if (envelope.method !== "tools/call") {
+        respondToSettingsFrame(event.source, envelope.id, {
+          error: { code: -32601, message: "Method not found" },
+        });
+        return;
+      }
+
+      const name = envelope.params?.name;
+      const args = envelope.params?.arguments || {};
+      void callSettingsTool(name, args).then(
+        (result) => respondToSettingsFrame(event.source, envelope.id, { result }),
+        (error) => respondToSettingsFrame(event.source, envelope.id, {
+          error: {
+            code: Number.isInteger(error?.code) ? error.code : -32000,
+            message: error?.message || "CoPicker settings request failed.",
+            ...(error?.data == null ? {} : { data: error.data }),
+          },
+        }),
+      );
+    }
+
+    function systemSettingsAppearance() {
+      return window.matchMedia("(prefers-color-scheme: light)").matches
+        ? "light"
+        : "dark";
+    }
+
+    function settingsAppearance() {
+      const root = document.documentElement;
+      const explicitTheme = [
+        root.getAttribute("data-theme"),
+        root.getAttribute("data-color-scheme"),
+        root.className,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase();
+      if (/(^|\s)light($|\s)/.test(explicitTheme)) return "light";
+      if (/(^|\s)dark($|\s)/.test(explicitTheme)) return "dark";
+      const colorScheme = getComputedStyle(root).colorScheme.toLocaleLowerCase();
+      if (colorScheme === "light" || colorScheme === "dark") return colorScheme;
+      return systemSettingsAppearance();
+    }
+
+    function updateSettingsAppearance() {
+      if (!integration.host) return;
+      const appearance = settingsAppearance();
+      integration.host.setAttribute("data-appearance-resolved", appearance);
+      integration.host.style.colorScheme = appearance;
+      integration.host.style.background = appearance === "light"
+        ? "rgb(255, 255, 255)"
+        : "rgb(30, 30, 30)";
+      integration.frame?.contentWindow?.postMessage({
+        method: "copicker/theme",
+        params: { appearance },
+      }, "*");
+    }
+
+    function settingsAnchor() {
+      return document.querySelector(
+        'button[data-settings-panel-slug="browser-use"]',
+      ) || document.querySelector(
+        'button[data-settings-panel-slug="plugins-settings"]',
+      );
+    }
+
+    function nativeSettingsButton(anchor) {
+      const scope = anchor?.parentElement;
+      if (!scope) return null;
+      return [...scope.querySelectorAll('button[aria-label="CoPicker"]')].find(
+        (button) => button.id !== SETTINGS_BUTTON_ID,
+      ) || null;
+    }
+
+    function makeSettingsIcon() {
+      const namespace = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(namespace, "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("class", "icon-sm shrink-0");
+      const outline = document.createElementNS(namespace, "rect");
+      outline.setAttribute("x", "2.25");
+      outline.setAttribute("y", "2.25");
+      outline.setAttribute("width", "19.5");
+      outline.setAttribute("height", "19.5");
+      outline.setAttribute("rx", "4.25");
+      outline.setAttribute("stroke", "currentColor");
+      outline.setAttribute("stroke-width", "2");
+      outline.setAttribute("stroke-linejoin", "round");
+      svg.append(outline);
+      for (const y of [7, 12, 17]) {
+        for (const x of [7, 12, 17]) {
+          const dot = document.createElementNS(namespace, "circle");
+          dot.setAttribute("cx", String(x));
+          dot.setAttribute("cy", String(y));
+          dot.setAttribute("r", "1.15");
+          dot.setAttribute("fill", "currentColor");
+          svg.append(dot);
+        }
+      }
+      return svg;
+    }
+
+    function createSettingsButton(anchor) {
+      const button = anchor.cloneNode(true);
+      button.id = SETTINGS_BUTTON_ID;
+      button.setAttribute("type", "button");
+      button.setAttribute("aria-label", "CoPicker");
+      button.setAttribute("data-settings-panel-slug", "copicker");
+      button.removeAttribute("disabled");
+      button.removeAttribute("aria-current");
+      const oldIcon = button.querySelector("svg, img");
+      oldIcon?.replaceWith(makeSettingsIcon());
+      const labels = [...button.querySelectorAll("span")].filter(
+        (element) => element.children.length === 0,
+      );
+      const label = labels.at(-1);
+      if (label) {
+        label.textContent = "CoPicker";
+      } else {
+        const fallbackLabel = document.createElement("span");
+        fallbackLabel.className = "truncate";
+        fallbackLabel.textContent = "CoPicker";
+        button.append(fallbackLabel);
+      }
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        showSettingsPanel();
+      });
+      anchor.insertAdjacentElement("afterend", button);
+      integration.button = button;
+      return button;
+    }
+
+    function restoreNativeButtons() {
+      for (const [button, previous] of integration.suppressedButtons) {
+        if (!button.isConnected) continue;
+        if (previous.value.length > 0) {
+          button.style.setProperty("background-color", previous.value, previous.priority);
+        } else {
+          button.style.removeProperty("background-color");
+        }
+      }
+      integration.suppressedButtons.clear();
+    }
+
+    function updateSettingsButtonState() {
+      const button = integration.button;
+      if (!button) return;
+      button.classList.toggle("bg-primary-ghost-hover", integration.active);
+      if (integration.active) {
+        button.setAttribute("aria-current", "page");
+        const scope = button.parentElement;
+        for (const nativeButton of scope?.querySelectorAll(
+          "button[data-settings-panel-slug]",
+        ) || []) {
+          if (nativeButton === button || integration.suppressedButtons.has(nativeButton)) {
+            continue;
+          }
+          integration.suppressedButtons.set(nativeButton, {
+            value: nativeButton.style.getPropertyValue("background-color"),
+            priority: nativeButton.style.getPropertyPriority("background-color"),
+          });
+          nativeButton.style.setProperty("background-color", "transparent", "important");
+        }
+      } else {
+        button.removeAttribute("aria-current");
+        restoreNativeButtons();
+      }
+    }
+
+    function settingsContentRect(anchor) {
+      let child = anchor;
+      while (child?.parentElement && child.parentElement !== document.body) {
+        const parent = child.parentElement;
+        const parentRect = parent.getBoundingClientRect();
+        if (parentRect.width >= window.innerWidth * 0.62) {
+          const sibling = [...parent.children]
+            .filter((element) => element !== child && element instanceof HTMLElement)
+            .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+            .filter(({ rect }) => rect.width >= window.innerWidth * 0.38 && rect.height > 120)
+            .sort((left, right) => right.rect.width - left.rect.width)[0];
+          if (sibling) return sibling.rect;
+        }
+        child = parent;
+      }
+
+      const anchorRect = anchor.getBoundingClientRect();
+      let sidebarRect = anchorRect;
+      for (let element = anchor.parentElement; element; element = element.parentElement) {
+        const rect = element.getBoundingClientRect();
+        if (
+          rect.width >= anchorRect.width &&
+          rect.width <= Math.min(440, window.innerWidth * 0.48) &&
+          rect.height >= window.innerHeight * 0.62
+        ) {
+          sidebarRect = rect;
+        }
+      }
+      const left = Math.max(sidebarRect.right, anchorRect.right + 8);
+      return {
+        left,
+        top: Math.max(0, sidebarRect.top),
+        right: window.innerWidth,
+        bottom: Math.min(window.innerHeight, sidebarRect.bottom || window.innerHeight),
+        width: Math.max(0, window.innerWidth - left),
+        height: Math.max(0, Math.min(window.innerHeight, sidebarRect.bottom) - sidebarRect.top),
+      };
+    }
+
+    function positionSettingsPanel() {
+      const anchor = settingsAnchor();
+      const host = integration.host;
+      if (!anchor || !host) return;
+      const rect = settingsContentRect(anchor);
+      const values = {
+        left: `${Math.round(rect.left)}px`,
+        top: `${Math.round(rect.top)}px`,
+        width: `${Math.round(rect.width)}px`,
+        height: `${Math.round(rect.height)}px`,
+      };
+      for (const [property, value] of Object.entries(values)) {
+        if (host.style[property] !== value) host.style[property] = value;
+      }
+    }
+
+    function ensureSettingsPanel() {
+      if (integration.host?.isConnected) return integration.host;
+      const host = document.createElement("section");
+      host.id = SETTINGS_HOST_ID;
+      host.setAttribute("aria-label", "CoPicker settings");
+      host.style.position = "fixed";
+      host.style.zIndex = "2147483000";
+      host.style.overflow = "hidden";
+      host.style.border = "0";
+
+      const frame = document.createElement("iframe");
+      frame.title = "CoPicker settings";
+      frame.setAttribute("sandbox", "allow-scripts");
+      frame.style.display = "block";
+      frame.style.width = "100%";
+      frame.style.height = "100%";
+      frame.style.border = "0";
+      frame.style.background = "transparent";
+      frame.srcdoc = integration.settingsHTML;
+      frame.addEventListener("load", updateSettingsAppearance);
+      host.append(frame);
+      document.body.append(host);
+      integration.host = host;
+      integration.frame = frame;
+      updateSettingsAppearance();
+      return host;
+    }
+
+    function showSettingsPanel() {
+      integration.active = true;
+      updateSettingsButtonState();
+      ensureSettingsPanel();
+      positionSettingsPanel();
+    }
+
+    function hideSettingsPanel({ removeButton = false } = {}) {
+      integration.active = false;
+      updateSettingsButtonState();
+      integration.host?.remove();
+      integration.host = null;
+      integration.frame = null;
+      if (removeButton) {
+        integration.button?.remove();
+        integration.button = null;
+      }
+    }
+
+    function syncSettingsNow() {
+      integration.scheduled = false;
+      rememberVisibleThreadID();
+      if (integration.button && !integration.button.isConnected) {
+        integration.button = null;
+      }
+
+      const anchor = settingsAnchor();
+      if (!anchor) {
+        hideSettingsPanel({ removeButton: true });
+        return;
+      }
+      if (nativeSettingsButton(anchor)) {
+        hideSettingsPanel({ removeButton: true });
+        return;
+      }
+      if (!integration.button) createSettingsButton(anchor);
+      if (integration.active) {
+        updateSettingsButtonState();
+        ensureSettingsPanel();
+        positionSettingsPanel();
+      }
+    }
+
+    function scheduleSettingsSync() {
+      if (integration.scheduled || integration.disposed) return;
+      integration.scheduled = true;
+      requestAnimationFrame(syncSettingsNow);
+    }
+
+    function handleSettingsNavigation(event) {
+      if (!integration.active || !(event.target instanceof Element)) return;
+      const clickedButton = event.target.closest("button");
+      if (!clickedButton || clickedButton === integration.button) return;
+      if (
+        clickedButton.hasAttribute("data-settings-panel-slug") ||
+        integration.button?.parentElement?.contains(clickedButton)
+      ) {
+        hideSettingsPanel();
+      }
+    }
+
+    function handleSettingsKeyDown(event) {
+      if (!integration.active || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      hideSettingsPanel();
+      integration.button?.focus();
+    }
+
+    integration.sync = scheduleSettingsSync;
+    integration.dispose = () => {
+      integration.disposed = true;
+      integration.observer?.disconnect();
+      integration.themeObserver?.disconnect();
+      window.removeEventListener("message", handleSettingsMessage, true);
+      window.removeEventListener("resize", scheduleSettingsSync);
+      document.removeEventListener("click", handleSettingsNavigation, true);
+      document.removeEventListener("keydown", handleSettingsKeyDown, true);
+      for (const pending of integration.pendingRequests.values()) {
+        window.clearTimeout(pending.timeoutID);
+        pending.reject(new Error("CoPicker settings integration was disposed."));
+      }
+      integration.pendingRequests.clear();
+      hideSettingsPanel({ removeButton: true });
+      if (window[SETTINGS_GLOBAL_KEY] === integration) {
+        delete window[SETTINGS_GLOBAL_KEY];
+      }
+    };
+
+    integration.observer = new MutationObserver(scheduleSettingsSync);
+    integration.observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+    });
+    integration.themeObserver = new MutationObserver(updateSettingsAppearance);
+    integration.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "style", "data-theme", "data-color-scheme"],
+    });
+    window.addEventListener("message", handleSettingsMessage, true);
+    window.addEventListener("resize", scheduleSettingsSync);
+    document.addEventListener("click", handleSettingsNavigation, true);
+    document.addEventListener("keydown", handleSettingsKeyDown, true);
+    window[SETTINGS_GLOBAL_KEY] = integration;
+    scheduleSettingsSync();
+    return integration;
+  }
   const ROWS = ALL_ROWS.filter((row) => CONFIG.visibleModels.includes(row.id));
 
   const ROW_HEIGHT = 48;

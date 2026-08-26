@@ -3,6 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; frame-src 'none'"
+    />
     <title>CoPicker 设置</title>
     <style>
       :root {
@@ -624,6 +628,27 @@
           };
         }
 
+        function toolResultFailure(value) {
+          const candidates = [
+            value,
+            value && value.result,
+            value && value.toolOutput,
+          ];
+          const failed = candidates.find(
+            (candidate) => candidate && candidate.isError === true
+          );
+          if (!failed) return null;
+          const message = Array.isArray(failed.content)
+            ? failed.content.find(
+                (item) => item && item.type === "text" && typeof item.text === "string"
+              )?.text
+            : null;
+          const error = new Error(message || "CoPicker settings request failed.");
+          error.code = failed._meta?.["copicker/errorCode"] ?? -32000;
+          error.data = normalizedSnapshot(failed);
+          return error;
+        }
+
         function samePreferences(left, right) {
           return Boolean(left && right) &&
             left.enabled === right.enabled &&
@@ -683,6 +708,8 @@
               };
               setStatus("正在保存…");
               const result = await callTool(SAVE_TOOL, saveArguments(requested));
+              const failure = toolResultFailure(result);
+              if (failure) throw failure;
               const saved = normalizedSnapshot(result);
               if (!saved) throw new Error("保存响应缺少有效设置快照。");
               authoritative = saved;
@@ -748,6 +775,13 @@
 
         window.addEventListener("message", (event) => {
           const message = event.data;
+          if (message?.method === "copicker/theme") {
+            const appearance = message.params?.appearance;
+            if (appearance === "light" || appearance === "dark") {
+              document.documentElement.style.colorScheme = appearance;
+            }
+            return;
+          }
           if (!message || message.jsonrpc !== "2.0") return;
           if (
             Object.prototype.hasOwnProperty.call(message, "id") &&

@@ -3,15 +3,21 @@ import Foundation
 public enum InjectionExpressionBuilder {
     public static func makeInstallerExpression(
         payload: String,
-        settings: CopickerSettings = .defaults
+        settings: CopickerSettings = .defaults,
+        settingsHTML: String = ""
     ) throws -> String {
         let encoder = JSONEncoder()
         let settingsData = try encoder.encode(settings)
         guard let settingsLiteral = String(data: settingsData, encoding: .utf8) else {
             throw InjectionExpressionError.payloadEncodingFailed
         }
+        let settingsHTMLData = try encoder.encode(settingsHTML)
+        guard let settingsHTMLLiteral = String(data: settingsHTMLData, encoding: .utf8) else {
+            throw InjectionExpressionError.payloadEncodingFailed
+        }
         let configuredPayload = """
         globalThis.__COPICKER_CONFIG__ = \(settingsLiteral);
+        globalThis.__COPICKER_SETTINGS_HTML__ = \(settingsHTMLLiteral);
         \(payload)
         """
         let payloadData = try encoder.encode(configuredPayload)
@@ -96,13 +102,21 @@ public enum InjectionExpressionBuilder {
     (async () => {
       const stateKey = Symbol.for("com.jonas.codex-model-rail.main-state");
       const globalKey = "__CODEX_MODEL_RAIL__";
-      const hostIDs = ["codex-model-rail-host", "codex-model-rail-popover-host"];
+      const settingsGlobalKey = "__COPICKER_SETTINGS_INTEGRATION__";
+      const hostIDs = [
+        "codex-model-rail-host",
+        "codex-model-rail-popover-host",
+        "copicker-settings-host",
+        "copicker-settings-nav-button"
+      ];
       const cleanupSource = `
         (() => {
           const current = window["${globalKey}"];
+          const settingsIntegration = window["${settingsGlobalKey}"];
           const hadState = Boolean(current);
           const hadHost = ${JSON.stringify(hostIDs)}.some((id) => document.getElementById(id));
           current?.dispose?.();
+          settingsIntegration?.dispose?.();
           for (const id of ${JSON.stringify(hostIDs)}) document.getElementById(id)?.remove();
           return { hadState, hadHost };
         })()

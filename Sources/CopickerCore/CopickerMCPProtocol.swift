@@ -81,7 +81,12 @@ public struct CopickerMCPProtocol {
                     ))
                 }
             } catch let error as CopickerSettingsError {
-                return encode(settingsErrorResponse(id: requestID, error: error))
+                switch error {
+                case let .revisionConflict(current):
+                    result = settingsConflictToolResult(current)
+                case .unsupportedSchemaVersion, .invalidRevision, .noVisibleModels:
+                    return encode(settingsErrorResponse(id: requestID, error: error))
+                }
             } catch {
                 return encode(errorResponse(
                     id: requestID,
@@ -297,6 +302,22 @@ public struct CopickerMCPProtocol {
             ],
             "structuredContent": settingsJSONObject(settings),
             "isError": false,
+        ]
+    }
+
+    private func settingsConflictToolResult(
+        _ current: CopickerSettings
+    ) -> [String: Any] {
+        [
+            "content": [
+                [
+                    "type": "text",
+                    "text": "CoPicker settings changed in another window.",
+                ],
+            ],
+            "structuredContent": settingsJSONObject(current),
+            "isError": true,
+            "_meta": ["copicker/errorCode": -32009],
         ]
     }
 

@@ -102,7 +102,7 @@ Installation is limited to these user-scoped paths:
 
 The source checkout may be removed after installation. The stable executable, resource bundle, and local plugin marketplace under `Application Support` are what the LaunchAgent and settings plugin use. `settings.json` contains only CoPicker UI preferences, is written with user-only `0600` permissions, and persists across ordinary reinstalls and watcher disable/enable cycles.
 
-Starting with the current `0.12.0-dev` installer, the script registers `copicker-local` with the Codex CLI and installs `copicker@copicker-local`. The settings entry appears the next time Codex is opened. Updating with a newer CoPicker installer refreshes the stable plugin package and reinstalls that same plugin ID; it does not create duplicate settings entries. The published `v0.11.0` installer does not create the marketplace directory or settings entry.
+Starting with the current `0.12.0-dev` installer, the script registers `copicker-local` with the Codex CLI and installs `copicker@copicker-local`. The settings entry appears after the updated payload is injected, normally when Codex is next opened. Current Codex builds may keep local plugin settings entrypoints behind a remote allowlist, so the injected payload provides a matching sidebar fallback and automatically yields if the native entry is available. Updating with a newer CoPicker installer refreshes the stable plugin package and reinstalls that same plugin ID; it does not create duplicate settings entries. The published `v0.11.0` installer does not create the marketplace directory or settings entry.
 
 ## Permissions and signatures
 

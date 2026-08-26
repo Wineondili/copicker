@@ -50,10 +50,12 @@ struct CopickerCLI {
             bundleIdentifier: installation.bundleIdentifier
         )
         let payload = try loadPayload()
+        let settingsHTML = try loadSettingsHTML()
         let settings = try loadSettings()
         _ = try InjectionExpressionBuilder.makeInstallerExpression(
             payload: payload,
-            settings: settings
+            settings: settings,
+            settingsHTML: settingsHTML
         )
 
         print("Copicker \(ProjectInfo.version)")
@@ -64,6 +66,7 @@ struct CopickerCLI {
         print("Node CLI Inspector: \(installation.fuseReport.nodeCLIInspectionEnabled ? "enabled" : "disabled")")
         print("ASAR integrity enforcement: \(installation.fuseReport.embeddedASARIntegrityEnabled ? "enabled" : "disabled")")
         print("Copicker payload: \(payload.utf8.count) bytes")
+        print("CoPicker settings fallback: \(settingsHTML.utf8.count) bytes")
         print("CoPicker enabled: \(settings.enabled ? "yes" : "no")")
         print("Visible models: \(settings.visibleModels.map(\.displayName).joined(separator: ", "))")
         print("Preferred placement: \(settings.preferredPlacement.rawValue)")
@@ -530,7 +533,8 @@ struct CopickerCLI {
     ) async throws -> InjectionExecution {
         let expression = try InjectionExpressionBuilder.makeInstallerExpression(
             payload: payload,
-            settings: settings
+            settings: settings,
+            settingsHTML: try loadSettingsHTML()
         )
         let context = try await openInspectorContext(
             expectedProcessIdentifier: expectedProcessIdentifier,
@@ -654,6 +658,16 @@ struct CopickerCLI {
 
     private static func loadPayload() throws -> String {
         guard let url = Bundle.module.url(forResource: "model-rail", withExtension: "js") else {
+            throw CLIError.payloadMissing
+        }
+        return try String(contentsOf: url, encoding: .utf8)
+    }
+
+    private static func loadSettingsHTML() throws -> String {
+        guard let url = Bundle.module.url(
+            forResource: "copicker-settings-v2",
+            withExtension: "html"
+        ) else {
             throw CLIError.payloadMissing
         }
         return try String(contentsOf: url, encoding: .utf8)
