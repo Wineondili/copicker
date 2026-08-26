@@ -8,6 +8,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 - [Install, update, reinstall, recover, or uninstall](docs/installation.md)
 - [Use the model and effort selector](docs/usage.md)
+- [Develop the native CoPicker settings plugin](docs/plugin-settings.md)
 - [Build, test, and continue development](docs/development.md)
 
 ## Goals

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-26 21:56:53 +0800
+
+- Added a private stdio MCP server mode with an app-only `CoPicker` settings entrypoint, versioned MCP App resource, exact empty network allowlists, and themed data-URI server icons.
+- Added a transparent, network-free settings shell, pure JSON-RPC protocol coverage, plugin-package contract tests, release-bundle verification, and a documented boundary for the later settings and installation phases.
+
 ## 2026-08-26 21:52:34 +0800
 
 - Added a distributable CoPicker plugin package with an MCP server launcher, repository metadata, and a validated Codex plugin manifest.
