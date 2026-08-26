@@ -284,7 +284,69 @@
       }
 
       .apply-note {
-        margin-top: 12px;
+        margin-top: 4px;
+      }
+
+      .apply-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 22px;
+        margin-top: 20px;
+        padding: 15px 16px;
+        border: 1px solid var(--divider);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+
+      .apply-copy {
+        min-width: 0;
+      }
+
+      .apply-result {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .apply-result:empty {
+        display: none;
+      }
+
+      .apply-result[data-tone="success"] {
+        color: var(--accent);
+      }
+
+      .apply-result[data-tone="error"] {
+        color: var(--error);
+      }
+
+      .apply-now {
+        min-width: 88px;
+        min-height: 34px;
+        padding: 7px 14px;
+        border: 0;
+        border-radius: 7px;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .apply-now:hover:not(:disabled) {
+        filter: brightness(1.06);
+      }
+
+      .apply-now:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .apply-now:disabled {
+        cursor: default;
+        opacity: 0.48;
       }
 
       .error-panel {
@@ -483,7 +545,14 @@
               <label class="segment"><input type="radio" name="appearance" value="dark" /><span>深色</span></label>
             </div>
           </fieldset>
-          <p class="apply-note">修改会持久化保存，并在下次注入时生效；通常重新打开 Codex 后即可看到。</p>
+          <div class="apply-actions">
+            <div class="apply-copy">
+              <h2>应用设置</h2>
+              <p class="apply-note">设置会自动保存，默认在下次启动 Codex（下一次注入）时生效。无需重启时，可在保存完成后立即应用到当前 Codex。</p>
+              <p id="apply-result" class="apply-result" data-tone="normal" aria-live="polite"></p>
+            </div>
+            <button id="apply-now" class="apply-now" type="button" disabled>立即应用</button>
+          </div>
           <div id="error-panel" class="error-panel" data-visible="false" role="alert">
             <span id="error-message"></span>
             <button id="retry" class="retry" type="button">重新读取</button>
@@ -498,6 +567,7 @@
 
         const READ_TOOL = "copicker_settings";
         const SAVE_TOOL = "copicker_settings_save";
+        const APPLY_TOOL = "copicker_settings_apply";
         const MODEL_IDS = [
           "sol",
           "terra",
@@ -509,12 +579,15 @@
         const PLACEMENTS = ["top", "left", "right"];
         const APPEARANCES = ["codex", "system", "light", "dark"];
         const BRIDGE_TIMEOUT_MS = 1800;
+        const APPLY_BRIDGE_TIMEOUT_MS = 12000;
 
         const main = document.querySelector("main");
         const saveState = document.querySelector("#save-state");
         const errorPanel = document.querySelector("#error-panel");
         const errorMessage = document.querySelector("#error-message");
         const retryButton = document.querySelector("#retry");
+        const applyButton = document.querySelector("#apply-now");
+        const applyResult = document.querySelector("#apply-result");
         const enabledInput = document.querySelector("#enabled");
         const modelInputs = [...document.querySelectorAll('input[name="visible-model"]')];
         const placementInputs = [...document.querySelectorAll('input[name="placement"]')];
@@ -526,6 +599,8 @@
         let authoritative = null;
         let draft = null;
         let saving = false;
+        let applying = false;
+        let retryApply = false;
         let blockedByConflict = false;
 
         function setStatus(message, tone = "normal") {
@@ -533,15 +608,31 @@
           saveState.dataset.tone = tone;
         }
 
-        function showError(message, retryLabel = "重新读取") {
+        function showError(message, retryLabel = "重新读取", applyRetry = false) {
           errorMessage.textContent = message;
           retryButton.textContent = retryLabel;
+          retryApply = applyRetry;
           errorPanel.dataset.visible = "true";
         }
 
         function clearError() {
           errorPanel.dataset.visible = "false";
           errorMessage.textContent = "";
+          retryApply = false;
+        }
+
+        function setApplyResult(message = "", tone = "normal") {
+          applyResult.textContent = message;
+          applyResult.dataset.tone = tone;
+        }
+
+        function updateApplyAvailability() {
+          const ready = Boolean(authoritative && draft) &&
+            samePreferences(authoritative, draft) &&
+            !saving && !applying && !blockedByConflict &&
+            main.dataset.loading !== "true";
+          applyButton.disabled = !ready;
+          applyButton.textContent = applying ? "正在应用…" : "立即应用";
         }
 
         function setLoading(loading) {
@@ -549,9 +640,10 @@
           allInputs.forEach((input) => {
             input.disabled = loading;
           });
+          updateApplyAvailability();
         }
 
-        function rpc(method, params) {
+        function rpc(method, params, timeoutMs = BRIDGE_TIMEOUT_MS) {
           const id = nextRequestID++;
           return new Promise((resolve, reject) => {
             const timeout = window.setTimeout(() => {
@@ -559,15 +651,25 @@
               const error = new Error("CoPicker settings bridge timed out.");
               error.code = "BRIDGE_TIMEOUT";
               reject(error);
-            }, BRIDGE_TIMEOUT_MS);
+            }, timeoutMs);
             pendingRequests.set(id, { resolve, reject, timeout });
             window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
           });
         }
 
         async function callTool(name, args = {}) {
+          if (
+            name === APPLY_TOOL && window.openai &&
+            typeof window.openai.callTool === "function"
+          ) {
+            return window.openai.callTool(name, args);
+          }
           try {
-            return await rpc("tools/call", { name, arguments: args });
+            return await rpc(
+              "tools/call",
+              { name, arguments: args },
+              name === APPLY_TOOL ? APPLY_BRIDGE_TIMEOUT_MS : BRIDGE_TIMEOUT_MS
+            );
           } catch (rpcError) {
             if (window.openai && typeof window.openai.callTool === "function") {
               return window.openai.callTool(name, args);
@@ -626,6 +728,14 @@
             preferredPlacement: candidate.preferredPlacement,
             appearance: candidate.appearance,
           };
+        }
+
+        function normalizedApplyResult(value) {
+          const candidate = snapshotCandidate(value);
+          return candidate && candidate.applied === true &&
+            candidate.applyMode === "current-process"
+            ? candidate
+            : null;
         }
 
         function toolResultFailure(value) {
@@ -699,6 +809,7 @@
         async function flushSaveQueue() {
           if (saving || blockedByConflict || !authoritative || !draft) return;
           saving = true;
+          updateApplyAvailability();
           clearError();
           try {
             while (!samePreferences(authoritative, draft)) {
@@ -733,6 +844,7 @@
             }
           } finally {
             saving = false;
+            updateApplyAvailability();
           }
         }
 
@@ -746,7 +858,44 @@
             return;
           }
           draft = nextDraft;
+          setApplyResult();
+          updateApplyAvailability();
           void flushSaveQueue();
+        }
+
+        async function applySettingsNow() {
+          if (
+            applying || saving || blockedByConflict || !authoritative || !draft ||
+            !samePreferences(authoritative, draft)
+          ) {
+            return;
+          }
+          applying = true;
+          updateApplyAvailability();
+          clearError();
+          setApplyResult();
+          setStatus("正在应用到当前 Codex…");
+          try {
+            const result = await callTool(APPLY_TOOL);
+            const failure = toolResultFailure(result);
+            if (failure) throw failure;
+            if (!normalizedApplyResult(result)) {
+              throw new Error("应用响应缺少有效结果。");
+            }
+            setStatus("已应用到当前 Codex");
+            setApplyResult("当前窗口已更新，无需重启。", "success");
+          } catch (error) {
+            setStatus("立即应用失败", "error");
+            setApplyResult("未立即应用；已保存设置仍会在下次启动时生效。", "error");
+            showError(
+              error && error.message ? error.message : "无法应用到当前 Codex。",
+              "重试应用",
+              true
+            );
+          } finally {
+            applying = false;
+            updateApplyAvailability();
+          }
         }
 
         async function loadSettings() {
@@ -803,11 +952,20 @@
         });
 
         allInputs.forEach((input) => input.addEventListener("change", onPreferenceChange));
+        applyButton.addEventListener("click", () => {
+          void applySettingsNow();
+        });
         retryButton.addEventListener("click", () => {
+          if (retryApply) {
+            clearError();
+            void applySettingsNow();
+            return;
+          }
           if (blockedByConflict) {
             blockedByConflict = false;
             clearError();
             setStatus("已保存 · 下次注入生效");
+            updateApplyAvailability();
             return;
           }
           if (authoritative && draft && !samePreferences(authoritative, draft)) {
@@ -826,6 +984,7 @@
           writeForm(initialSnapshot);
           setLoading(false);
           setStatus("已保存 · 下次注入生效");
+          updateApplyAvailability();
         }
         void loadSettings();
       })();
