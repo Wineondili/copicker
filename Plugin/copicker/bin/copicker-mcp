@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+copicker_executable="${HOME}/Library/Application Support/Copicker/bin/copicker"
+
+if [ ! -x "$copicker_executable" ]; then
+  echo "CoPicker is not installed. Run ./script/install.sh from the tagged source checkout first." >&2
+  exit 1
+fi
+
+exec "$copicker_executable" mcp-server

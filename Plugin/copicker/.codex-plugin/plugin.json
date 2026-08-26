@@ -1,0 +1,35 @@
+{
+  "name": "copicker",
+  "version": "0.11.0",
+  "description": "Adds CoPicker controls and settings to Codex desktop.",
+  "author": {
+    "name": "Wineondili",
+    "url": "https://github.com/Wineondili"
+  },
+  "homepage": "https://github.com/Wineondili/copicker",
+  "repository": "https://github.com/Wineondili/copicker",
+  "license": "Proprietary",
+  "keywords": [
+    "codex",
+    "model-picker",
+    "reasoning-effort"
+  ],
+  "interface": {
+    "displayName": "CoPicker",
+    "shortDescription": "Model and reasoning controls for Codex desktop.",
+    "longDescription": "CoPicker adds a compact model and reasoning-effort selector to Codex desktop and provides an in-app settings surface.",
+    "developerName": "Wineondili",
+    "category": "Engineering",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Open CoPicker settings."
+    ],
+    "websiteURL": "https://github.com/Wineondili/copicker",
+    "logo": "./assets/model-picker-grid-light.svg",
+    "logoDark": "./assets/model-picker-grid-dark.svg",
+    "screenshots": []
+  },
+  "mcpServers": "./.mcp.json"
+}
