@@ -14,9 +14,9 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The selector and watcher behavior frozen in Copicker `0.9.0` is live-verified on Apple silicon against Codex `26.818.41705` (build `6971`), including guarded automatic injection after Codex restarts and Inspector shutdown after injection. The renderer payload keeps its independent `0.9.3` compatibility identifier so an already injected hook remains idempotent across this CLI release. Autostart remains opt-in and is never enabled by the default read-only command.
+The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified on Apple silicon against Codex `26.818.41705` (build `6971`), including guarded automatic injection after Codex restarts and Inspector shutdown after injection. The renderer payload keeps its independent `0.9.3` compatibility identifier so an already injected hook remains idempotent across this CLI release. Autostart remains opt-in and is never enabled by the default read-only command.
 
-`v0.9.0` is the public pre-release baseline. The numerically higher `v0.10.1-dev` tag remains available only as an immutable historical development snapshot; it is not the recommended installation version.
+`v0.11.0` is the public pre-release baseline. The earlier `v0.10.1-dev` tag remains available only as an immutable historical development snapshot; it is not the recommended installation version.
 
 - The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
 - Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
@@ -42,11 +42,11 @@ The selector and watcher behavior frozen in Copicker `0.9.0` is live-verified on
 
 ## Install on another Mac
 
-Copicker `0.9.0` is distributed as source in this pre-release. The recommended installation pins the exact release tag, builds a native release executable with SwiftPM, performs the read-only compatibility check, and then explicitly enables the user LaunchAgent:
+Copicker `0.11.0` is distributed as source in this pre-release. The recommended installation pins the exact release tag, builds a native release executable with SwiftPM, performs the read-only compatibility check, and then explicitly enables the user LaunchAgent:
 
 ```bash
 xcode-select --install
-git clone --branch v0.9.0 --depth 1 https://github.com/Wineondili/copicker.git
+git clone --branch v0.11.0 --depth 1 https://github.com/Wineondili/copicker.git
 cd copicker
 ./script/install.sh
 ```

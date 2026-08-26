@@ -1,6 +1,6 @@
 # Installing Copicker on another Mac
 
-Copicker `0.9.0` is a source-distributed pre-release. Building it on the target Mac avoids distributing an unsigned or non-notarized executable and produces a native binary for that machine.
+Copicker `0.11.0` is a source-distributed pre-release. Building it on the target Mac avoids distributing an unsigned or non-notarized executable and produces a native binary for that machine.
 
 ## Compatibility boundary
 
@@ -23,7 +23,7 @@ xcode-select --install
 Clone the exact release tag and run the installer as the logged-in user:
 
 ```bash
-git clone --branch v0.9.0 --depth 1 https://github.com/Wineondili/copicker.git
+git clone --branch v0.11.0 --depth 1 https://github.com/Wineondili/copicker.git
 cd copicker
 ./script/install.sh
 ```
@@ -88,7 +88,7 @@ From an existing checkout, fetch the desired tag, check it out, and rerun the in
 
 ```bash
 git fetch origin --tags
-git checkout v0.9.0
+git checkout v0.11.0
 ./script/install.sh
 ```
 
