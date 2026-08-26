@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.0";
+  const VERSION = "0.12.1";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -148,9 +148,14 @@
     }
     existing?.dispose?.();
 
+    const fallbackDocument = new DOMParser().parseFromString(settingsHTML, "text/html");
+    fallbackDocument.querySelectorAll("script").forEach((script) => script.remove());
+    fallbackDocument.documentElement.dataset.copickerSettingsController = "parent";
+
     const integration = {
       version: VERSION,
       settingsHTML,
+      fallbackHTML: `<!doctype html>\n${fallbackDocument.documentElement.outerHTML}`,
       observer: null,
       themeObserver: null,
       scheduled: false,
@@ -158,6 +163,7 @@
       button: null,
       host: null,
       frame: null,
+      frameController: null,
       currentThreadID: null,
       pendingRequests: new Map(),
       suppressedButtons: new Map(),
@@ -256,12 +262,298 @@
       });
     }
 
-    function respondToSettingsFrame(target, id, response) {
-      try {
-        target?.postMessage({ jsonrpc: "2.0", id, ...response }, "*");
-      } catch {
-        // The settings frame may have been removed while a request was in flight.
+    function settingsSnapshotCandidate(value) {
+      const candidates = [
+        value?.structuredContent,
+        value?.result?.structuredContent,
+        value?.toolOutput?.structuredContent,
+        value?.data,
+        value,
+      ];
+      return candidates.find(
+        (candidate) => candidate && typeof candidate === "object",
+      ) || null;
+    }
+
+    function normalizedSettingsSnapshot(value) {
+      const candidate = settingsSnapshotCandidate(value);
+      if (!candidate) return null;
+      const modelIDs = ALL_ROWS.map((row) => row.id);
+      const visibleModels = Array.isArray(candidate.visibleModels)
+        ? modelIDs.filter((id) => candidate.visibleModels.includes(id))
+        : [];
+      if (
+        !Number.isInteger(candidate.schemaVersion) ||
+        !Number.isInteger(candidate.revision) ||
+        typeof candidate.enabled !== "boolean" ||
+        visibleModels.length === 0 ||
+        !["top", "left", "right"].includes(candidate.preferredPlacement) ||
+        !["codex", "system", "light", "dark"].includes(candidate.appearance)
+      ) {
+        return null;
       }
+      return {
+        schemaVersion: candidate.schemaVersion,
+        revision: candidate.revision,
+        enabled: candidate.enabled,
+        visibleModels,
+        preferredPlacement: candidate.preferredPlacement,
+        appearance: candidate.appearance,
+      };
+    }
+
+    function settingsToolFailure(value) {
+      const candidates = [value, value?.result, value?.toolOutput];
+      const failed = candidates.find((candidate) => candidate?.isError === true);
+      if (!failed) return null;
+      const message = Array.isArray(failed.content)
+        ? failed.content.find(
+            (item) => item?.type === "text" && typeof item.text === "string",
+          )?.text
+        : null;
+      const error = new Error(message || "CoPicker settings request failed.");
+      error.code = failed._meta?.["copicker/errorCode"] ?? -32000;
+      error.data = normalizedSettingsSnapshot(failed);
+      return error;
+    }
+
+    function sameSettingsPreferences(left, right) {
+      return Boolean(left && right) &&
+        left.enabled === right.enabled &&
+        left.preferredPlacement === right.preferredPlacement &&
+        left.appearance === right.appearance &&
+        left.visibleModels.length === right.visibleModels.length &&
+        left.visibleModels.every(
+          (model, index) => model === right.visibleModels[index],
+        );
+    }
+
+    function installSettingsFrameController(frame) {
+      const frameDocument = frame.contentDocument;
+      const main = frameDocument?.querySelector("main");
+      const saveState = frameDocument?.querySelector("#save-state");
+      const errorPanel = frameDocument?.querySelector("#error-panel");
+      const errorMessage = frameDocument?.querySelector("#error-message");
+      const retryButton = frameDocument?.querySelector("#retry");
+      const enabledInput = frameDocument?.querySelector("#enabled");
+      const modelInputs = [
+        ...(frameDocument?.querySelectorAll('input[name="visible-model"]') || []),
+      ];
+      const placementInputs = [
+        ...(frameDocument?.querySelectorAll('input[name="placement"]') || []),
+      ];
+      const appearanceInputs = [
+        ...(frameDocument?.querySelectorAll('input[name="appearance"]') || []),
+      ];
+      if (
+        !main || !saveState || !errorPanel || !errorMessage || !retryButton ||
+        !enabledInput || modelInputs.length === 0 || placementInputs.length === 0 ||
+        appearanceInputs.length === 0
+      ) {
+        return null;
+      }
+
+      const allInputs = [
+        enabledInput,
+        ...modelInputs,
+        ...placementInputs,
+        ...appearanceInputs,
+      ];
+      const listeners = [];
+      let authoritative = null;
+      let draft = null;
+      let saving = false;
+      let blockedByConflict = false;
+      let disposed = false;
+
+      function listen(target, type, handler) {
+        target.addEventListener(type, handler);
+        listeners.push(() => target.removeEventListener(type, handler));
+      }
+
+      function setStatus(message, tone = "normal") {
+        if (disposed) return;
+        saveState.textContent = message;
+        saveState.dataset.tone = tone;
+      }
+
+      function showError(message, retryLabel = "重新读取") {
+        if (disposed) return;
+        errorMessage.textContent = message;
+        retryButton.textContent = retryLabel;
+        errorPanel.dataset.visible = "true";
+      }
+
+      function clearError() {
+        if (disposed) return;
+        errorPanel.dataset.visible = "false";
+        errorMessage.textContent = "";
+      }
+
+      function setLoading(loading) {
+        if (disposed) return;
+        main.dataset.loading = String(loading);
+        allInputs.forEach((input) => {
+          input.disabled = loading;
+        });
+      }
+
+      function readForm() {
+        return {
+          schemaVersion: authoritative?.schemaVersion || 1,
+          revision: authoritative?.revision || 0,
+          enabled: enabledInput.checked,
+          visibleModels: ALL_ROWS.map((row) => row.id).filter((id) =>
+            modelInputs.some((input) => input.value === id && input.checked)
+          ),
+          preferredPlacement:
+            placementInputs.find((input) => input.checked)?.value || "top",
+          appearance:
+            appearanceInputs.find((input) => input.checked)?.value || "dark",
+        };
+      }
+
+      function writeForm(snapshot) {
+        if (disposed) return;
+        enabledInput.checked = snapshot.enabled;
+        modelInputs.forEach((input) => {
+          input.checked = snapshot.visibleModels.includes(input.value);
+        });
+        placementInputs.forEach((input) => {
+          input.checked = input.value === snapshot.preferredPlacement;
+        });
+        appearanceInputs.forEach((input) => {
+          input.checked = input.value === snapshot.appearance;
+        });
+      }
+
+      function saveArguments(snapshot) {
+        return {
+          expectedRevision: authoritative.revision,
+          enabled: snapshot.enabled,
+          visibleModels: snapshot.visibleModels,
+          preferredPlacement: snapshot.preferredPlacement,
+          appearance: snapshot.appearance,
+        };
+      }
+
+      async function flushSaveQueue() {
+        if (
+          disposed || saving || blockedByConflict || !authoritative || !draft
+        ) {
+          return;
+        }
+        saving = true;
+        clearError();
+        try {
+          while (!disposed && !sameSettingsPreferences(authoritative, draft)) {
+            const requested = {
+              ...draft,
+              visibleModels: [...draft.visibleModels],
+            };
+            setStatus("正在保存…");
+            const result = await callSettingsTool(
+              SETTINGS_SAVE_TOOL,
+              saveArguments(requested),
+            );
+            if (disposed) return;
+            const failure = settingsToolFailure(result);
+            if (failure) throw failure;
+            const saved = normalizedSettingsSnapshot(result);
+            if (!saved) throw new Error("保存响应缺少有效设置快照。");
+            authoritative = saved;
+            if (sameSettingsPreferences(requested, draft)) draft = saved;
+          }
+          setStatus("已保存 · 下次注入生效");
+        } catch (error) {
+          if (disposed) return;
+          const current = normalizedSettingsSnapshot(error?.data);
+          if (error?.code === -32009 && current) {
+            authoritative = current;
+            draft = current;
+            blockedByConflict = true;
+            writeForm(current);
+            setStatus("发现更新冲突", "error");
+            showError(
+              "设置已在另一个窗口中修改，已显示最新版本。请确认后再修改。",
+              "继续编辑",
+            );
+          } else {
+            setStatus("保存失败", "error");
+            showError(error?.message || "设置无法保存。", "重试保存");
+          }
+        } finally {
+          saving = false;
+        }
+      }
+
+      function onPreferenceChange(event) {
+        if (disposed || !authoritative || blockedByConflict) return;
+        const nextDraft = readForm();
+        if (nextDraft.visibleModels.length === 0) {
+          event.target.checked = true;
+          setStatus("至少保留一个模型", "error");
+          showError("模型选择器至少需要保留一个已适配模型。", "知道了");
+          return;
+        }
+        draft = nextDraft;
+        void flushSaveQueue();
+      }
+
+      async function loadSettings() {
+        setLoading(true);
+        clearError();
+        setStatus("正在读取设置…");
+        try {
+          const result = await callSettingsTool(SETTINGS_READ_TOOL, {});
+          if (disposed) return;
+          const failure = settingsToolFailure(result);
+          if (failure) throw failure;
+          const loaded = normalizedSettingsSnapshot(result);
+          if (!loaded) throw new Error("读取响应缺少有效设置快照。");
+          authoritative = loaded;
+          draft = loaded;
+          blockedByConflict = false;
+          writeForm(loaded);
+          setStatus("已保存 · 下次注入生效");
+        } catch (error) {
+          if (disposed) return;
+          setStatus("无法读取设置", "error");
+          showError(error?.message || "CoPicker 设置服务不可用。", "重新读取");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function onRetry() {
+        if (blockedByConflict) {
+          blockedByConflict = false;
+          clearError();
+          setStatus("已保存 · 下次注入生效");
+          return;
+        }
+        if (
+          authoritative && draft &&
+          !sameSettingsPreferences(authoritative, draft)
+        ) {
+          clearError();
+          void flushSaveQueue();
+          return;
+        }
+        void loadSettings();
+      }
+
+      allInputs.forEach((input) => listen(input, "change", onPreferenceChange));
+      listen(retryButton, "click", onRetry);
+      void loadSettings();
+
+      return {
+        dispose() {
+          if (disposed) return;
+          disposed = true;
+          listeners.splice(0).forEach((removeListener) => removeListener());
+        },
+      };
     }
 
     function handleSettingsMessage(event) {
@@ -286,29 +578,6 @@
         }
         return;
       }
-
-      const frameWindow = integration.frame?.contentWindow;
-      if (event.source !== frameWindow || envelope?.jsonrpc !== "2.0") return;
-      if (!Object.prototype.hasOwnProperty.call(envelope, "id")) return;
-      if (envelope.method !== "tools/call") {
-        respondToSettingsFrame(event.source, envelope.id, {
-          error: { code: -32601, message: "Method not found" },
-        });
-        return;
-      }
-
-      const name = envelope.params?.name;
-      const args = envelope.params?.arguments || {};
-      void callSettingsTool(name, args).then(
-        (result) => respondToSettingsFrame(event.source, envelope.id, { result }),
-        (error) => respondToSettingsFrame(event.source, envelope.id, {
-          error: {
-            code: Number.isInteger(error?.code) ? error.code : -32000,
-            message: error?.message || "CoPicker settings request failed.",
-            ...(error?.data == null ? {} : { data: error.data }),
-          },
-        }),
-      );
     }
 
     function systemSettingsAppearance() {
@@ -530,14 +799,18 @@
 
       const frame = document.createElement("iframe");
       frame.title = "CoPicker settings";
-      frame.setAttribute("sandbox", "allow-scripts");
+      frame.setAttribute("sandbox", "allow-same-origin");
       frame.style.display = "block";
       frame.style.width = "100%";
       frame.style.height = "100%";
       frame.style.border = "0";
       frame.style.background = "transparent";
-      frame.srcdoc = integration.settingsHTML;
-      frame.addEventListener("load", updateSettingsAppearance);
+      frame.srcdoc = integration.fallbackHTML;
+      frame.addEventListener("load", () => {
+        updateSettingsAppearance();
+        integration.frameController?.dispose?.();
+        integration.frameController = installSettingsFrameController(frame);
+      });
       host.append(frame);
       document.body.append(host);
       integration.host = host;
@@ -556,6 +829,8 @@
     function hideSettingsPanel({ removeButton = false } = {}) {
       integration.active = false;
       updateSettingsButtonState();
+      integration.frameController?.dispose?.();
+      integration.frameController = null;
       integration.host?.remove();
       integration.host = null;
       integration.frame = null;
