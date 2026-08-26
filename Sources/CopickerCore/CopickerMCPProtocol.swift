@@ -4,6 +4,7 @@ public struct CopickerMCPProtocol {
     public static let settingsResourceURI = "ui://copicker/settings/v2.html"
     public static let settingsToolName = "copicker_settings"
     public static let settingsSaveToolName = "copicker_settings_save"
+    public static let settingsApplyToolName = "copicker_settings_apply"
     public static let appMIMEType = "text/html;profile=mcp-app"
 
     private static let supportedProtocolVersions = [
@@ -14,13 +15,16 @@ public struct CopickerMCPProtocol {
 
     private let settingsHTML: String
     private let settingsStore: CopickerSettingsStore
+    private let applySettings: (() throws -> Void)?
 
     public init(
         settingsHTML: String,
-        settingsStore: CopickerSettingsStore
+        settingsStore: CopickerSettingsStore,
+        applySettings: (() throws -> Void)? = nil
     ) {
         self.settingsHTML = settingsHTML
         self.settingsStore = settingsStore
+        self.applySettings = applySettings
     }
 
     public func response(to requestData: Data) -> Data? {
@@ -54,7 +58,7 @@ public struct CopickerMCPProtocol {
         case "ping":
             result = [:]
         case "tools/list":
-            result = ["tools": [settingsTool, settingsSaveTool]]
+            result = ["tools": [settingsTool, settingsSaveTool, settingsApplyTool]]
         case "tools/call":
             guard let toolName = params["name"] as? String else {
                 return encode(errorResponse(
@@ -73,6 +77,8 @@ public struct CopickerMCPProtocol {
                         try saveSettings(arguments: arguments),
                         saved: true
                     )
+                case Self.settingsApplyToolName:
+                    result = settingsApplyToolResult()
                 default:
                     return encode(errorResponse(
                         id: requestID,
@@ -243,6 +249,35 @@ public struct CopickerMCPProtocol {
         ]
     }
 
+    private var settingsApplyTool: [String: Any] {
+        [
+            "name": Self.settingsApplyToolName,
+            "title": "Apply CoPicker settings now",
+            "description": "Use this only when the user explicitly asks the CoPicker settings UI to inject the saved configuration into the currently running Codex process.",
+            "inputSchema": emptyObjectSchema,
+            "outputSchema": [
+                "type": "object",
+                "properties": [
+                    "applied": ["type": "boolean"],
+                    "applyMode": ["type": "string", "enum": ["current-process"]],
+                ],
+                "required": ["applied", "applyMode"],
+                "additionalProperties": false,
+            ],
+            "annotations": [
+                "readOnlyHint": false,
+                "destructiveHint": false,
+                "openWorldHint": false,
+                "idempotentHint": true,
+            ],
+            "_meta": [
+                "ui": ["visibility": ["app"]],
+                "openai/toolInvocation/invoking": "Applying CoPicker settings",
+                "openai/toolInvocation/invoked": "CoPicker settings applied",
+            ],
+        ]
+    }
+
     private var emptyObjectSchema: [String: Any] {
         [
             "type": "object",
@@ -319,6 +354,43 @@ public struct CopickerMCPProtocol {
             "isError": true,
             "_meta": ["copicker/errorCode": -32009],
         ]
+    }
+
+    private func settingsApplyToolResult() -> [String: Any] {
+        do {
+            guard let applySettings else {
+                throw CopickerSettingsApplyError.unavailable
+            }
+            try applySettings()
+            return [
+                "content": [
+                    [
+                        "type": "text",
+                        "text": "CoPicker settings applied to the running Codex process.",
+                    ],
+                ],
+                "structuredContent": [
+                    "applied": true,
+                    "applyMode": "current-process",
+                ],
+                "isError": false,
+            ]
+        } catch {
+            return [
+                "content": [
+                    [
+                        "type": "text",
+                        "text": error.localizedDescription,
+                    ],
+                ],
+                "structuredContent": [
+                    "applied": false,
+                    "applyMode": "current-process",
+                ],
+                "isError": true,
+                "_meta": ["copicker/errorCode": -32010],
+            ]
+        }
     }
 
     private func saveSettings(arguments: [String: Any]) throws -> CopickerSettings {
@@ -457,5 +529,16 @@ public struct CopickerMCPProtocol {
 
     private func encode(_ object: [String: Any]) -> Data? {
         try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+    }
+}
+
+private enum CopickerSettingsApplyError: LocalizedError {
+    case unavailable
+
+    var errorDescription: String? {
+        switch self {
+        case .unavailable:
+            "Immediate CoPicker application is unavailable in this host."
+        }
     }
 }
