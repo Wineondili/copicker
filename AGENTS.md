@@ -23,6 +23,7 @@ This repository builds Copicker, a local macOS CLI that adds a model-selection r
 - `Sources/CopickerCore/CopickerAutostart.swift`: user-scoped paths, plist generation, artifact installation, structured watcher state, and retry policy.
 - `Sources/CopickerCLI/AutostartManager.swift`: explicit `launchctl` management for the opt-in user LaunchAgent.
 - `Tests/`: offline unit tests; tests must not signal or attach to the running Codex process.
+- `script/install.sh`: release-build and explicit user LaunchAgent installation entrypoint for a tagged source checkout.
 - `script/build_and_run.sh`: single build/run/debug entrypoint.
 - `.codex/environments/environment.toml`: Codex Run action.
 
@@ -33,6 +34,8 @@ The existing `codex-model-rail` state keys, host IDs, and log subsystem are lega
 ```bash
 swift build
 swift test
+# Requires explicit user authorization because it installs and loads the real user LaunchAgent.
+./script/install.sh
 ./script/build_and_run.sh
 ./script/build_and_run.sh --inject
 ./script/build_and_run.sh --autostart-status

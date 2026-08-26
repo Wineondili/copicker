@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-26 11:32:40 +0800
+
+- Established `0.9.0` as the public pre-release baseline while retaining `v0.10.1-dev` as an immutable historical development snapshot and keeping renderer compatibility identifier `0.9.3` unchanged.
+- Added a tagged-source installation entrypoint that builds a native SwiftPM release executable, runs the read-only Codex compatibility preflight, and explicitly installs the user LaunchAgent without restarting or modifying Codex.
+- Added public cross-device documentation for prerequisites, exact-tag installation, structured verification, upgrades, managed paths, rollback, Inspector closure, and privacy-safe troubleshooting.
+- Revalidated the release build and existing automatic-injection state against Codex `26.818.41705` build `6971` on Apple silicon.
+
 ## 2026-08-19 08:53:46 +0800
 
 - Fixed the login-time Codex/Copicker startup race by adding a five-second startup grace period and retrying bounded Inspector target timeouts.
