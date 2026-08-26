@@ -30,19 +30,25 @@ Do not use the shallow `--branch v0.11.0` installation checkout for ongoing deve
 
 `Package.swift` defines:
 
-- `CopickerCore`: process discovery, Electron fuse parsing, Inspector transport, injection planning, user-scoped installation paths, state, and retry policy;
-- `copicker`: the executable CLI, user LaunchAgent management, watcher, and bundled renderer payload.
+- `CopickerCore`: process discovery, Electron fuse parsing, Inspector transport, injection planning, user-scoped installation paths, state, retry policy, and the pure MCP settings protocol;
+- `copicker`: the executable CLI, user LaunchAgent management, watcher, bundled renderer payload, and private stdio MCP server.
 
 Important paths:
 
 - `Sources/CopickerCore/`: reusable compatibility and injection infrastructure;
+- `Sources/CopickerCore/CopickerMCPProtocol.swift`: pure JSON-RPC contract for the app-only settings tool and resource;
 - `Sources/CopickerCLI/CopickerCLI.swift`: command routing, live injection, probes, and watcher loop;
+- `Sources/CopickerCLI/CopickerMCPServer.swift`: newline-delimited stdio transport for the settings plugin;
 - `Sources/CopickerCLI/AutostartManager.swift`: explicit `launchctl` mutations;
 - `Sources/CopickerCLI/Resources/model-rail.js`: detached Shadow DOM UI and Codex renderer bridge;
+- `Sources/CopickerCLI/Resources/copicker-settings-v1.html`: network-free MCP App settings shell;
+- `Plugin/copicker/`: repository-local plugin package, launcher, manifest, and themed icons;
 - `Tests/`: offline tests that must not attach to or signal Codex;
 - `tools/model-rail-tuner.html`: standalone visual tuning page;
 - `script/build_and_run.sh`: project-local development entrypoint;
 - `script/install.sh`: release build plus explicit installation of the real user LaunchAgent.
+
+The settings plugin is an independent distribution surface. Its current offline shell is documented in [plugin-settings.md](plugin-settings.md). It is deliberately not installed by `script/install.sh` until the setting controls and their persistence contract are finalized.
 
 ## Offline development commands
 
@@ -58,6 +64,15 @@ git diff --check
 ```
 
 Node.js is optional for normal installation. Skip `node --check` when Node.js is unavailable; the Swift build still bundles the payload.
+
+The private stdio server can be exercised without registering the plugin or changing Codex state:
+
+```bash
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+  | .build/debug/copicker mcp-server
+```
 
 The default project script builds and runs the read-only status command:
 
@@ -99,7 +114,7 @@ Model IDs and the Fast service-tier ID must continue to come from `model/list`. 
 
 ## Resource packaging
 
-SwiftPM processes `Sources/CopickerCLI/Resources/model-rail.js` into `Copicker_CopickerCLI.bundle`. `Bundle.module` resolves that bundle at runtime. Any installation or packaging change must preserve both the executable and this adjacent resource bundle.
+SwiftPM processes `Sources/CopickerCLI/Resources/model-rail.js` and `copicker-settings-v1.html` into `Copicker_CopickerCLI.bundle`. `Bundle.module` resolves that bundle at runtime. Any installation or packaging change must preserve both the executable and this adjacent resource bundle.
 
 For a release build:
 

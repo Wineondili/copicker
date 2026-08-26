@@ -31,6 +31,8 @@ struct CopickerCLI {
                 try await handleAutostart(Array(arguments.dropFirst()))
             case "watch":
                 try await watch()
+            case "mcp-server":
+                try CopickerMCPServer.run()
             case "help", "--help", "-h":
                 printUsage()
             default:
@@ -614,7 +616,7 @@ struct CopickerCLI {
 
     private static func printUsage() {
         print("""
-        Usage: copicker [status|version|probe|probe-picker|probe-primary|probe-selector|inject|remove|autostart|help]
+        Usage: copicker [status|version|probe|probe-picker|probe-primary|probe-selector|inject|remove|autostart|mcp-server|help]
 
           status   Inspect the installed Codex build without changing runtime state.
           dry-run  Alias for status; validates the bundled payload and expression.
@@ -629,6 +631,7 @@ struct CopickerCLI {
           autostart disable           Stop future automatic injection.
           autostart disable --remove  Disable autostart and remove the current hook if Codex is running.
           autostart status            Inspect LaunchAgent and watcher state without opening Inspector.
+          mcp-server  Run the private stdio server used by the CoPicker settings plugin.
           help     Show this help.
         """)
     }
