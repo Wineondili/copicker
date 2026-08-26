@@ -88,6 +88,8 @@ Placement avoidance is latched. Repeated submenu mutations do not move CoPicker 
 
 After the `0.12.0-dev` settings plugin is installed, open **Settings → Integrations → CoPicker**. Changes save automatically. By default they apply on the next injection, usually the next time Codex is opened. After saving completes, **立即应用** applies the saved snapshot to the currently running Codex without restarting it; if that action fails, the saved settings still apply on the next normal injection.
 
+The CoPicker page follows the same grouped cards, setting rows, compact switches, and segmented controls as the built-in Codex settings pages. Its controls remain keyboard accessible in both the native plugin view and the injected compatibility fallback.
+
 Available settings are:
 
 - enable or disable CoPicker;

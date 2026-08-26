@@ -13,27 +13,36 @@
         color-scheme: light dark;
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
         font-synthesis: none;
-        --text: light-dark(#1e1f20, #f3f3f4);
-        --muted: light-dark(rgb(30 31 32 / 58%), rgb(243 243 244 / 56%));
-        --faint: light-dark(rgb(30 31 32 / 42%), rgb(243 243 244 / 38%));
-        --divider: light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 10%));
-        --surface: light-dark(rgb(0 0 0 / 4%), rgb(255 255 255 / 6%));
-        --surface-hover: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 9%));
-        --accent: light-dark(#087cf0, #69a9ff);
-        --accent-contrast: #fff;
-        --warning: light-dark(#925f00, #e2ae51);
-        --error: light-dark(#b42318, #ff8a80);
-        --focus: light-dark(#006edc, #8bbcff);
+        --text-default: light-dark(#202123, #f2f2f2);
+        --text-secondary: light-dark(rgb(32 33 35 / 62%), rgb(242 242 242 / 58%));
+        --text-tertiary: light-dark(rgb(32 33 35 / 46%), rgb(242 242 242 / 42%));
+        --panel: light-dark(rgb(255 255 255 / 88%), rgb(255 255 255 / 5%));
+        --border-default: light-dark(rgb(0 0 0 / 14%), rgb(255 255 255 / 12%));
+        --border-subtle: light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 9%));
+        --control-selected: light-dark(rgb(0 0 0 / 6%), rgb(255 255 255 / 9%));
+        --control-hover: light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 11%));
+        --switch-off: light-dark(rgb(32 33 35 / 12%), rgb(242 242 242 / 14%));
+        --accent: light-dark(#087cf0, #65a9ff);
+        --warning: light-dark(#895c08, #d7aa58);
+        --danger: light-dark(#b42318, #ff8a80);
+        --focus: light-dark(#087cf0, #8bbcff);
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html,
+      body {
+        min-height: 100%;
+      }
+
       body {
         margin: 0;
         background: transparent;
-        color: var(--text);
+        color: var(--text-default);
+        font-size: 14px;
+        line-height: 18px;
       }
 
       button,
@@ -42,98 +51,170 @@
       }
 
       main {
-        width: min(100%, 780px);
-        padding: 30px 36px 52px;
+        width: min(100%, 768px);
+        margin: 0 auto;
+        padding: 32px 32px calc(48px + env(safe-area-inset-bottom));
       }
 
-      header {
+      .page-header {
         display: flex;
-        align-items: center;
-        min-height: 28px;
-        gap: 12px;
+        min-width: 0;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 32px;
       }
 
-      .icon {
-        width: 24px;
-        height: 24px;
-        flex: 0 0 auto;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 650;
-        letter-spacing: -0.012em;
-      }
-
-      .save-state {
-        margin-left: auto;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.4;
-        text-align: right;
-      }
-
-      .save-state[data-tone="error"] {
-        color: var(--error);
-      }
-
-      .section {
-        padding: 24px 0;
-        border-top: 1px solid var(--divider);
-      }
-
-      header + .section {
-        margin-top: 22px;
-      }
-
-      .section-heading,
-      .setting-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 22px;
-      }
-
+      h1,
       h2,
       h3,
       p {
         margin: 0;
       }
 
-      h2 {
-        font-size: 15px;
-        font-weight: 620;
-        letter-spacing: -0.005em;
+      h1 {
+        min-width: 0;
+        color: var(--text-default);
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 26px;
+        text-wrap: balance;
       }
 
-      h3 {
+      .save-state {
+        max-width: 240px;
+        flex: 0 1 auto;
+        padding-top: 4px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 16px;
+        text-align: right;
+        text-wrap: pretty;
+      }
+
+      .save-state[data-tone="error"] {
+        color: var(--danger);
+      }
+
+      .settings-content {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+      }
+
+      .settings-section {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+      }
+
+      .section-header {
+        display: flex;
+        min-height: 28px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 6px;
+      }
+
+      .section-header h2 {
+        color: var(--text-default);
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 20px;
+        text-wrap: balance;
+      }
+
+      .settings-card {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--border-default);
+        border-radius: 16px;
+        background: var(--panel);
+      }
+
+      .setting-row {
+        position: relative;
+        display: flex;
+        min-width: 0;
+        min-height: 64px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 12px 16px;
+      }
+
+      .setting-row:not(:last-child)::after,
+      .error-panel[data-visible="true"]::before {
+        position: absolute;
+        right: 16px;
+        bottom: 0;
+        left: 16px;
+        height: 0.5px;
+        background: var(--border-subtle);
+        content: "";
+        pointer-events: none;
+      }
+
+      .apply-row::after {
+        display: none;
+      }
+
+      .setting-copy,
+      .apply-copy {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .setting-copy h3,
+      .apply-copy h3 {
+        min-width: 0;
+        color: var(--text-default);
         font-size: 14px;
-        font-weight: 590;
+        font-weight: 500;
+        line-height: 18px;
+        text-wrap: balance;
       }
 
       .description,
       .model-efforts,
-      .apply-note {
-        color: var(--muted);
+      .apply-note,
+      .apply-result,
+      .section-footer {
+        color: var(--text-secondary);
         font-size: 12px;
-        line-height: 1.52;
+        line-height: 16px;
+        text-wrap: pretty;
       }
 
-      .section-heading .description,
-      .setting-copy .description {
-        margin-top: 4px;
+      .model-warning {
+        margin-top: 2px;
+        color: var(--warning);
+        font-size: 12px;
+        line-height: 16px;
+        text-wrap: pretty;
+      }
+
+      .section-footer {
+        padding: 6px 16px 0;
       }
 
       .switch {
         position: relative;
         display: inline-flex;
-        width: 38px;
-        height: 22px;
+        width: 32px;
+        height: 20px;
         flex: 0 0 auto;
+        cursor: pointer;
       }
 
-      .switch input {
+      .switch input,
+      .segment input {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -145,32 +226,33 @@
       }
 
       .switch-track {
-        width: 100%;
-        height: 100%;
-        border: 1px solid var(--divider);
+        position: relative;
+        display: block;
+        width: 32px;
+        height: 20px;
         border-radius: 999px;
-        background: light-dark(rgb(0 0 0 / 17%), rgb(255 255 255 / 18%));
+        background: var(--switch-off);
       }
 
       .switch-track::after {
         position: absolute;
-        top: 3px;
-        left: 3px;
+        top: 2px;
+        left: 2px;
         width: 16px;
         height: 16px;
+        border: 1px solid #fff;
         border-radius: 50%;
         background: #fff;
-        box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
         content: "";
       }
 
       .switch input:checked + .switch-track {
-        border-color: var(--accent);
         background: var(--accent);
       }
 
       .switch input:checked + .switch-track::after {
-        left: 18px;
+        transform: translateX(12px);
       }
 
       .switch input:focus-visible + .switch-track {
@@ -179,41 +261,13 @@
       }
 
       .switch input:disabled + .switch-track {
+        cursor: default;
         opacity: 0.45;
-      }
-
-      .model-list {
-        margin-top: 17px;
-        border-top: 1px solid var(--divider);
-      }
-
-      .model-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        min-height: 61px;
-        gap: 22px;
-        border-bottom: 1px solid var(--divider);
-      }
-
-      .model-row:last-child {
-        border-bottom: 0;
-      }
-
-      .model-efforts {
-        margin-top: 3px;
-      }
-
-      .model-warning {
-        margin-top: 4px;
-        color: var(--warning);
-        font-size: 11px;
-        line-height: 1.45;
       }
 
       fieldset {
         min-width: 0;
-        margin: 17px 0 0;
+        margin: 0;
         padding: 0;
         border: 0;
       }
@@ -229,85 +283,70 @@
         white-space: nowrap;
       }
 
-      .segmented {
-        display: grid;
-        grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-        gap: 4px;
-        padding: 4px;
-        border-radius: 9px;
-        background: var(--surface);
+      .setting-control {
+        max-width: 100%;
+        flex: 0 0 auto;
+      }
+
+      .segmented-control {
+        display: inline-flex;
+        max-width: 100%;
+        align-items: center;
+        gap: 2px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+      }
+
+      .segmented-control::-webkit-scrollbar {
+        display: none;
       }
 
       .segment {
         position: relative;
-      }
-
-      .segment input {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        clip-path: inset(50%);
-        white-space: nowrap;
+        display: block;
+        flex: 0 0 auto;
+        cursor: pointer;
       }
 
       .segment span {
         display: flex;
+        min-height: 28px;
         align-items: center;
         justify-content: center;
-        min-height: 32px;
-        padding: 4px 10px;
+        padding: 3px 10px;
         border: 1px solid transparent;
-        border-radius: 6px;
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 550;
+        border-radius: 7px;
+        color: var(--text-tertiary);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 18px;
         text-align: center;
+        white-space: nowrap;
+      }
+
+      .segment:hover span {
+        background: var(--control-hover);
+        color: var(--text-default);
       }
 
       .segment input:checked + span {
-        border-color: var(--divider);
-        background: light-dark(#fff, rgb(255 255 255 / 11%));
-        color: var(--text);
-        box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+        background: var(--control-selected);
+        color: var(--text-default);
       }
 
       .segment input:focus-visible + span {
         outline: 2px solid var(--focus);
-        outline-offset: 1px;
+        outline-offset: -2px;
       }
 
-      .segment:hover span {
-        background: var(--surface-hover);
-      }
-
-      .apply-note {
-        margin-top: 4px;
-      }
-
-      .apply-actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 22px;
-        margin-top: 20px;
-        padding: 15px 16px;
-        border: 1px solid var(--divider);
-        border-radius: 10px;
-        background: var(--surface);
-      }
-
-      .apply-copy {
-        min-width: 0;
+      .segment input:disabled + span {
+        cursor: default;
+        opacity: 0.45;
       }
 
       .apply-result {
-        margin-top: 6px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.45;
+        margin-top: 4px;
       }
 
       .apply-result:empty {
@@ -319,71 +358,64 @@
       }
 
       .apply-result[data-tone="error"] {
-        color: var(--error);
+        color: var(--danger);
+      }
+
+      .apply-now,
+      .retry {
+        min-height: 32px;
+        flex: 0 0 auto;
+        padding: 5px 12px;
+        border: 1px solid var(--border-default);
+        border-radius: 7px;
+        background: var(--panel);
+        color: var(--text-default);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 18px;
       }
 
       .apply-now {
         min-width: 88px;
-        min-height: 34px;
-        padding: 7px 14px;
-        border: 0;
-        border-radius: 7px;
-        background: var(--accent);
-        color: var(--accent-contrast);
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 620;
       }
 
-      .apply-now:hover:not(:disabled) {
-        filter: brightness(1.06);
+      .apply-now:hover:not(:disabled),
+      .retry:hover {
+        background: var(--control-hover);
       }
 
-      .apply-now:focus-visible {
+      .apply-now:focus-visible,
+      .retry:focus-visible {
         outline: 2px solid var(--focus);
-        outline-offset: 2px;
+        outline-offset: 1px;
       }
 
       .apply-now:disabled {
         cursor: default;
-        opacity: 0.48;
+        opacity: 0.45;
       }
 
       .error-panel {
+        position: relative;
         display: none;
+        min-height: 52px;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid var(--divider);
-        color: var(--error);
+        padding: 10px 16px;
+        color: var(--danger);
         font-size: 12px;
-        line-height: 1.45;
+        line-height: 16px;
       }
 
       .error-panel[data-visible="true"] {
         display: flex;
       }
 
-      .retry {
-        flex: 0 0 auto;
-        padding: 6px 10px;
-        border: 1px solid var(--divider);
-        border-radius: 6px;
-        background: var(--surface);
-        color: var(--text);
-        cursor: pointer;
-        font-size: 12px;
-      }
-
-      .retry:hover {
-        background: var(--surface-hover);
-      }
-
-      .retry:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 2px;
+      .error-panel[data-visible="true"]::before {
+        top: 0;
+        bottom: auto;
       }
 
       [data-loading="true"] .settings-content {
@@ -391,64 +423,89 @@
         pointer-events: none;
       }
 
-      @media (max-width: 560px) {
+      @media (max-width: 640px) {
         main {
-          padding: 24px 22px 40px;
+          padding: 24px 20px calc(40px + env(safe-area-inset-bottom));
         }
 
-        .segmented {
-          grid-template-columns: 1fr;
+        .page-header {
+          padding-bottom: 28px;
+        }
+
+        .setting-row--adaptive {
+          align-items: stretch;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .setting-row--adaptive .setting-control {
+          width: 100%;
+        }
+
+        .setting-row--adaptive .segmented-control {
+          display: flex;
+          width: 100%;
+        }
+
+        .setting-row--adaptive .segment {
+          min-width: max-content;
+          flex: 1 0 auto;
+        }
+
+        .setting-row--adaptive .apply-now {
+          align-self: flex-end;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .page-header {
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .save-state {
+          max-width: none;
+          padding-top: 0;
+          text-align: left;
         }
       }
     </style>
   </head>
   <body>
-    <main data-loading="true">
-      <header>
-        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <rect x="2.25" y="2.25" width="19.5" height="19.5" rx="4.25"
-                stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-          <g fill="currentColor">
-            <circle cx="7" cy="7" r="1.15" />
-            <circle cx="12" cy="7" r="1.15" />
-            <circle cx="17" cy="7" r="1.15" />
-            <circle cx="7" cy="12" r="1.15" />
-            <circle cx="12" cy="12" r="1.15" />
-            <circle cx="17" cy="12" r="1.15" />
-            <circle cx="7" cy="17" r="1.15" />
-            <circle cx="12" cy="17" r="1.15" />
-            <circle cx="17" cy="17" r="1.15" />
-          </g>
-        </svg>
+    <main data-loading="true" aria-busy="true">
+      <header class="page-header">
         <h1>CoPicker</h1>
-        <div id="save-state" class="save-state" aria-live="polite">正在读取设置…</div>
+        <div id="save-state" class="save-state" role="status" aria-live="polite">
+          正在读取设置…
+        </div>
       </header>
 
       <div class="settings-content">
-        <section class="section" aria-labelledby="general-title">
-          <div class="setting-row">
-            <div class="setting-copy">
-              <h2 id="general-title">启用 CoPicker</h2>
-              <p class="description">在官方模型选择器打开时显示快捷模型与推理强度选择器。</p>
+        <section class="settings-section" aria-labelledby="general-title">
+          <div class="section-header">
+            <h2 id="general-title">常规</h2>
+          </div>
+          <div class="settings-card">
+            <div class="setting-row">
+              <div class="setting-copy">
+                <h3>启用 CoPicker</h3>
+                <p class="description">在官方模型选择器打开时显示快捷模型与推理强度选择器。</p>
+              </div>
+              <label class="switch">
+                <input id="enabled" type="checkbox" aria-label="启用 CoPicker" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
             </div>
-            <label class="switch">
-              <input id="enabled" type="checkbox" aria-label="启用 CoPicker" />
-              <span class="switch-track" aria-hidden="true"></span>
-            </label>
           </div>
         </section>
 
-        <section class="section" aria-labelledby="models-title">
-          <div class="section-heading">
-            <div>
-              <h2 id="models-title">模型配置</h2>
-              <p class="description">选择要显示在 Model Picker 里的已适配模型。至少保留一个模型。</p>
-            </div>
+        <section class="settings-section" aria-labelledby="models-title">
+          <div class="section-header">
+            <h2 id="models-title">模型</h2>
           </div>
-
-          <div class="model-list">
-            <div class="model-row">
-              <div>
+          <div class="settings-card">
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.6 Sol</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
               </div>
@@ -457,8 +514,8 @@
                 <span class="switch-track" aria-hidden="true"></span>
               </label>
             </div>
-            <div class="model-row">
-              <div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.6 Terra</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
               </div>
@@ -467,8 +524,8 @@
                 <span class="switch-track" aria-hidden="true"></span>
               </label>
             </div>
-            <div class="model-row">
-              <div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.6 Luna</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · Max</p>
               </div>
@@ -477,8 +534,8 @@
                 <span class="switch-track" aria-hidden="true"></span>
               </label>
             </div>
-            <div class="model-row">
-              <div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>Daybreak Blue</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra · 不支持 Fast</p>
                 <p class="model-warning">可能需要申请 Codex Trusted Access for Cyber，并允许所需的网络访问。</p>
@@ -488,8 +545,8 @@
                 <span class="switch-track" aria-hidden="true"></span>
               </label>
             </div>
-            <div class="model-row">
-              <div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.5</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High</p>
               </div>
@@ -498,8 +555,8 @@
                 <span class="switch-track" aria-hidden="true"></span>
               </label>
             </div>
-            <div class="model-row">
-              <div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.3 Codex Spark</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · 不支持 Fast</p>
                 <p class="model-warning">可能需要 ChatGPT Pro 订阅（Pro 5x / 20x）；未出现在当前账户的官方模型列表时无法切换。</p>
@@ -510,52 +567,63 @@
               </label>
             </div>
           </div>
+          <p class="section-footer">选择要显示在 Model Picker 里的已适配模型。至少保留一个模型。</p>
         </section>
 
-        <section class="section" aria-labelledby="placement-title">
-          <div class="section-heading">
-            <div>
-              <h2 id="placement-title">默认出现位置</h2>
-              <p class="description">选择 CoPicker 相对官方菜单的首选位置；空间不足或菜单遮挡时仍会自动避让。</p>
+        <section class="settings-section" aria-labelledby="presentation-title">
+          <div class="section-header">
+            <h2 id="presentation-title">位置与外观</h2>
+          </div>
+          <div class="settings-card">
+            <div class="setting-row setting-row--adaptive">
+              <div class="setting-copy">
+                <h3>默认出现位置</h3>
+                <p class="description">空间不足或菜单遮挡时，CoPicker 仍会自动避让。</p>
+              </div>
+              <fieldset class="setting-control">
+                <legend>默认出现位置</legend>
+                <div class="segmented-control" role="group" aria-label="默认出现位置">
+                  <label class="segment"><input type="radio" name="placement" value="top" /><span>上方</span></label>
+                  <label class="segment"><input type="radio" name="placement" value="left" /><span>左侧</span></label>
+                  <label class="segment"><input type="radio" name="placement" value="right" /><span>右侧</span></label>
+                </div>
+              </fieldset>
+            </div>
+            <div class="setting-row setting-row--adaptive">
+              <div class="setting-copy">
+                <h3>外观</h3>
+                <p class="description">浅色模式使用纯白背景；彩色模型轨道保持不变。</p>
+              </div>
+              <fieldset class="setting-control">
+                <legend>外观</legend>
+                <div class="segmented-control" role="group" aria-label="外观">
+                  <label class="segment"><input type="radio" name="appearance" value="codex" /><span>跟随 Codex</span></label>
+                  <label class="segment"><input type="radio" name="appearance" value="system" /><span>跟随系统</span></label>
+                  <label class="segment"><input type="radio" name="appearance" value="light" /><span>浅色</span></label>
+                  <label class="segment"><input type="radio" name="appearance" value="dark" /><span>深色</span></label>
+                </div>
+              </fieldset>
             </div>
           </div>
-          <fieldset>
-            <legend>默认出现位置</legend>
-            <div class="segmented" style="--count: 3">
-              <label class="segment"><input type="radio" name="placement" value="top" /><span>上方</span></label>
-              <label class="segment"><input type="radio" name="placement" value="left" /><span>左侧</span></label>
-              <label class="segment"><input type="radio" name="placement" value="right" /><span>右侧</span></label>
-            </div>
-          </fieldset>
         </section>
 
-        <section class="section" aria-labelledby="appearance-title">
-          <div class="section-heading">
-            <div>
-              <h2 id="appearance-title">外观</h2>
-              <p class="description">浅色模式使用纯白背景；彩色模型轨道保持不变。</p>
-            </div>
+        <section class="settings-section" aria-labelledby="apply-title">
+          <div class="section-header">
+            <h2 id="apply-title">应用</h2>
           </div>
-          <fieldset>
-            <legend>外观</legend>
-            <div class="segmented" style="--count: 4">
-              <label class="segment"><input type="radio" name="appearance" value="codex" /><span>跟随 Codex</span></label>
-              <label class="segment"><input type="radio" name="appearance" value="system" /><span>跟随系统</span></label>
-              <label class="segment"><input type="radio" name="appearance" value="light" /><span>浅色</span></label>
-              <label class="segment"><input type="radio" name="appearance" value="dark" /><span>深色</span></label>
+          <div class="settings-card">
+            <div class="setting-row setting-row--adaptive apply-row">
+              <div class="apply-copy">
+                <h3>应用设置</h3>
+                <p class="apply-note">设置会自动保存，默认在下次启动 Codex（下一次注入）时生效。无需重启时，可在保存完成后立即应用到当前 Codex。</p>
+                <p id="apply-result" class="apply-result" data-tone="normal" aria-live="polite"></p>
+              </div>
+              <button id="apply-now" class="apply-now" type="button" disabled>立即应用</button>
             </div>
-          </fieldset>
-          <div class="apply-actions">
-            <div class="apply-copy">
-              <h2>应用设置</h2>
-              <p class="apply-note">设置会自动保存，默认在下次启动 Codex（下一次注入）时生效。无需重启时，可在保存完成后立即应用到当前 Codex。</p>
-              <p id="apply-result" class="apply-result" data-tone="normal" aria-live="polite"></p>
+            <div id="error-panel" class="error-panel" data-visible="false" role="alert">
+              <span id="error-message"></span>
+              <button id="retry" class="retry" type="button">重新读取</button>
             </div>
-            <button id="apply-now" class="apply-now" type="button" disabled>立即应用</button>
-          </div>
-          <div id="error-panel" class="error-panel" data-visible="false" role="alert">
-            <span id="error-message"></span>
-            <button id="retry" class="retry" type="button">重新读取</button>
           </div>
         </section>
       </div>
@@ -637,6 +705,7 @@
 
         function setLoading(loading) {
           main.dataset.loading = String(loading);
+          main.setAttribute("aria-busy", String(loading));
           allInputs.forEach((input) => {
             input.disabled = loading;
           });

@@ -12,7 +12,7 @@ The repository currently contains the offline integration and persistence founda
 - `copicker mcp-server`: a private stdio MCP server mode;
 - `ui://copicker/settings/v2.html`: the versioned MCP App resource;
 - a native `CoPicker` MCP settings entrypoint plus an injected sidebar fallback placed after the built-in Plugins and Browser entries;
-- a transparent, network-free interactive settings page;
+- a Codex-native-styled, transparent, network-free interactive settings page;
 - a versioned preference store at `~/Library/Application Support/Copicker/settings.json`.
 
 The store contains only CoPicker enablement, visible supported-model keys, preferred placement, appearance, schema version, and revision. Writes are validated, atomic, permissioned `0600`, and protected by an optimistic revision check so a stale settings page cannot silently replace a newer edit.
@@ -23,6 +23,8 @@ The page exposes native, keyboard-accessible controls for:
 - showing GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark, with at least one model retained;
 - selecting a top, left, or right preferred placement;
 - following Codex, following macOS, or forcing a light or dark rail.
+
+The right pane mirrors the current Codex settings hierarchy: a standard page title, grouped section headings, rounded settings cards, inset row separators, compact 32-by-20 switches, and the same segmented-control pattern used by built-in settings such as terminal placement. The document implements those primitives locally instead of importing private Codex React modules, so the native MCP App route and the injected sandboxed fallback share one stable visual surface without coupling preference behavior to minified host component names.
 
 Autosaves are serialized and always use the last authoritative revision. A stale window displays the newer stored values instead of overwriting them. The UI never uses browser storage. By default, saved settings take effect when Codex is next started and the next process injection runs. The explicit **Apply now** button is enabled only after saving finishes and applies the persisted snapshot to the current Codex process without restarting it.
 
