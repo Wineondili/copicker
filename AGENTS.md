@@ -21,6 +21,7 @@ This repository builds Copicker, a local macOS CLI that adds a model-selection r
 - `Sources/CopickerCore/`: Inspector protocol, process discovery, compatibility, and injection planning.
 - `Sources/CopickerCLI/`: CLI entrypoint and bundled DOM payload.
 - `Sources/CopickerCore/CopickerMCPProtocol.swift`: pure app-only MCP settings protocol and metadata contract.
+- `Sources/CopickerCore/CopickerSettings.swift`: versioned, privacy-limited user preferences and atomic local persistence.
 - `Sources/CopickerCLI/CopickerMCPServer.swift`: private newline-delimited stdio server for the settings plugin.
 - `Sources/CopickerCore/CopickerAutostart.swift`: user-scoped paths, plist generation, artifact installation, structured watcher state, and retry policy.
 - `Sources/CopickerCLI/AutostartManager.swift`: explicit `launchctl` management for the opt-in user LaunchAgent.

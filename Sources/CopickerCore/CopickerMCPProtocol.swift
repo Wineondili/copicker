@@ -1,8 +1,9 @@
 import Foundation
 
 public struct CopickerMCPProtocol {
-    public static let settingsResourceURI = "ui://copicker/settings/v1.html"
+    public static let settingsResourceURI = "ui://copicker/settings/v2.html"
     public static let settingsToolName = "copicker_settings"
+    public static let settingsSaveToolName = "copicker_settings_save"
     public static let appMIMEType = "text/html;profile=mcp-app"
 
     private static let supportedProtocolVersions = [
@@ -12,9 +13,14 @@ public struct CopickerMCPProtocol {
     ]
 
     private let settingsHTML: String
+    private let settingsStore: CopickerSettingsStore
 
-    public init(settingsHTML: String) {
+    public init(
+        settingsHTML: String,
+        settingsStore: CopickerSettingsStore
+    ) {
         self.settingsHTML = settingsHTML
+        self.settingsStore = settingsStore
     }
 
     public func response(to requestData: Data) -> Data? {
@@ -48,16 +54,41 @@ public struct CopickerMCPProtocol {
         case "ping":
             result = [:]
         case "tools/list":
-            result = ["tools": [settingsTool]]
+            result = ["tools": [settingsTool, settingsSaveTool]]
         case "tools/call":
-            guard params["name"] as? String == Self.settingsToolName else {
+            guard let toolName = params["name"] as? String else {
                 return encode(errorResponse(
                     id: requestID,
                     code: -32602,
-                    message: "Unknown tool"
+                    message: "Missing tool name"
                 ))
             }
-            result = settingsToolResult
+            do {
+                switch toolName {
+                case Self.settingsToolName:
+                    result = settingsToolResult(try settingsStore.read(), saved: false)
+                case Self.settingsSaveToolName:
+                    let arguments = params["arguments"] as? [String: Any] ?? [:]
+                    result = settingsToolResult(
+                        try saveSettings(arguments: arguments),
+                        saved: true
+                    )
+                default:
+                    return encode(errorResponse(
+                        id: requestID,
+                        code: -32602,
+                        message: "Unknown tool"
+                    ))
+                }
+            } catch let error as CopickerSettingsError {
+                return encode(settingsErrorResponse(id: requestID, error: error))
+            } catch {
+                return encode(errorResponse(
+                    id: requestID,
+                    code: -32000,
+                    message: "CoPicker settings could not be read or saved"
+                ))
+            }
         case "resources/list":
             result = ["resources": [settingsResource]]
         case "resources/read":
@@ -120,20 +151,9 @@ public struct CopickerMCPProtocol {
         [
             "name": Self.settingsToolName,
             "title": "CoPicker",
-            "description": "Use this when the Codex host opens CoPicker settings. It renders the local settings surface without changing model, effort, Fast mode, or injection state.",
-            "inputSchema": [
-                "type": "object",
-                "properties": [:],
-                "additionalProperties": false,
-            ],
-            "outputSchema": [
-                "type": "object",
-                "properties": [
-                    "version": ["type": "string"],
-                ],
-                "required": ["version"],
-                "additionalProperties": false,
-            ],
+            "description": "Use this when the Codex host opens CoPicker settings. It reads and renders the persisted local configuration without changing model or task state.",
+            "inputSchema": emptyObjectSchema,
+            "outputSchema": settingsOutputSchema,
             "annotations": [
                 "readOnlyHint": true,
                 "destructiveHint": false,
@@ -155,31 +175,191 @@ public struct CopickerMCPProtocol {
                                 "model picker",
                                 "reasoning effort",
                                 "Fast",
+                                "appearance",
                                 "模型",
                                 "推理强度",
+                                "外观",
                             ],
                         ],
                     ],
                 ],
-                "openai/toolInvocation/invoking": "Opening CoPicker settings",
+                "openai/toolInvocation/invoking": "Loading CoPicker settings",
                 "openai/toolInvocation/invoked": "CoPicker settings ready",
             ],
         ]
     }
 
-    private var settingsToolResult: [String: Any] {
+    private var settingsSaveTool: [String: Any] {
+        [
+            "name": Self.settingsSaveToolName,
+            "title": "Save CoPicker settings",
+            "description": "Use this when the CoPicker settings UI saves a complete validated local configuration snapshot.",
+            "inputSchema": [
+                "type": "object",
+                "properties": [
+                    "expectedRevision": ["type": "integer", "minimum": 0],
+                    "enabled": ["type": "boolean"],
+                    "visibleModels": [
+                        "type": "array",
+                        "items": ["type": "string", "enum": modelIDs],
+                        "minItems": 1,
+                        "uniqueItems": true,
+                    ],
+                    "preferredPlacement": [
+                        "type": "string",
+                        "enum": CopickerPlacement.allCases.map(\.rawValue),
+                    ],
+                    "appearance": [
+                        "type": "string",
+                        "enum": CopickerAppearance.allCases.map(\.rawValue),
+                    ],
+                ],
+                "required": [
+                    "expectedRevision",
+                    "enabled",
+                    "visibleModels",
+                    "preferredPlacement",
+                    "appearance",
+                ],
+                "additionalProperties": false,
+            ],
+            "outputSchema": settingsOutputSchema,
+            "annotations": [
+                "readOnlyHint": false,
+                "destructiveHint": false,
+                "openWorldHint": false,
+                "idempotentHint": true,
+            ],
+            "_meta": [
+                "ui": ["visibility": ["app"]],
+                "openai/toolInvocation/invoking": "Saving CoPicker settings",
+                "openai/toolInvocation/invoked": "CoPicker settings saved",
+            ],
+        ]
+    }
+
+    private var emptyObjectSchema: [String: Any] {
+        [
+            "type": "object",
+            "properties": [String: Any](),
+            "additionalProperties": false,
+        ]
+    }
+
+    private var settingsOutputSchema: [String: Any] {
+        [
+            "type": "object",
+            "properties": [
+                "schemaVersion": ["type": "integer"],
+                "revision": ["type": "integer"],
+                "enabled": ["type": "boolean"],
+                "visibleModels": [
+                    "type": "array",
+                    "items": ["type": "string", "enum": modelIDs],
+                ],
+                "preferredPlacement": [
+                    "type": "string",
+                    "enum": CopickerPlacement.allCases.map(\.rawValue),
+                ],
+                "appearance": [
+                    "type": "string",
+                    "enum": CopickerAppearance.allCases.map(\.rawValue),
+                ],
+                "applyMode": ["type": "string", "enum": ["next-injection"]],
+            ],
+            "required": [
+                "schemaVersion",
+                "revision",
+                "enabled",
+                "visibleModels",
+                "preferredPlacement",
+                "appearance",
+                "applyMode",
+            ],
+            "additionalProperties": false,
+        ]
+    }
+
+    private var modelIDs: [String] {
+        CopickerModel.allCases.map(\.rawValue)
+    }
+
+    private func settingsToolResult(
+        _ settings: CopickerSettings,
+        saved: Bool
+    ) -> [String: Any] {
         [
             "content": [
                 [
                     "type": "text",
-                    "text": "CoPicker settings are ready.",
+                    "text": saved ? "CoPicker settings saved." : "CoPicker settings loaded.",
                 ],
             ],
-            "structuredContent": [
-                "version": ProjectInfo.version,
-            ],
+            "structuredContent": settingsJSONObject(settings),
             "isError": false,
         ]
+    }
+
+    private func saveSettings(arguments: [String: Any]) throws -> CopickerSettings {
+        guard let expectedRevision = arguments["expectedRevision"] as? Int,
+              let enabled = arguments["enabled"] as? Bool,
+              let modelIDs = arguments["visibleModels"] as? [String],
+              let placementValue = arguments["preferredPlacement"] as? String,
+              let placement = CopickerPlacement(rawValue: placementValue),
+              let appearanceValue = arguments["appearance"] as? String,
+              let appearance = CopickerAppearance(rawValue: appearanceValue)
+        else {
+            throw CopickerSettingsError.invalidRevision(-1)
+        }
+
+        let models = modelIDs.compactMap(CopickerModel.init(rawValue:))
+        guard models.count == modelIDs.count else {
+            throw CopickerSettingsError.noVisibleModels
+        }
+        let requestedSettings = CopickerSettings(
+            revision: expectedRevision,
+            enabled: enabled,
+            visibleModels: models,
+            preferredPlacement: placement,
+            appearance: appearance
+        )
+        return try settingsStore.save(
+            requestedSettings,
+            expectedRevision: expectedRevision
+        )
+    }
+
+    private func settingsJSONObject(_ settings: CopickerSettings) -> [String: Any] {
+        [
+            "schemaVersion": settings.schemaVersion,
+            "revision": settings.revision,
+            "enabled": settings.enabled,
+            "visibleModels": settings.visibleModels.map(\.rawValue),
+            "preferredPlacement": settings.preferredPlacement.rawValue,
+            "appearance": settings.appearance.rawValue,
+            "applyMode": "next-injection",
+        ]
+    }
+
+    private func settingsErrorResponse(
+        id: Any,
+        error: CopickerSettingsError
+    ) -> [String: Any] {
+        switch error {
+        case let .revisionConflict(current):
+            errorResponse(
+                id: id,
+                code: -32009,
+                message: error.localizedDescription,
+                data: settingsJSONObject(current)
+            )
+        case .unsupportedSchemaVersion, .invalidRevision, .noVisibleModels:
+            errorResponse(
+                id: id,
+                code: -32602,
+                message: error.localizedDescription
+            )
+        }
     }
 
     private var settingsResource: [String: Any] {
@@ -187,7 +367,7 @@ public struct CopickerMCPProtocol {
             "uri": Self.settingsResourceURI,
             "name": "copicker-settings",
             "title": "CoPicker Settings",
-            "description": "Local CoPicker settings surface.",
+            "description": "Persistent local CoPicker settings surface.",
             "mimeType": Self.appMIMEType,
         ]
     }
@@ -205,10 +385,9 @@ public struct CopickerMCPProtocol {
                             "csp": [
                                 "connectDomains": [],
                                 "resourceDomains": [],
-                                "frameDomains": [],
                             ],
                         ],
-                        "openai/widgetDescription": "CoPicker settings inside the Codex settings window.",
+                        "openai/widgetDescription": "Configure CoPicker inside the Codex settings window.",
                     ],
                 ],
             ],
@@ -235,14 +414,23 @@ public struct CopickerMCPProtocol {
         ]
     }
 
-    private func errorResponse(id: Any, code: Int, message: String) -> [String: Any] {
-        [
+    private func errorResponse(
+        id: Any,
+        code: Int,
+        message: String,
+        data: [String: Any]? = nil
+    ) -> [String: Any] {
+        var error: [String: Any] = [
+            "code": code,
+            "message": message,
+        ]
+        if let data {
+            error["data"] = data
+        }
+        return [
             "jsonrpc": "2.0",
             "id": id,
-            "error": [
-                "code": code,
-                "message": message,
-            ],
+            "error": error,
         ]
     }
 

@@ -10,6 +10,7 @@ import Testing
     #expect(paths.installedExecutableURL.path == "/Users/tester/Library/Application Support/Copicker/bin/copicker")
     #expect(paths.installedResourceBundleURL.lastPathComponent == "Copicker_CopickerCLI.bundle")
     #expect(paths.stateFileURL.lastPathComponent == "autostart-state.json")
+    #expect(paths.settingsFileURL.lastPathComponent == "settings.json")
     #expect(paths.launchAgentPlistURL.path == "/Users/tester/Library/LaunchAgents/io.github.wineondili.copicker.plist")
     #expect(paths.standardOutputLogURL.path == "/Users/tester/Library/Logs/Copicker/autostart.log")
     #expect(paths.standardErrorLogURL.path == "/Users/tester/Library/Logs/Copicker/autostart-error.log")

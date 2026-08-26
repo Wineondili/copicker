@@ -4,21 +4,22 @@ CoPicker's settings entry is packaged as a local Codex plugin backed by the exis
 
 ## Current phase
 
-The repository currently contains the complete offline shell for the integration:
+The repository currently contains the offline integration and persistence foundation:
 
 - `Plugin/copicker/`: distributable Codex plugin package;
 - `Plugin/copicker/assets/model-picker-grid.svg`: the supplied source icon;
 - explicit light and dark icon variants for plugin surfaces;
 - `copicker mcp-server`: a private stdio MCP server mode;
-- `ui://copicker/settings/v1.html`: the versioned MCP App resource;
+- `ui://copicker/settings/v2.html`: the versioned MCP App resource;
 - a `CoPicker` settings entrypoint intended to appear after the built-in Plugins and Browser entries;
-- a transparent, network-free placeholder settings page.
+- a transparent, network-free settings page shell;
+- a versioned preference store at `~/Library/Application Support/Copicker/settings.json`.
 
-The specific controls and persistence model are intentionally deferred until their behavior and layout are approved. The plugin package is not yet installed by `script/install.sh`, and this phase does not change a personal plugin marketplace or the running Codex application.
+The store contains only CoPicker enablement, visible supported-model keys, preferred placement, appearance, schema version, and revision. Writes are validated, atomic, permissioned `0600`, and protected by an optimistic revision check so a stale settings page cannot silently replace a newer edit. The plugin package is not yet installed by `script/install.sh`, and this phase does not change a personal plugin marketplace or the running Codex application.
 
 ## Runtime contract
 
-The settings tool is host-only. Its `_meta.ui.visibility` contains only `app`, so it is not offered as a normal model-callable tool. The tool declares the standard MCP App resource through `_meta.ui.resourceUri` and retains `openai/outputTemplate` only as a compatibility alias.
+Both settings tools are host-only. Their `_meta.ui.visibility` contains only `app`, so they are not offered as normal model-callable tools. `copicker_settings` is the read-only render entrypoint and declares the standard MCP App resource through `_meta.ui.resourceUri`; `copicker_settings_save` accepts a complete preference snapshot plus the caller's expected revision. Repeating an already-applied save is idempotent, while a stale save returns the current authoritative snapshot.
 
 The current Codex settings sidebar additionally discovers `_meta["openai/ui"].entrypoints` entries whose type is `settings`. That metadata and server-icon handling are private Codex compatibility points and must be rechecked after desktop updates.
 
@@ -35,17 +36,17 @@ swift test
 printf '%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v1.html"}}' \
+  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v2.html"}}' \
   | .build/debug/copicker mcp-server
 ```
 
-Expected output is three newline-delimited JSON-RPC responses. They should report the `CoPicker` server, an app-only `copicker_settings` tool with a `settings` entrypoint, and the versioned HTML resource with the MCP App MIME type.
+Expected output is three newline-delimited JSON-RPC responses. They should report the `CoPicker` server, app-only `copicker_settings` and `copicker_settings_save` tools, and the versioned HTML resource with the MCP App MIME type.
 
 ## Remaining integration work
 
 After the settings contents are approved:
 
-1. implement the actual controls and a narrowly scoped local persistence contract;
+1. implement the interactive controls and connect authoritative read/save snapshots to the MCP App;
 2. add installation, update, and removal for the plugin package;
 3. install it explicitly on a test device;
 4. restart Codex only outside an active Codex task;

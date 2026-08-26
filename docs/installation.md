@@ -92,11 +92,12 @@ Installation is limited to these user-scoped paths:
 - `~/Library/Application Support/Copicker/bin/copicker`
 - `~/Library/Application Support/Copicker/bin/Copicker_CopickerCLI.bundle`
 - `~/Library/Application Support/Copicker/autostart-state.json`
+- `~/Library/Application Support/Copicker/settings.json`
 - `~/Library/LaunchAgents/io.github.wineondili.copicker.plist`
 - `~/Library/Logs/Copicker/autostart.log`
 - `~/Library/Logs/Copicker/autostart-error.log`
 
-The source checkout may be removed after installation. The stable executable and resource bundle under `Application Support` are what the LaunchAgent runs.
+The source checkout may be removed after installation. The stable executable and resource bundle under `Application Support` are what the LaunchAgent runs. `settings.json` contains only CoPicker UI preferences, is written with user-only `0600` permissions, and persists across ordinary reinstalls and watcher disable/enable cycles.
 
 ## Permissions and signatures
 
@@ -212,7 +213,7 @@ rm -rf -- "$HOME/Library/Application Support/Copicker"
 rm -rf -- "$HOME/Library/Logs/Copicker"
 ```
 
-These commands permanently remove Copicker's installed binary, resource bundle, structured state, and operational logs. They do not touch `/Applications/ChatGPT.app`. Reinstall later by repeating the clean tagged-source installation.
+These commands permanently remove Copicker's installed binary, resource bundle, preferences, structured state, and operational logs. They do not touch `/Applications/ChatGPT.app`. Reinstall later by repeating the clean tagged-source installation.
 
 ## Troubleshooting
 

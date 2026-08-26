@@ -3,9 +3,17 @@ import Testing
 @testable import CopickerCore
 
 struct CopickerMCPProtocolTests {
-    private let protocolHandler = CopickerMCPProtocol(
-        settingsHTML: "<html><body>CoPicker test settings</body></html>"
+    private let settingsStore = CopickerSettingsStore(
+        fileURL: FileManager.default.temporaryDirectory
+            .appendingPathComponent("CopickerMCPProtocolTests-\(UUID().uuidString)/settings.json")
     )
+
+    private var protocolHandler: CopickerMCPProtocol {
+        CopickerMCPProtocol(
+            settingsHTML: "<html><body>CoPicker test settings</body></html>",
+            settingsStore: settingsStore
+        )
+    }
 
     @Test
     func initializeAdvertisesThemedIconsAndLocalCapabilities() throws {
@@ -33,7 +41,10 @@ struct CopickerMCPProtocolTests {
         let response = try send(method: "tools/list")
         let result = try dictionary(response["result"])
         let tools = try array(result["tools"]).map { try dictionary($0) }
-        let tool = try #require(tools.first)
+        #expect(tools.count == 2)
+        let tool = try #require(
+            tools.first(where: { $0["name"] as? String == CopickerMCPProtocol.settingsToolName })
+        )
 
         #expect(tool["name"] as? String == CopickerMCPProtocol.settingsToolName)
         let annotations = try dictionary(tool["annotations"])
@@ -49,6 +60,13 @@ struct CopickerMCPProtocolTests {
         let openAIUI = try dictionary(metadata["openai/ui"])
         let entrypoints = try array(openAIUI["entrypoints"]).map { try dictionary($0) }
         #expect(entrypoints.first?["type"] as? String == "settings")
+
+        let saveTool = try #require(
+            tools.first(where: { $0["name"] as? String == CopickerMCPProtocol.settingsSaveToolName })
+        )
+        let saveAnnotations = try dictionary(saveTool["annotations"])
+        #expect(saveAnnotations["readOnlyHint"] as? Bool == false)
+        #expect(saveAnnotations["idempotentHint"] as? Bool == true)
     }
 
     @Test
@@ -69,7 +87,72 @@ struct CopickerMCPProtocolTests {
         let csp = try dictionary(ui["csp"])
         #expect((csp["connectDomains"] as? [String])?.isEmpty == true)
         #expect((csp["resourceDomains"] as? [String])?.isEmpty == true)
-        #expect((csp["frameDomains"] as? [String])?.isEmpty == true)
+        #expect(csp["frameDomains"] == nil)
+    }
+
+    @Test
+    func settingsToolsReadSaveAndRepeatAnIdempotentSnapshot() throws {
+        let initial = try callTool(CopickerMCPProtocol.settingsToolName)
+        let initialSnapshot = try dictionary(initial["structuredContent"])
+        #expect(initialSnapshot["revision"] as? Int == 0)
+        #expect(initialSnapshot["visibleModels"] as? [String] == ["sol", "terra", "luna"])
+
+        let arguments: [String: Any] = [
+            "expectedRevision": 0,
+            "enabled": false,
+            "visibleModels": ["sol", "gpt-5.5", "daybreak-blue"],
+            "preferredPlacement": "left",
+            "appearance": "codex",
+        ]
+        let saved = try callTool(
+            CopickerMCPProtocol.settingsSaveToolName,
+            arguments: arguments
+        )
+        let savedSnapshot = try dictionary(saved["structuredContent"])
+        #expect(savedSnapshot["revision"] as? Int == 1)
+        #expect(savedSnapshot["enabled"] as? Bool == false)
+        #expect(savedSnapshot["preferredPlacement"] as? String == "left")
+
+        let repeated = try callTool(
+            CopickerMCPProtocol.settingsSaveToolName,
+            arguments: arguments
+        )
+        let repeatedSnapshot = try dictionary(repeated["structuredContent"])
+        #expect(repeatedSnapshot["revision"] as? Int == 1)
+        #expect(try settingsStore.read().revision == 1)
+    }
+
+    @Test
+    func staleSettingsWritesReturnTheCurrentSnapshot() throws {
+        _ = try callTool(
+            CopickerMCPProtocol.settingsSaveToolName,
+            arguments: [
+                "expectedRevision": 0,
+                "enabled": true,
+                "visibleModels": ["sol", "terra"],
+                "preferredPlacement": "right",
+                "appearance": "light",
+            ]
+        )
+
+        let response = try send(
+            method: "tools/call",
+            params: [
+                "name": CopickerMCPProtocol.settingsSaveToolName,
+                "arguments": [
+                    "expectedRevision": 0,
+                    "enabled": true,
+                    "visibleModels": ["luna"],
+                    "preferredPlacement": "top",
+                    "appearance": "dark",
+                ],
+            ]
+        )
+        let error = try dictionary(response["error"])
+        #expect(error["code"] as? Int == -32009)
+        let current = try dictionary(error["data"])
+        #expect(current["revision"] as? Int == 1)
+        #expect(current["preferredPlacement"] as? String == "right")
     }
 
     @Test
@@ -102,6 +185,17 @@ struct CopickerMCPProtocolTests {
         return try #require(
             JSONSerialization.jsonObject(with: responseData) as? [String: Any]
         )
+    }
+
+    private func callTool(
+        _ name: String,
+        arguments: [String: Any] = [:]
+    ) throws -> [String: Any] {
+        let response = try send(
+            method: "tools/call",
+            params: ["name": name, "arguments": arguments]
+        )
+        return try dictionary(response["result"])
     }
 
     private func dictionary(_ value: Any?) throws -> [String: Any] {
