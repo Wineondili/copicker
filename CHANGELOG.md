@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-28 01:20:56 +0800
+
+- Increased the CoPicker settings page-top inset from 20 to 42 pixels so the whitespace above the page title matches the 41.5-pixel visual gap from the title to the first **General** group heading.
+- Left the accepted 24-pixel page title, 32-pixel title-wrapper clearance, group headers, cards, controls, model order, and interaction behavior unchanged.
+- Advanced the renderer compatibility identifier to `0.12.7`, expanded the settings contract, and verified the corrected dark layout against the supplied live screenshot at a normalized 1552-by-922 viewport without injecting into or restarting Codex.
+
 ## 2026-08-28 00:16:57 +0800
 
 - Restored the CoPicker settings page hierarchy to the current Codex pattern: a 24-pixel, normal-weight page title with 32 pixels of bottom clearance, followed by compact settings-group headers.

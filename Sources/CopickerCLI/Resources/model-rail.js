@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.6";
+  const VERSION = "0.12.7";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";

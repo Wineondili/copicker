@@ -116,6 +116,8 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(settingsHTML.contains("--font-heading-lg-size"))
     #expect(settingsHTML.contains("var(--text-heading-lg, 24px)"))
     #expect(settingsHTML.contains("padding-bottom: 32px"))
+    #expect(settingsHTML.contains("--copicker-page-top-inset: 42px"))
+    #expect(settingsHTML.contains("padding: var(--copicker-page-top-inset) 20px"))
     #expect(settingsHTML.contains("min-height: 24px"))
     #expect(settingsHTML.contains("height: 28px"))
     #expect(settingsHTML.contains("border: 1px solid transparent"))
