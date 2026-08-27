@@ -110,7 +110,7 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(settingsHTML.contains("class=\"switch-thumb\""))
     #expect(settingsHTML.contains("transform: translateX(14px)"))
     #expect(settingsHTML.contains("--color-text-primary"))
-    #expect(settingsHTML.contains("max-width: 768px"))
+    #expect(settingsHTML.contains("width: min(100%, 768px)"))
     #expect(settingsHTML.contains("min-height: 24px"))
     #expect(settingsHTML.contains("height: 28px"))
     #expect(settingsHTML.contains("border: 1px solid transparent"))
@@ -141,6 +141,19 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(settingsHTML.contains("下次启动 Codex（下一次注入）时生效"))
     #expect(settingsHTML.contains("立即应用"))
     #expect(settingsHTML.contains("当前窗口已更新，无需重启"))
+    #expect(!settingsHTML.contains("id=\"apply-title\""))
+
+    let enabledRange = settingsHTML.range(of: "启用 CoPicker")
+    let applyRange = settingsHTML.range(of: "应用设置")
+    let modelsRange = settingsHTML.range(of: "id=\"models-title\"")
+    #expect(enabledRange != nil)
+    #expect(applyRange != nil)
+    #expect(modelsRange != nil)
+    if let enabledRange, let applyRange, let modelsRange {
+        #expect(enabledRange.lowerBound < applyRange.lowerBound)
+        #expect(applyRange.lowerBound < modelsRange.lowerBound)
+    }
+
     #expect(settingsHTML.contains("type=\"checkbox\""))
     #expect(settingsHTML.contains("type=\"radio\""))
     #expect(!settingsHTML.contains("fetch("))
