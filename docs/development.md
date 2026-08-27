@@ -114,7 +114,7 @@ Private DOM selectors, host IDs, state keys, and bridge behavior are versioned c
 
 The CLI version is defined in `Sources/CopickerCore/ProjectInfo.swift`. The renderer payload has an independent compatibility version in `model-rail.js`. Do not bump or rename the legacy `codex-model-rail` keys, host IDs, payload filename, or logging subsystem merely to match the CLI release; changing them requires an explicit migration that can dispose of an already injected older payload.
 
-Model IDs and the Fast service-tier ID must continue to come from `model/list`. Current-task changes must use the existing renderer bridge and `thread/settings/update`, require an active task identifier, and wait for `thread/settings/updated` confirmation. Do not add account-specific model or tier IDs.
+Model IDs, effort order, and the Fast service-tier ID/order must continue to come from `model/list`. Current-task changes must use the existing renderer bridge and `thread/settings/update`, require an active task identifier, and wait for `thread/settings/updated` confirmation. With no task identifier, the only permitted fallback is the bounded proxy over the exact official Model, Effort, and Speed controls, followed by official trigger-state confirmation. Never write raw config keys from the injected payload, create an empty task, or add account-specific model or tier IDs.
 
 ## Resource packaging
 

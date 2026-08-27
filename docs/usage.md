@@ -21,7 +21,7 @@ Check the automatic installation without opening Inspector or changing Codex:
 
 ## Open Copicker
 
-1. Open an existing Codex task, or send the first message in a new task so Codex has created its task identifier.
+1. Open an existing Codex task or a new unsent task.
 2. Click the composer control that displays the current model and reasoning effort, such as `5.6 Sol / High`.
 3. Wait for the official first-level model and reasoning picker to open. Copicker appears in its own popover at the configured top, left, or right position.
 
@@ -38,7 +38,7 @@ Check the automatic installation without opening Inspector or changing Codex:
 | Space | Toggle the catalog service tier named `Fast` when the selected model supports it |
 | Escape | Close the official picker and Copicker |
 
-Arrow-key input is briefly coalesced before it is committed. Pointer release and Space commit immediately. Copicker waits for Codex's official settings confirmation before treating a changed selection as final; a failed update restores the last confirmed selection.
+Arrow-key input is briefly coalesced before it is committed. Pointer release and Space commit immediately. In an existing task, Copicker waits for Codex's settings notification; in a new unsent task, it waits for the exact official picker controls and trigger to confirm the result. A failed update restores the last confirmed rail selection.
 
 ## Supported selections
 
@@ -65,7 +65,9 @@ If an account does not currently expose a requested model, effort, or Fast tier 
 
 ## Task and compaction behavior
 
-Model, effort, and Fast changes apply to the active Codex task through the same current-task settings path used by the official picker. The active task must already have a Codex task identifier.
+When a task identifier exists, model, effort, and Fast changes use Codex's documented current-task settings method and confirmation notification. Before the first message creates an identifier, CoPicker instead opens and selects the exact official Model, Effort, and Speed controls. That lets Codex run its own no-task default-model workflow, including its cache and prewarmed-task handling, without CoPicker writing raw config keys.
+
+The no-task fallback is deliberately strict: it requires the versioned official trigger, Model row, ordered catalog-backed Effort options, Speed option order, and a final official trigger match. If any anchor is missing or ambiguous, it fails closed. Once Codex creates the task identifier, CoPicker immediately returns to the direct current-task method.
 
 Changing model or effort may trigger the same compaction behavior as an equivalent change made with the official picker. This is expected Codex behavior rather than a separate Copicker compaction mechanism.
 
