@@ -14,9 +14,10 @@ Historical evidence remains useful, but it must not silently override a later ac
 
 <!-- COPICKER_ACCEPTED_BASELINE_V1
 accepted_runtime_commit=c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
-published_release_tag=v0.11.0
-published_release_commit=108335a9b4f4dfb6fe7399a7df58da6b9d510cfe
-cli_version=0.12.0-dev
+accepted_live_cli_version=0.12.0-dev
+published_release_tag=v0.99.0
+published_release_commit=v0.99.0^{commit}
+cli_version=0.99.0
 renderer_version=0.12.8
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v2.html
@@ -42,18 +43,21 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Item | Accepted value | Status |
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
-| CLI/plugin line | `0.12.0-dev` | Current full-feature development line |
+| CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
 | Renderer compatibility | `0.12.8` | Current accepted in-memory renderer/settings payload |
 | Settings schema | `1` | Current persisted preference schema |
 | Settings resource | `ui://copicker/settings/v2.html` | Current MCP App document |
-| Public GitHub release | `v0.11.0` at `108335a` | Older immutable three-model pre-release |
+| Public GitHub release | `v0.99.0` | Full-feature immutable source pre-release; the annotated tag resolves its exact package commit |
+| Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Codex desktop | `26.820.60940` build `7119` | Exact build for current live acceptance |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Installed watcher | `0.12.0-dev`, loaded, `injection-succeeded` | Verified for the accepted Codex PID |
+| Installed watcher evidence | `0.12.0-dev`, loaded, `injection-succeeded` | Verified for the accepted Codex PID before the release-only version bump |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
-The published `v0.11.0` release does not contain the complete settings, six-model, placement-latching, or final settings-geometry work. Until a later tag is published, install `c0343d4` when the current full feature set is required.
+`v0.99.0` packages the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
+
+The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
 
 ## Product requirements
 

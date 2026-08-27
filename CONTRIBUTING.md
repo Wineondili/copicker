@@ -49,7 +49,7 @@ git switch -c codex/my-change
 
 Use small coherent commits with English imperative messages. Preserve unrelated changes. Every completed change batch must add a timestamped, timezone-qualified entry to `CHANGELOG.md`.
 
-Do not use the shallow `v0.11.0` installation checkout for ongoing development.
+Do not use a shallow release-tag installation checkout for ongoing development.
 
 ## Version layers
 

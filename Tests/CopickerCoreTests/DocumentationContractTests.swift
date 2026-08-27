@@ -59,8 +59,9 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
     let rendererVersion = try #require(values["renderer_version"])
 
     #expect(values["accepted_runtime_commit"] == "c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb")
-    #expect(values["published_release_tag"] == "v0.11.0")
-    #expect(values["published_release_commit"] == "108335a9b4f4dfb6fe7399a7df58da6b9d510cfe")
+    #expect(values["accepted_live_cli_version"] == "0.12.0-dev")
+    #expect(values["published_release_tag"] == "v0.99.0")
+    #expect(values["published_release_commit"] == "v0.99.0^{commit}")
     #expect(values["cli_version"] == ProjectInfo.version)
     #expect(plugin["version"] as? String == ProjectInfo.version)
     #expect(rendererVersion == "0.12.8")
@@ -92,6 +93,7 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     let architecture = try documentationText("docs/architecture.md")
     let contributing = try documentationText("CONTRIBUTING.md")
     let designQA = try documentationText("design-qa.md")
+    let releaseNotes = try documentationText("docs/releases/v0.99.0.md")
     let installer = try documentationText("script/install.sh")
 
     let acceptedCommit = try #require(values["accepted_runtime_commit"])
@@ -99,7 +101,7 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     for document in [readme, installation] {
         #expect(document.contains(acceptedCommit))
         #expect(document.contains(publishedTag))
-        #expect(document.contains("three-model"))
+        #expect(document.contains("full-feature"))
     }
 
     for requirement in [
@@ -118,11 +120,16 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     #expect(installation.contains("Optional preference migration"))
     #expect(usage.contains("New unsent task"))
     #expect(pluginSettings.contains("Apply now"))
-    #expect(development.contains("documentation-only commits do not become runtime acceptance anchors"))
+    #expect(development.contains(
+        "documentation-only and version-only commits do not become runtime acceptance anchors"
+    ))
     #expect(validation.contains("Use `not tested`"))
     #expect(architecture.contains("thread/settings/update"))
     #expect(contributing.contains("Never terminate or restart Codex"))
     #expect(installer.contains("codex plugin add copicker@copicker-local"))
+    #expect(releaseNotes.contains("Copicker v0.99.0"))
+    #expect(releaseNotes.contains("no unsigned or non-notarized prebuilt executable"))
+    #expect(releaseNotes.contains("35 offline tests"))
 
     #expect(values["official_settings_toolbar_height_css_px"] == "46")
     #expect(values["official_settings_panel_inset_css_px"] == "20")

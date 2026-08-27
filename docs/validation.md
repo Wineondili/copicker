@@ -159,17 +159,18 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 
 | Gate | Evidence |
 | --- | --- |
-| Runtime source | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` |
-| CLI/plugin | `0.12.0-dev` |
+| Live-accepted runtime source | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` |
+| Current package | `v0.99.0`; CLI/plugin `0.99.0` |
+| Live-accepted CLI label | `0.12.0-dev` |
 | Renderer | `0.12.8` |
 | Codex | `26.820.60940` build `7119` |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |
 | Settings geometry | live official DOM measured; final user response: completely identical |
 | Inspector | closed after bounded work; no idle listener |
-| Public runtime release | still `v0.11.0`; current accepted development baseline is not yet tagged |
+| Public runtime release | `v0.99.0` full-feature source pre-release; no prebuilt executable attached |
 
-The accepted UI evidence applies to that exact Codex build and runtime source. It must not be generalized to an untested desktop update.
+The accepted UI evidence applies to that exact Codex build and runtime source. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
 
 ## New-machine acceptance record
 

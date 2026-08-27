@@ -17,16 +17,17 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Layer | Current accepted value | Where it is defined |
 | --- | --- | --- |
 | Accepted runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | [accepted-baseline.md](accepted-baseline.md) |
-| Published GitHub pre-release | `v0.11.0` at `108335a9b4f4dfb6fe7399a7df58da6b9d510cfe` | Immutable Git tag/release |
-| CLI and plugin | `0.12.0-dev` | `ProjectInfo.version` and plugin manifest |
+| Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
+| CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
+| Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
 | Renderer compatibility | `0.12.8` | `model-rail.js` `VERSION` |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
 | Live-accepted Codex | `26.820.60940` build `7119` | [accepted-baseline.md](accepted-baseline.md) |
 
-The accepted runtime commit is older than this documentation closure. That is intentional: documentation-only commits do not become runtime acceptance anchors. A later source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
+The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.11.0` pre-release is also intentionally distinct. It is an older three-model line and does not contain the full six-model settings integration, no-task switching, placement latching, or final native settings geometry.
+The public `v0.99.0` pre-release packages the full six-model implementation without changing renderer `0.12.8`. `v0.11.0` remains an immutable historical three-model release.
 
 ## Supported development boundary
 
@@ -62,7 +63,7 @@ git rev-parse origin/main
 git remote -v
 ```
 
-Do not use the shallow `--branch v0.11.0` installation checkout for ongoing development. A tag checkout is deliberately detached and suitable for reproducible installation or historical investigation, not for retaining development commits.
+Do not use a shallow `--branch v0.99.0` installation checkout for ongoing development. A tag checkout is deliberately detached and suitable for reproducible installation or historical investigation, not for retaining development commits.
 
 ## Package products and repository layout
 
@@ -73,7 +74,7 @@ Do not use the shallow `--branch v0.11.0` installation checkout for ongoing deve
 
 Important paths:
 
-- `Sources/CopickerCore/ProjectInfo.swift`: CLI/plugin development version.
+- `Sources/CopickerCore/ProjectInfo.swift`: CLI/plugin distribution version.
 - `Sources/CopickerCore/CopickerSettings.swift`: schema, defaults, model keys, validation, revision checks, and atomic persistence.
 - `Sources/CopickerCore/CopickerMCPProtocol.swift`: versioned app-only settings resource and tool metadata.
 - `Sources/CopickerCore/CopickerAutostart.swift`: user-scoped paths, installed artifacts, LaunchAgent definition, watcher state, and retry policy.
