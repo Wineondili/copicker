@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 10:51:20 +0800
+
+- Replaced the settings page's hand-tuned palette, typography, and control geometry with the current Codex MCP theme variables and measured native page, row, switch, segmented-control, and button metrics.
+- Restored the full 768-pixel native content column, removed the artificial 64-pixel row floor, added the native compact control states and reduced-motion behavior, and kept all existing settings semantics unchanged.
+- Advanced the renderer compatibility identifier to `0.12.3` and made the injected fallback forward resolved Codex renderer surfaces, text, borders, focus, blue accent, font, and shadow variables into its script-disabled frame.
+
 ## 2026-08-27 02:06:52 +0800
 
 - Rebuilt the CoPicker settings right pane around the native Codex hierarchy: a standard page heading, grouped section labels, rounded settings cards, inset row separators, compact segmented controls, and 32-by-20 switches, removing the visually separate plugin-style header and action card.

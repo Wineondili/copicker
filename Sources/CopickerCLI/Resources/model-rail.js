@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.2";
+  const VERSION = "0.12.3";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -29,6 +29,57 @@
   const APP_SERVER_REQUEST_TIMEOUT_MS = 5000;
   const SETTINGS_APPLY_REQUEST_TIMEOUT_MS = 12000;
   const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
+  const SETTINGS_FRAME_STYLE_VARIABLES = [
+    ["--color-background-primary", [
+      "--color-background-surface",
+      "--color-surface-tertiary",
+      "--color-surface",
+    ]],
+    ["--color-background-secondary", [
+      "--color-surface-elevated",
+      "--color-surface-secondary",
+    ]],
+    ["--color-background-tertiary", ["--color-surface-secondary"]],
+    ["--color-text-primary", ["--color-text"]],
+    ["--color-text-secondary", ["--color-codex-description"]],
+    ["--color-text-tertiary", [
+      "--color-text-tertiary",
+      "--color-codex-description",
+    ]],
+    ["--color-text-info", ["--color-text-info", "--color-chart-blue"]],
+    ["--color-text-danger", ["--color-text-danger", "--color-chart-red"]],
+    ["--color-text-warning", ["--color-text-warning"]],
+    ["--color-border-primary", [
+      "--color-border-primary-outline",
+      "--color-border",
+    ]],
+    ["--color-border-secondary", ["--color-border"]],
+    ["--color-ring-primary", ["--color-ring"]],
+    ["--font-sans", ["--font-sans"]],
+    ["--font-weight-normal", ["--vscode-font-weight"]],
+    ["--font-weight-medium", ["--font-weight-medium"]],
+    ["--font-text-xs-size", ["--text-xs"]],
+    ["--font-text-xs-line-height", ["--text-xs--line-height"]],
+    ["--font-text-sm-size", ["--text-sm"]],
+    ["--font-text-sm-line-height", ["--text-sm--line-height"]],
+    ["--font-text-md-size", ["--text-base"]],
+    ["--font-text-md-line-height", ["--text-base--line-height"]],
+    ["--font-heading-md-size", ["--text-heading-lg"]],
+    ["--shadow-sm", ["--shadow-sm"]],
+    ["--copicker-host-panel", [
+      "--color-background-panel",
+      "--color-background-primary-soft-alpha",
+      "--color-surface-secondary",
+    ]],
+    ["--copicker-host-primary-soft-alpha", [
+      "--color-background-primary-soft-alpha",
+    ]],
+    ["--copicker-host-control-hover", [
+      "--color-background-primary-ghost-hover",
+    ]],
+    ["--copicker-host-chart-blue", ["--color-chart-blue"]],
+    ["--copicker-host-gray-zero", ["--gray-0"]],
+  ];
   const KEYBOARD_COMMIT_DELAY_MS = 120;
   const POPOVER_ANIMATION_MS = 180;
   const PLACEMENT_RETURN_DELAY_MS = 420;
@@ -705,16 +756,44 @@
       return systemSettingsAppearance();
     }
 
+    function firstSettingsStyleValue(style, names) {
+      for (const name of names) {
+        const value = style.getPropertyValue(name).trim();
+        if (value.length > 0) return value;
+      }
+      return "";
+    }
+
+    function syncSettingsFrameStyleVariables(frameRoot, hostStyle) {
+      if (!frameRoot) return;
+      for (const [target, sources] of SETTINGS_FRAME_STYLE_VARIABLES) {
+        const value = firstSettingsStyleValue(hostStyle, sources);
+        if (value.length > 0) {
+          frameRoot.style.setProperty(target, value);
+        } else {
+          frameRoot.style.removeProperty(target);
+        }
+      }
+    }
+
     function updateSettingsAppearance() {
       if (!integration.host) return;
       const appearance = settingsAppearance();
+      const hostStyle = getComputedStyle(document.documentElement);
       integration.host.setAttribute("data-appearance-resolved", appearance);
       integration.host.style.colorScheme = appearance;
-      integration.host.style.background = appearance === "light"
-        ? "rgb(255, 255, 255)"
-        : "rgb(30, 30, 30)";
+      integration.host.style.background = firstSettingsStyleValue(hostStyle, [
+        "--color-background-surface",
+        "--color-surface-tertiary",
+        "--color-surface",
+      ]) || (
+        appearance === "light" ? "rgb(255, 255, 255)" : "rgb(30, 30, 30)"
+      );
       const frameRoot = integration.frame?.contentDocument?.documentElement;
-      if (frameRoot) frameRoot.style.colorScheme = appearance;
+      if (frameRoot) {
+        frameRoot.style.colorScheme = appearance;
+        syncSettingsFrameStyleVariables(frameRoot, hostStyle);
+      }
       integration.frame?.contentWindow?.postMessage({
         method: "copicker/theme",
         params: { appearance },
