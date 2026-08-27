@@ -148,8 +148,7 @@
       }
 
       main {
-        width: 100%;
-        max-width: 768px;
+        width: min(100%, 768px);
         margin: 0 auto;
         padding: 0;
       }
@@ -603,6 +602,18 @@
                 <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
+            <div class="setting-row setting-row--adaptive apply-row">
+              <div class="apply-copy">
+                <h3>应用设置</h3>
+                <p class="apply-note">设置会自动保存，默认在下次启动 Codex（下一次注入）时生效。无需重启时，可在保存完成后立即应用到当前 Codex。</p>
+                <p id="apply-result" class="apply-result" data-tone="normal" aria-live="polite"></p>
+              </div>
+              <button id="apply-now" class="apply-now" type="button" disabled>立即应用</button>
+            </div>
+            <div id="error-panel" class="error-panel" data-visible="false" role="alert">
+              <span id="error-message"></span>
+              <button id="retry" class="retry" type="button">重新读取</button>
+            </div>
           </div>
         </section>
 
@@ -714,25 +725,6 @@
           </div>
         </section>
 
-        <section class="settings-section" aria-labelledby="apply-title">
-          <div class="section-header">
-            <h2 id="apply-title">应用</h2>
-          </div>
-          <div class="settings-card">
-            <div class="setting-row setting-row--adaptive apply-row">
-              <div class="apply-copy">
-                <h3>应用设置</h3>
-                <p class="apply-note">设置会自动保存，默认在下次启动 Codex（下一次注入）时生效。无需重启时，可在保存完成后立即应用到当前 Codex。</p>
-                <p id="apply-result" class="apply-result" data-tone="normal" aria-live="polite"></p>
-              </div>
-              <button id="apply-now" class="apply-now" type="button" disabled>立即应用</button>
-            </div>
-            <div id="error-panel" class="error-panel" data-visible="false" role="alert">
-              <span id="error-message"></span>
-              <button id="retry" class="retry" type="button">重新读取</button>
-            </div>
-          </div>
-        </section>
       </div>
     </main>
 

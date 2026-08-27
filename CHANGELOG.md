@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 16:28:54 +0800
+
+- Moved the immediate-apply row and its result/error state directly below **Enable CoPicker**, removing the separate bottom **Apply** settings group without changing save or apply behavior.
+- Made the centered settings-column contract explicit with `width: min(100%, 768px)`, so narrow panes remain responsive while wider panes grow only equal side whitespace.
+- Added source-order and maximum-width contract coverage, documented the layout, browser-verified 1280- and 420-pixel viewports without live injection, and passed all 33 tests plus the production build.
+
 ## 2026-08-27 11:37:14 +0800
 
 - Re-derived the settings card, row, switch, default segmented control, and secondary toolbar button from the current Codex renderer bundle instead of inferring their variants from screenshots.
