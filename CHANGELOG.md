@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 11:37:14 +0800
+
+- Re-derived the settings card, row, switch, default segmented control, and secondary toolbar button from the current Codex renderer bundle instead of inferring their variants from screenshots.
+- Corrected the switch thumb box model and 2/14-pixel offsets, changed cards to the 8-percent default border with a white light fill, removed the inset segmented track and shadow, and replaced outlined pill actions with borderless 28-pixel toolbar actions.
+- Replaced the oversized page treatment with the compact native settings-group header, advanced the renderer compatibility identifier to `0.12.4`, and recorded focused in-app-browser comparison evidence without attaching to or restarting Codex.
+
 ## 2026-08-27 10:51:20 +0800
 
 - Replaced the settings page's hand-tuned palette, typography, and control geometry with the current Codex MCP theme variables and measured native page, row, switch, segmented-control, and button metrics.

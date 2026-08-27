@@ -21,7 +21,7 @@ The project is designed around one non-negotiable safety property: it does not m
 
 ## Current status
 
-The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified on Apple silicon against Codex `26.818.41705` (build `6971`), including guarded automatic injection after Codex restarts and Inspector shutdown after injection. The current development renderer payload uses the independent `0.12.2` compatibility identifier so it can replace older injected renderer state without renaming the legacy hook keys. Autostart remains opt-in and is never enabled by the default read-only command.
+The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified on Apple silicon against Codex `26.818.41705` (build `6971`), including guarded automatic injection after Codex restarts and Inspector shutdown after injection. The current development renderer payload uses the independent `0.12.4` compatibility identifier so it can replace older injected renderer state without renaming the legacy hook keys. Autostart remains opt-in and is never enabled by the default read-only command.
 
 `v0.11.0` is the public pre-release baseline. The earlier `v0.10.1-dev` tag remains available only as an immutable historical development snapshot; it is not the recommended installation version.
 

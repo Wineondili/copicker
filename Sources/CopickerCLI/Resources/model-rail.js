@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.3";
+  const VERSION = "0.12.4";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -49,10 +49,7 @@
     ["--color-text-info", ["--color-text-info", "--color-chart-blue"]],
     ["--color-text-danger", ["--color-text-danger", "--color-chart-red"]],
     ["--color-text-warning", ["--color-text-warning"]],
-    ["--color-border-primary", [
-      "--color-border-primary-outline",
-      "--color-border",
-    ]],
+    ["--color-border-primary", ["--color-border"]],
     ["--color-border-secondary", ["--color-border"]],
     ["--color-ring-primary", ["--color-ring"]],
     ["--font-sans", ["--font-sans"]],
@@ -64,19 +61,16 @@
     ["--font-text-sm-line-height", ["--text-sm--line-height"]],
     ["--font-text-md-size", ["--text-base"]],
     ["--font-text-md-line-height", ["--text-base--line-height"]],
-    ["--font-heading-md-size", ["--text-heading-lg"]],
     ["--shadow-sm", ["--shadow-sm"]],
     ["--copicker-host-panel", [
       "--color-background-panel",
       "--color-background-primary-soft-alpha",
       "--color-surface-secondary",
     ]],
-    ["--copicker-host-primary-soft-alpha", [
-      "--color-background-primary-soft-alpha",
-    ]],
     ["--copicker-host-control-hover", [
       "--color-background-primary-ghost-hover",
     ]],
+    ["--copicker-host-border-default", ["--color-border"]],
     ["--copicker-host-chart-blue", ["--color-chart-blue"]],
     ["--copicker-host-gray-zero", ["--gray-0"]],
   ];
