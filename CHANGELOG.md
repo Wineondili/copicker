@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-28 00:16:57 +0800
+
+- Restored the CoPicker settings page hierarchy to the current Codex pattern: a 24-pixel, normal-weight page title with 32 pixels of bottom clearance, followed by compact settings-group headers.
+- Added the visible first-group title **General** (`常规` in Simplified Chinese) above the existing enablement and immediate-apply card without changing the accepted controls, section order, or 768-pixel maximum width.
+- Advanced the renderer compatibility identifier to `0.12.6`, forwarded the native heading scale into the injected fallback, expanded hierarchy contracts, and verified the dark settings surface against the supplied official screenshot in the in-app browser without live injection or a Codex restart.
+
 ## 2026-08-27 22:51:33 +0800
 
 - Added a fail-closed no-task selection path that proxies the exact official Codex Model, Effort, and Speed controls, while preserving `thread/settings/update` and notification confirmation for existing tasks.

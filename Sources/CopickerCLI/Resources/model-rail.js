@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.5";
+  const VERSION = "0.12.6";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -62,6 +62,19 @@
     ["--font-text-sm-line-height", ["--text-sm--line-height"]],
     ["--font-text-md-size", ["--text-base"]],
     ["--font-text-md-line-height", ["--text-base--line-height"]],
+    ["--font-heading-lg-size", [
+      "--font-heading-lg-size",
+      "--text-heading-lg",
+      "--text-2xl",
+    ]],
+    ["--font-heading-lg-line-height", [
+      "--font-heading-lg-line-height",
+      "--text-2xl--line-height",
+    ]],
+    ["--font-heading-lg-tracking", [
+      "--font-heading-lg-tracking",
+      "--text-2xl--letter-spacing",
+    ]],
     ["--shadow-sm", ["--shadow-sm"]],
     ["--copicker-host-panel", [
       "--color-background-panel",

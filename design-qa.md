@@ -40,3 +40,30 @@
   - Pass 2 used `[local reference omitted]`; no actionable P0, P1, or P2 mismatch remained in the required fidelity surfaces. The different source copy, model-row count, and responsive viewport width are documented constraints rather than visual defects.
 
 final result: passed
+
+## 2026-08-28 — CoPicker page-title hierarchy
+
+- Source visual truth:
+  - `[local reference omitted]` — current official Codex General settings at 3104 × 1844 pixels, showing the page-level heading, its vertical clearance, and compact group headings.
+  - `[local reference omitted]` — the accepted CoPicker controls before this correction, showing that only the page-title hierarchy and missing first group label required adjustment.
+- Rendered implementation evidence:
+  - `[local reference omitted]` — updated CoPicker settings document captured at a 1552 × 922 CSS-pixel viewport in the Codex in-app browser.
+  - `[local reference omitted]` — one combined comparison input containing the official reference downsampled from @2x and the implementation at one image pixel per CSS pixel.
+- Viewport and density normalization: the 3104 × 1844 official screenshot was downsampled exactly to 1552 × 922 before comparison. The isolated implementation uses the same viewport but intentionally omits the surrounding native settings sidebar and toolbar; relative page-title, group-title, and card spacing are therefore the authoritative comparison surfaces.
+- State: controlled visual validation; personal preference snapshot omitted.
+- Native source confirmation: the current Codex renderer wraps settings pages with a 768-pixel maximum content column, a `heading-lg font-normal` page heading, 32 pixels of bottom padding, 40-pixel group gaps, and compact toolbar-height section headers. The implementation now follows that same hierarchy while retaining the already accepted local control primitives.
+- Measured implementation:
+  - Page title: 24-pixel font, 400 weight, 28.8-pixel line height, starting at the content inset.
+  - Page-title wrapper: 32-pixel bottom padding.
+  - First group title: `常规`, 14-pixel font, 500 weight, 21-pixel line height.
+  - First card: 768-pixel width at the same left edge as both headings; all lower groups retain their previous 40-pixel spacing.
+- Required fidelity surfaces:
+  - Typography: the page title now has the official visual prominence while section headings remain compact; row labels, descriptions, warnings, and controls are unchanged.
+  - Spacing: the page title no longer collapses into the first card, and the new `常规` label occupies the same group-header rhythm used by official settings.
+  - Layout: the existing centered 768-pixel maximum width, card geometry, row separators, model order, placement controls, and appearance controls remain unchanged.
+  - Color and assets: the accepted dark theme tokens, colored warning text, switches, and icon-free settings body remain unchanged.
+- Comparison history:
+  - Pass 1 is the user-supplied CoPicker screenshot: the outer title incorrectly reused the 14-pixel group-title treatment and the first card had no visible group label.
+  - Pass 2 is `[local reference omitted]`: the outer heading matches the official 24-pixel page treatment, the relative blank space matches the native wrapper contract, and the first group now reads `常规`. No visible regression was found in the accepted lower controls.
+
+final result: passed
