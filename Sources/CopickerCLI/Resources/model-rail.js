@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.7";
+  const VERSION = "0.12.8";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -69,7 +69,6 @@
     ]],
     ["--font-heading-lg-line-height", [
       "--font-heading-lg-line-height",
-      "--text-2xl--line-height",
     ]],
     ["--font-heading-lg-tracking", [
       "--font-heading-lg-tracking",
@@ -923,6 +922,28 @@
       }
     }
 
+    function nativeSettingsScrollViewport(container) {
+      if (!(container instanceof HTMLElement)) return null;
+      const containerRect = container.getBoundingClientRect();
+      return [container, ...container.querySelectorAll("*")]
+        .filter((element) => element instanceof HTMLElement)
+        .map((element) => ({
+          element,
+          rect: element.getBoundingClientRect(),
+          overflowY: getComputedStyle(element).overflowY,
+        }))
+        .filter(({ rect, overflowY }) =>
+          (overflowY === "auto" || overflowY === "scroll") &&
+          rect.width >= containerRect.width * 0.85 &&
+          rect.height > 120 &&
+          rect.top >= containerRect.top &&
+          rect.bottom <= containerRect.bottom,
+        )
+        .sort((left, right) =>
+          right.rect.width * right.rect.height - left.rect.width * left.rect.height,
+        )[0]?.rect || null;
+    }
+
     function settingsContentRect(anchor) {
       let child = anchor;
       while (child?.parentElement && child.parentElement !== document.body) {
@@ -934,7 +955,9 @@
             .map((element) => ({ element, rect: element.getBoundingClientRect() }))
             .filter(({ rect }) => rect.width >= window.innerWidth * 0.38 && rect.height > 120)
             .sort((left, right) => right.rect.width - left.rect.width)[0];
-          if (sibling) return sibling.rect;
+          if (sibling) {
+            return nativeSettingsScrollViewport(sibling.element) || sibling.rect;
+          }
         }
         child = parent;
       }

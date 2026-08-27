@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-28 01:33:13 +0800
+
+- Replaced the screenshot-derived CoPicker settings top inset with the live Codex settings geometry: the injected host now targets the native full-width scroll viewport below the 46-pixel toolbar and uses the same 20-pixel panel padding.
+- Removed the unrelated `text-2xl` line-height fallback so the 24-pixel CoPicker page heading resolves to the native `1.2` line height (28.8 pixels), matching the official title block and first-group baseline.
+- Advanced the renderer compatibility identifier to `0.12.8` and expanded offline contracts for the native scroll-viewport selection, page inset, and heading-line-height boundary.
+
 ## 2026-08-28 01:20:56 +0800
 
 - Increased the CoPicker settings page-top inset from 20 to 42 pixels so the whitespace above the page title matches the 41.5-pixel visual gap from the title to the first **General** group heading.
