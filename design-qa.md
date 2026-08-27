@@ -67,3 +67,27 @@ final result: passed
   - Pass 2 is `/tmp/copicker-design-qa-comparison-2026-08-28.png`: the outer heading matches the official 24-pixel page treatment, the relative blank space matches the native wrapper contract, and the first group now reads `常规`. No visible regression was found in the accepted lower controls.
 
 final result: passed
+
+## 2026-08-28 — CoPicker balanced page-top inset
+
+- Source visual truth:
+  - `/Users/jonas/Library/Mobile Documents/com~apple~CloudDocs/Downloads/Pasted 2026-08-28 at 01.15.19.png` — live CoPicker settings at 3104 × 1844 pixels before the correction, showing the page title too close to the host toolbar edge.
+  - `/Users/jonas/Library/Mobile Documents/com~apple~CloudDocs/Downloads/Pasted 2026-08-28 at 01.15.23.png` — official Codex General settings at 3104 × 1844 pixels, used to confirm the intended page-level vertical breathing room.
+- Rendered implementation evidence:
+  - `/tmp/copicker-design-qa-top-inset-2026-08-28.png` — corrected CoPicker settings document captured in the Codex in-app browser at a 1552 × 922 CSS-pixel viewport.
+  - `/tmp/copicker-design-qa-top-inset-comparison-2026-08-28.png` — combined full-view and focused comparison of the observed live page before the fix and the corrected implementation.
+- Viewport and density normalization: the live 3104 × 1844 source was downsampled exactly to 1552 × 922. The implementation was captured at 1552 × 922 with one image pixel per CSS pixel. The focused comparison aligns the host content edge and page-title region so surrounding sidebar and toolbar differences do not distort the whitespace judgment.
+- State: Simplified Chinese, dark appearance, CoPicker enabled, all six adapted models visible, top placement selected, Codex appearance selected, saved status visible, and no hover or focus treatment active. The preview used an isolated local bridge and did not attach to, signal, inject into, terminate, or restart Codex.
+- Findings and comparison history:
+  - Pass 1 found one P2 spacing mismatch: the live page left approximately half as much clear space above `CoPicker` as between `CoPicker` and `常规`, making the page title appear pinned to the host toolbar edge.
+  - The fix changed only the body page-top inset from 20 to 42 pixels and advanced the renderer compatibility identifier so a subsequent injection replaces the older settings surface.
+  - Pass 2 measured 42 pixels from the content top to the page-title top and 41.5 pixels from the page-title bottom to the `常规` title top. The 0.5-pixel difference is subpixel layout rounding; no actionable P0, P1, or P2 mismatch remains.
+- Required fidelity surfaces:
+  - Fonts and typography: the accepted 24-pixel, 400-weight page title and 14-pixel, 500-weight group headings are unchanged.
+  - Spacing and layout rhythm: only the page-top inset changed; the first card begins at the same position relative to `常规`, and all 40-pixel lower group gaps remain unchanged.
+  - Colors and visual tokens: dark surface, text, border, warning, switch, and selected-control tokens are unchanged.
+  - Image quality and assets: the settings body contains no visible product imagery or new assets.
+  - Copy and content: all labels, descriptions, access notices, model order, and save/apply messages are unchanged.
+- Interaction evidence: the preview loaded the authoritative snapshot and **立即应用** still completed with `已应用到当前 Codex` and `当前窗口已更新，无需重启。` after the spacing-only change.
+
+final result: passed

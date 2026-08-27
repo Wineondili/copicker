@@ -126,6 +126,7 @@
           --font-heading-lg-tracking,
           normal
         );
+        --copicker-page-top-inset: 42px;
         --copicker-weight-normal: var(--font-weight-normal, 400);
         --copicker-weight-medium: var(--font-weight-medium, 500);
       }
@@ -143,7 +144,8 @@
 
       body {
         margin: 0;
-        padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+        padding: var(--copicker-page-top-inset) 20px
+          calc(20px + env(safe-area-inset-bottom));
         background: transparent;
         color: var(--copicker-text-primary);
         font-family: inherit;
