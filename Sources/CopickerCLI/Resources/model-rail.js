@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.4";
+  const VERSION = "0.12.5";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -29,6 +29,7 @@
   const APP_SERVER_REQUEST_TIMEOUT_MS = 5000;
   const SETTINGS_APPLY_REQUEST_TIMEOUT_MS = 12000;
   const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
+  const OFFICIAL_CONTROL_TIMEOUT_MS = 2400;
   const SETTINGS_FRAME_STYLE_VARIABLES = [
     ["--color-background-primary", [
       "--color-background-surface",
@@ -1149,6 +1150,7 @@
       visualPending: false,
       localOnly: false,
       switchMode: "thread-settings-update",
+      noThreadSwitchMode: "official-control-proxy",
       design: "preview-2d",
       version: VERSION,
     };
@@ -1169,6 +1171,7 @@
       visualPending: false,
       localOnly: false,
       switchMode: "thread-settings-update",
+      noThreadSwitchMode: "official-control-proxy",
       design: "preview-2d",
       version: VERSION,
     };
@@ -1208,6 +1211,7 @@
     modelCatalog: null,
     modelCatalogPromise: null,
     currentThreadID: null,
+    pendingOfficialSelection: null,
     switchState: "idle",
     lastSwitchError: null,
     handleBridgeMessage: null,
@@ -1572,6 +1576,12 @@
   }
 
   function initializeSelectorFromTrigger(trigger) {
+    state.currentThreadID = resolveCurrentThreadID(trigger);
+    if (state.pendingOfficialSelection && !state.currentThreadID) {
+      setSwitchState("pending");
+      return;
+    }
+
     const triggerText = String(trigger?.textContent || "")
       .replace(/\s+/g, " ")
       .trim();
@@ -1598,12 +1608,9 @@
     );
     state.selectionRevision += 1;
     state.confirmedSelection = snapshotSelection();
-    state.currentThreadID = resolveCurrentThreadID(trigger);
     state.lastSwitchError = null;
     setSwitchState(state.currentThreadID ? "loading" : "no-thread");
-    if (state.currentThreadID) {
-      void ensureModelCatalog().catch(() => {});
-    }
+    void ensureModelCatalog().catch(() => {});
   }
 
   function hasSelectorSelection() {
@@ -1815,28 +1822,34 @@
         return null;
       }
 
-      const supportedEfforts = new Set(
-        (model.supportedReasoningEfforts || [])
-          .map((entry) =>
-            typeof entry === "string"
-              ? entry
-              : entry?.reasoningEffort || entry?.effort || null,
-          )
-          .filter(Boolean),
-      );
+      const supportedEffortOrder = (model.supportedReasoningEfforts || [])
+        .map((entry) =>
+          typeof entry === "string"
+            ? entry
+            : entry?.reasoningEffort || entry?.effort || null,
+        )
+        .filter((effort) => EFFORTS.includes(effort));
+      const supportedEfforts = new Set(supportedEffortOrder);
       const requiredEfforts = row.dots.map((dotNumber) => EFFORTS[dotNumber - 1]);
       if (requiredEfforts.some((effort) => !supportedEfforts.has(effort))) {
         return null;
       }
 
-      const fastTier = (model.serviceTiers || []).find(
+      const serviceTiers = Array.isArray(model.serviceTiers)
+        ? model.serviceTiers
+        : [];
+      const fastTierIndex = serviceTiers.findIndex(
         (tier) => String(tier?.name || "").toLocaleLowerCase() === "fast",
       );
+      const fastTier = fastTierIndex >= 0 ? serviceTiers[fastTierIndex] : null;
       return {
         rowIndex,
         model: model.model,
         displayName: model.displayName,
         supportedEfforts,
+        supportedEffortOrder,
+        serviceTierOptionCount: serviceTiers.length + 1,
+        fastTierOptionIndex: fastTierIndex >= 0 ? fastTierIndex + 1 : null,
         fastTierID: row.supportsFast
           ? fastTier?.id || fastTier?.serviceTier || null
           : null,
@@ -2001,18 +2014,496 @@
     };
   }
 
+  function officialControlIsUsable(element) {
+    return Boolean(
+      element instanceof HTMLElement &&
+      isVisible(element) &&
+      !element.matches(":disabled, [aria-disabled='true'], [data-disabled]") &&
+      !element.closest("[aria-hidden='true'], [inert]"),
+    );
+  }
+
+  function officialItemsInSurface(surface) {
+    if (!surface) return [];
+    return [...surface.querySelectorAll(SECONDARY_ITEM_SELECTOR)].filter(
+      (item) =>
+        officialControlIsUsable(item) &&
+        item.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+    );
+  }
+
+  function findOfficialComposerTrigger() {
+    if (officialControlIsUsable(state.trigger)) return state.trigger;
+    const candidates = [...document.querySelectorAll(TRIGGER_SELECTOR)].filter(
+      officialControlIsUsable,
+    );
+    const openCandidates = candidates.filter(
+      (trigger) =>
+        trigger.getAttribute("aria-expanded") === "true" ||
+        trigger.getAttribute("data-state") === "open",
+    );
+    if (openCandidates.length === 1) return openCandidates[0];
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
+  function waitForOfficialState(predicate, failureMessage) {
+    return new Promise((resolve, reject) => {
+      const startedAt = performance.now();
+      let lastError = null;
+      const poll = () => {
+        if (state.disposed) {
+          reject(new Error("Copicker was disposed while waiting for an official control."));
+          return;
+        }
+        try {
+          const result = predicate();
+          if (result) {
+            resolve(result);
+            return;
+          }
+        } catch (error) {
+          lastError = error;
+        }
+        if (performance.now() - startedAt >= OFFICIAL_CONTROL_TIMEOUT_MS) {
+          const suffix = lastError instanceof Error ? ` ${lastError.message}` : "";
+          reject(new Error(`${failureMessage}${suffix}`));
+          return;
+        }
+        window.requestAnimationFrame(poll);
+      };
+      poll();
+    });
+  }
+
+  function clickOfficialControl(control) {
+    if (!officialControlIsUsable(control)) {
+      throw new Error("The required official Codex control is unavailable.");
+    }
+    const rect = control.getBoundingClientRect();
+    if (typeof PointerEvent === "function") {
+      control.dispatchEvent(new PointerEvent("pointermove", {
+        bubbles: true,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        pointerType: "mouse",
+      }));
+    }
+    control.focus({ preventScroll: true });
+    control.click();
+  }
+
+  function isOfficialPrimarySurfaceForProxy(surface) {
+    return Boolean(
+      surface &&
+      isVisible(surface) &&
+      !surface.matches(SECONDARY_SURFACE_SELECTOR) &&
+      !surface.closest(SECONDARY_SURFACE_SELECTOR) &&
+      surface.querySelector(REASONING_SLIDER_SELECTOR) &&
+      surface.querySelector(PRIMARY_CONTROL_SELECTOR),
+    );
+  }
+
+  function findOfficialPrimarySurfaceForProxy(trigger) {
+    if (isOfficialPrimarySurfaceForProxy(state.primarySurface)) {
+      return state.primarySurface;
+    }
+    const controlledID = trigger?.getAttribute("aria-controls");
+    if (controlledID) {
+      const controlled = document.getElementById(controlledID);
+      if (isOfficialPrimarySurfaceForProxy(controlled)) return controlled;
+    }
+
+    const candidates = [...document.querySelectorAll(PRIMARY_SURFACE_SELECTOR)]
+      .filter(isOfficialPrimarySurfaceForProxy);
+    if (candidates.length === 0) return null;
+    const triggerRect = trigger.getBoundingClientRect();
+    return candidates.sort((left, right) => {
+      const score = (surface) => {
+        const rect = surface.getBoundingClientRect();
+        return Math.hypot(
+          rect.left + rect.width / 2 - (triggerRect.left + triggerRect.width / 2),
+          rect.top + rect.height / 2 - (triggerRect.top + triggerRect.height / 2),
+        );
+      };
+      return score(left) - score(right);
+    })[0];
+  }
+
+  async function ensureOfficialPrimaryOpen() {
+    const trigger = findOfficialComposerTrigger();
+    if (!trigger) {
+      throw new Error("Copicker could not resolve one exact official model trigger.");
+    }
+
+    const existingSurface = findOfficialPrimarySurfaceForProxy(trigger);
+    if (
+      existingSurface &&
+      (trigger.getAttribute("aria-expanded") === "true" ||
+        trigger.getAttribute("data-state") === "open")
+    ) {
+      state.trigger = trigger;
+      state.primarySurface = existingSurface;
+      return { trigger, surface: existingSurface };
+    }
+
+    clickOfficialControl(trigger);
+    const target = await waitForOfficialState(() => {
+      const currentTrigger = findOfficialComposerTrigger();
+      if (!currentTrigger) return null;
+      if (
+        currentTrigger.getAttribute("aria-expanded") !== "true" &&
+        currentTrigger.getAttribute("data-state") !== "open"
+      ) {
+        return null;
+      }
+      const surface = findOfficialPrimarySurfaceForProxy(currentTrigger);
+      return surface ? { trigger: currentTrigger, surface } : null;
+    }, "The official model picker did not open.");
+    state.trigger = target.trigger;
+    state.primarySurface = target.surface;
+    return target;
+  }
+
+  function officialAdvancedRows(surface) {
+    const modelTriggers = [...surface.querySelectorAll(MODEL_ROW_SELECTOR)]
+      .map((label) => label.closest(SECONDARY_ITEM_SELECTOR))
+      .filter(
+        (item) =>
+          officialControlIsUsable(item) &&
+          item.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+      );
+    const uniqueModelTriggers = [...new Set(modelTriggers)];
+    if (uniqueModelTriggers.length !== 1) return null;
+
+    const modelTrigger = uniqueModelTriggers[0];
+    const activePanel = modelTrigger.closest("[data-active='true']");
+    const rowItems = officialItemsInSurface(surface).filter(
+      (item) => !activePanel || activePanel.contains(item),
+    );
+    const modelIndex = rowItems.indexOf(modelTrigger);
+    if (modelIndex < 0) return null;
+    return {
+      modelTrigger,
+      effortTrigger: rowItems[modelIndex + 1] || null,
+      speedTrigger: rowItems[modelIndex + 2] || null,
+    };
+  }
+
+  async function ensureOfficialAdvancedRows(context) {
+    const primary = await ensureOfficialPrimaryOpen();
+    const existingRows = officialAdvancedRows(primary.surface);
+    if (existingRows) return { surface: primary.surface, rows: existingRows };
+
+    const toggles = [...primary.surface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)]
+      .filter(
+        (control) =>
+          control.matches("[data-model-picker-view-toggle]") &&
+          officialControlIsUsable(control) &&
+          control.closest(PRIMARY_SURFACE_SELECTOR) === primary.surface,
+      );
+    if (toggles.length !== 1) {
+      throw new Error("The official Advanced control is unavailable or ambiguous.");
+    }
+    clickOfficialControl(toggles[0]);
+    const advanced = await waitForOfficialState(() => {
+      const trigger = findOfficialComposerTrigger();
+      const surface = trigger ? findOfficialPrimarySurfaceForProxy(trigger) : null;
+      const rows = surface ? officialAdvancedRows(surface) : null;
+      return surface && rows ? { surface, rows } : null;
+    }, "The official Advanced model controls did not open.");
+    context.expandedAdvanced = true;
+    state.primarySurface = advanced.surface;
+    return advanced;
+  }
+
+  async function restoreOfficialPickerView(context) {
+    if (!context.expandedAdvanced) return;
+    const primary = await ensureOfficialPrimaryOpen();
+    if (!officialAdvancedRows(primary.surface)) {
+      context.expandedAdvanced = false;
+      return;
+    }
+    const toggles = [...primary.surface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)]
+      .filter(
+        (control) =>
+          control.matches("[data-model-picker-view-toggle]") &&
+          officialControlIsUsable(control) &&
+          control.closest(PRIMARY_SURFACE_SELECTOR) === primary.surface,
+      );
+    if (toggles.length !== 1) {
+      throw new Error("Copicker could not restore the official compact picker view.");
+    }
+    clickOfficialControl(toggles[0]);
+    const compact = await waitForOfficialState(() => {
+      const trigger = findOfficialComposerTrigger();
+      const surface = trigger ? findOfficialPrimarySurfaceForProxy(trigger) : null;
+      return surface && !officialAdvancedRows(surface) ? { trigger, surface } : null;
+    }, "The official picker did not return to its original compact view.");
+    context.expandedAdvanced = false;
+    state.trigger = compact.trigger;
+    state.primarySurface = compact.surface;
+  }
+
+  function findOfficialSubmenuSurface(trigger, primarySurface, predicate) {
+    const controlledID = trigger?.getAttribute("aria-controls");
+    if (controlledID) {
+      const controlled = document.getElementById(controlledID);
+      if (
+        controlled &&
+        controlled !== primarySurface &&
+        isVisible(controlled) &&
+        predicate(controlled)
+      ) {
+        return controlled;
+      }
+    }
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const candidates = [...document.querySelectorAll(PRIMARY_SURFACE_SELECTOR)]
+      .filter(
+        (surface) =>
+          surface !== primarySurface &&
+          isVisible(surface) &&
+          !primarySurface.contains(surface) &&
+          !surface.contains(primarySurface) &&
+          predicate(surface),
+      );
+    return candidates.sort((left, right) => {
+      const score = (surface) => {
+        const rect = surface.getBoundingClientRect();
+        return Math.hypot(
+          rect.left + rect.width / 2 - (triggerRect.left + triggerRect.width / 2),
+          rect.top + rect.height / 2 - (triggerRect.top + triggerRect.height / 2),
+        );
+      };
+      return score(left) - score(right);
+    })[0] || null;
+  }
+
+  async function openOfficialSubmenu(trigger, primarySurface, predicate, failureMessage) {
+    const existing = findOfficialSubmenuSurface(trigger, primarySurface, predicate);
+    if (existing) return existing;
+    clickOfficialControl(trigger);
+    return waitForOfficialState(
+      () => findOfficialSubmenuSurface(trigger, primarySurface, predicate),
+      failureMessage,
+    );
+  }
+
+  function officialModelTextCandidates(row, catalogEntry) {
+    const values = new Set([
+      catalogEntry?.displayName,
+      ...row.catalogDisplayNames,
+    ].filter(Boolean));
+    for (const value of [...values]) {
+      values.add(String(value).replace(/^GPT[-\s]*/i, ""));
+    }
+    return [...values]
+      .map(normalizedDisplayName)
+      .filter((value) => value.length >= 3)
+      .sort((left, right) => right.length - left.length);
+  }
+
+  function officialModelItems(surface, row, catalogEntry) {
+    const candidates = officialModelTextCandidates(row, catalogEntry);
+    return officialItemsInSurface(surface).filter((item) => {
+      const itemText = normalizedDisplayName(item.textContent);
+      return candidates.some(
+        (candidate) => itemText === candidate || itemText.startsWith(candidate),
+      );
+    });
+  }
+
+  async function selectOfficialModel(row, catalogEntry, context) {
+    const currentTrigger = findOfficialComposerTrigger();
+    if (currentTrigger && rowMatchesTriggerText(row, currentTrigger.textContent)) return;
+
+    const { surface, rows } = await ensureOfficialAdvancedRows(context);
+    if (!rows?.modelTrigger) {
+      throw new Error("The official Model row is unavailable or ambiguous.");
+    }
+    const submenu = await openOfficialSubmenu(
+      rows.modelTrigger,
+      surface,
+      (candidate) => officialModelItems(candidate, row, catalogEntry).length === 1,
+      "The official Model submenu did not expose one exact target model.",
+    );
+    const matches = officialModelItems(submenu, row, catalogEntry);
+    if (matches.length !== 1) {
+      throw new Error("The official target model control is unavailable or ambiguous.");
+    }
+    clickOfficialControl(matches[0]);
+    const trigger = await waitForOfficialState(() => {
+      const candidate = findOfficialComposerTrigger();
+      return candidate && rowMatchesTriggerText(row, candidate.textContent)
+        ? candidate
+        : null;
+    }, "Codex did not confirm the model selected through its official control.");
+    state.trigger = trigger;
+  }
+
+  async function selectOfficialEffort(effort, catalogEntry, context) {
+    const currentTrigger = findOfficialComposerTrigger();
+    if (currentTrigger?.getAttribute("data-selected-reasoning-effort") === effort) return;
+
+    const { surface, rows } = await ensureOfficialAdvancedRows(context);
+    if (!rows?.effortTrigger) {
+      throw new Error("The official Effort row is unavailable or ambiguous.");
+    }
+    const submenu = await openOfficialSubmenu(
+      rows.effortTrigger,
+      surface,
+      (candidate) => Boolean(candidate.querySelector("[data-reasoning-selected='true']")),
+      "The official Effort submenu did not open.",
+    );
+    const items = officialItemsInSurface(submenu);
+    const effortOrder = catalogEntry.supportedEffortOrder;
+    if (items.length !== effortOrder.length) {
+      throw new Error("The official Effort menu no longer matches the model catalog.");
+    }
+    const targetIndex = effortOrder.indexOf(effort);
+    if (targetIndex < 0 || !items[targetIndex]) {
+      throw new Error("The selected effort has no exact official control.");
+    }
+    clickOfficialControl(items[targetIndex]);
+    const trigger = await waitForOfficialState(() => {
+      const candidate = findOfficialComposerTrigger();
+      return candidate?.getAttribute("data-selected-reasoning-effort") === effort
+        ? candidate
+        : null;
+    }, "Codex did not confirm the effort selected through its official control.");
+    state.trigger = trigger;
+  }
+
+  async function selectOfficialFastMode(enabled, catalogEntry, context) {
+    const primary = await ensureOfficialPrimaryOpen();
+    const surface = primary.surface;
+    if (readOfficialFastMode(surface) === enabled) return;
+
+    const advanced = await ensureOfficialAdvancedRows(context);
+    const rows = advanced.rows;
+    if (!rows?.speedTrigger) {
+      throw new Error("The official Speed row is unavailable or ambiguous.");
+    }
+    const expectedCount = catalogEntry?.serviceTierOptionCount || null;
+    const submenu = await openOfficialSubmenu(
+      rows.speedTrigger,
+      advanced.surface,
+      (candidate) => {
+        if (candidate.querySelector("[data-reasoning-selected='true']")) return false;
+        const itemCount = officialItemsInSurface(candidate).length;
+        return expectedCount
+          ? itemCount === expectedCount
+          : itemCount >= 2 && itemCount <= 4;
+      },
+      "The official Speed submenu did not open.",
+    );
+    const items = officialItemsInSurface(submenu);
+    const targetIndex = enabled ? catalogEntry?.fastTierOptionIndex : 0;
+    if (!Number.isInteger(targetIndex) || !items[targetIndex]) {
+      throw new Error("The selected speed tier has no exact official control.");
+    }
+    clickOfficialControl(items[targetIndex]);
+    const reopened = await ensureOfficialPrimaryOpen();
+    await waitForOfficialState(
+      () => readOfficialFastMode(reopened.surface) === enabled,
+      "Codex did not confirm the speed selected through its official control.",
+    );
+  }
+
+  async function performOfficialControlProxy(selection, catalogEntry) {
+    const row = ROWS[selection.rowIndex];
+    const context = { expandedAdvanced: false };
+    try {
+      const initial = await ensureOfficialPrimaryOpen();
+      if (!row.supportsFast && readOfficialFastMode(initial.surface)) {
+        await selectOfficialFastMode(false, null, context);
+      }
+
+      await selectOfficialModel(row, catalogEntry, context);
+      await selectOfficialEffort(selection.effort, catalogEntry, context);
+      if (row.supportsFast) {
+        await selectOfficialFastMode(Boolean(selection.fastMode), catalogEntry, context);
+      }
+
+      await restoreOfficialPickerView(context);
+      await ensureOfficialPrimaryOpen();
+      const confirmed = officialSelectionFromDOM();
+      if (!selectionsEqual(confirmed, selection)) {
+        throw new Error("The official controls did not confirm the complete CoPicker selection.");
+      }
+      return confirmed;
+    } catch (error) {
+      try {
+        await restoreOfficialPickerView(context);
+      } catch (restoreError) {
+        if (error instanceof Error) error.restoreError = restoreError;
+      }
+      throw error;
+    }
+  }
+
+  async function performNoThreadSelectionCommit(
+    selection,
+    revision,
+    catalogEntry,
+    { force = false } = {},
+  ) {
+    const previousConfirmed = state.confirmedSelection;
+    const sameAsConfirmed = selectionsEqual(previousConfirmed, selection);
+    if (sameAsConfirmed && !force) {
+      setSwitchState("confirmed");
+      return { confirmed: true, unchanged: true, mode: "official-control-proxy" };
+    }
+
+    state.commitInFlight = true;
+    state.pendingOfficialSelection = { ...selection };
+    setSwitchState("pending");
+    try {
+      const confirmed = await performOfficialControlProxy(selection, catalogEntry);
+      state.confirmedSelection = confirmed;
+      state.lastSwitchError = null;
+      setSwitchState("confirmed");
+      return {
+        confirmed: true,
+        unchanged: sameAsConfirmed,
+        superseded: revision < state.selectionRevision,
+        mode: "official-control-proxy",
+      };
+    } catch (error) {
+      let rollbackError = null;
+      const rollbackEntry = Number.isInteger(previousConfirmed?.rowIndex)
+        ? state.modelCatalog?.[previousConfirmed.rowIndex]
+        : null;
+      if (
+        revision === state.selectionRevision &&
+        rollbackEntry &&
+        !selectionsEqual(officialSelectionFromDOM(), previousConfirmed)
+      ) {
+        try {
+          await performOfficialControlProxy(previousConfirmed, rollbackEntry);
+        } catch (failure) {
+          rollbackError = failure;
+        }
+      }
+      if (rollbackError && error instanceof Error) error.rollbackError = rollbackError;
+      state.lastSwitchError = error;
+      if (revision === state.selectionRevision && previousConfirmed) {
+        applySelection(previousConfirmed);
+      }
+      setSwitchState("error");
+      throw error;
+    } finally {
+      state.pendingOfficialSelection = null;
+      state.commitInFlight = false;
+    }
+  }
+
   async function performSelectionCommit(selection, revision, { force = false } = {}) {
     if (!Number.isInteger(selection?.rowIndex) || !selection.effort) {
       throw new Error("A supported model and effort must be selected.");
     }
     if (revision < state.selectionRevision) return { skipped: "superseded" };
-
-    const threadID = state.currentThreadID || resolveCurrentThreadID(state.trigger);
-    if (!threadID) {
-      setSwitchState("no-thread");
-      throw new Error("The current Codex task has no thread identifier yet.");
-    }
-    state.currentThreadID = threadID;
 
     const catalog = await ensureModelCatalog();
     const catalogEntry = catalog[selection.rowIndex];
@@ -2022,6 +2513,18 @@
     if (selection.fastMode && !catalogEntry.fastTierID) {
       throw new Error("Fast is unavailable for the selected model.");
     }
+
+    const threadID = state.currentThreadID || resolveCurrentThreadID(state.trigger);
+    if (!threadID) {
+      state.currentThreadID = null;
+      return performNoThreadSelectionCommit(
+        selection,
+        revision,
+        catalogEntry,
+        { force },
+      );
+    }
+    state.currentThreadID = threadID;
 
     const previousConfirmed = state.confirmedSelection;
     const sameAsConfirmed = selectionsEqual(previousConfirmed, selection);
@@ -3012,6 +3515,7 @@
     host.setAttribute("data-visual-pending", "false");
     host.setAttribute("data-local-only", "false");
     host.setAttribute("data-switch-mode", "thread-settings-update");
+    host.setAttribute("data-no-thread-switch-mode", "official-control-proxy");
     host.setAttribute("data-switch-state", state.switchState);
     host.setAttribute("data-keyboard-navigation", "arrows-space");
     host.setAttribute("data-design-source", "preview.html");
@@ -3352,6 +3856,7 @@
     visualPending: false,
     localOnly: false,
     switchMode: "thread-settings-update",
+    noThreadSwitchMode: "official-control-proxy",
     design: "preview-2d",
     version: VERSION,
   };

@@ -42,17 +42,17 @@ The current `main` branch is `0.12.0-dev`. It adds the native CoPicker settings 
 - Settings can expose Sol, Terra, Luna, Daybreak, GPT-5.5, and Codex Spark in that fixed order. Sol, Terra, and Daybreak have six efforts; Luna has five; GPT-5.5 and Codex Spark have four. GPT-5.4 and GPT-5.4 Mini remain unsupported.
 - When the official trigger reports any of those six adapted models with a supported effort, the detached selector recognizes it even when that model is hidden from the selectable rows. Unsupported official models produce an empty state with a centered gray `Other` label.
 - While the rail is visible, the arrow keys move through enabled model and effort cells. Space toggles Fast only for models that support it. Daybreak and Codex Spark clear Fast when selected and cannot toggle it.
-- The renderer reuses Codex's existing `electronBridge` and local app-server connection. Model selection calls only `model/list` and `thread/settings/update`; the injected settings fallback additionally uses `thread/loaded/list` and `mcpServer/tool/call` to reach the private CoPicker settings tools. It does not spawn another app-server process or proxy a click through the official model list.
+- The renderer reuses Codex's existing `electronBridge` and local app-server connection. It resolves availability through `model/list`; an existing task uses `thread/settings/update`, while an unsent task with no identifier proxies only the exact official Model, Effort, and Speed controls so Codex performs its complete default-settings workflow. The injected settings fallback additionally uses `thread/loaded/list` and `mcpServer/tool/call` to reach the private CoPicker settings tools.
 - Settings save automatically and normally take effect on the next Codex-process injection. The settings page also offers an explicit **Apply now** action that reuses the same guarded `copicker inject` path for the current process without restarting Codex; ordinary reads and autosaves never open Inspector.
 - Adapted model IDs are matched from their official catalog display names. Supported effort levels and the service tier named `Fast` are validated from that catalog before any write, and no model ID or tier ID is persisted. Daybreak and Codex Spark always submit the normal service tier.
-- A settings update is scoped to the active task identified by Codex's composer context. The rail waits for `thread/settings/updated` before marking a changed selection as confirmed, serializes rapid changes, and restores the last confirmed selection if the update fails.
-- On a new unsent task with no thread identifier, the rail remains visible but refuses to write until Codex creates the task. Model or effort changes may trigger the same compaction behavior as the official picker because both use the same current-task settings path.
+- A settings update in an existing task is scoped to its identifier and waits for `thread/settings/updated`. On a new unsent task, CoPicker uses the official accessible controls and confirms the official trigger state instead; it never writes raw config keys or invents a task identifier.
+- Both paths serialize rapid changes and restore the last confirmed rail selection on failure. Model or effort changes may trigger the same compaction behavior as the equivalent official picker action.
 - Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
 - All selector markup and styles are isolated in the detached Shadow DOM host.
 
 ## Quick use
 
-After automatic or manual injection, open an existing Codex task and click the composer control that displays the current model and reasoning effort. Copicker appears at the configured top, left, or right side of the official first-level picker.
+After automatic or manual injection, open an existing Codex task or a new unsent task and click the composer control that displays the current model and reasoning effort. Copicker appears at the configured top, left, or right side of the official first-level picker.
 
 | Input | Action |
 | --- | --- |

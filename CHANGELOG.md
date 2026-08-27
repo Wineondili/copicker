@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27 22:51:33 +0800
+
+- Added a fail-closed no-task selection path that proxies the exact official Codex Model, Effort, and Speed controls, while preserving `thread/settings/update` and notification confirmation for existing tasks.
+- Derived model names, effort ordering, and Fast option ordering from `model/list`, restored the official compact/advanced picker state after selection, and rolled the rail back when an official control is missing or ambiguous.
+- Advanced the renderer compatibility identifier to `0.12.5`, documented unsent-task behavior, expanded payload contracts, and verified pointer drag plus Fast selection in an isolated browser without injecting into or restarting Codex.
+
 ## 2026-08-27 16:28:54 +0800
 
 - Moved the immediate-apply row and its result/error state directly below **Enable CoPicker**, removing the separate bottom **Apply** settings group without changing save or apply behavior.
