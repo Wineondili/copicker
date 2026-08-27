@@ -10,52 +10,48 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 | Layer | Current value | Meaning |
 | --- | --- | --- |
-| Latest GitHub release | `v0.11.0` pre-release | Published three-model source release; older than the current settings work |
+| Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Current six-model, persistent-settings, no-task, placement, and native-geometry baseline |
-| CLI and plugin version | `0.12.0-dev` | Development line installed by the accepted runtime baseline |
+| CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
 | Renderer compatibility version | `0.12.8` | Forces replacement of older in-memory renderer/settings integrations |
 | Settings schema | `1` | Version of `settings.json` |
 | MCP settings resource | `ui://copicker/settings/v2.html` | Versioned CoPicker settings document |
 | Live-accepted Codex build | `26.820.60940` (`7119`) | Build on which the current UI and interaction baseline was accepted |
+| Live-accepted CLI label | `0.12.0-dev` | Version string present during the accepted installation before the release-only bump |
 
 The current runtime baseline was installed and accepted on Apple silicon with Codex `26.820.60940` build `7119`. The user confirmed that the final CoPicker settings geometry matches the official settings page. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-The repository's latest documentation may be newer than `c0343d4`, but that commit remains the immutable accepted **runtime-code** anchor until a later runtime change is separately accepted. `main` is the latest development source, not a published stable release.
+`v0.99.0` packages that accepted full-feature implementation with release metadata and the completed public documentation. The renderer behavior is unchanged from `c0343d4`; the release-only version bump does not create a second live-installation claim. `main` remains the moving development branch, while `v0.99.0` is the immutable install ref.
 
-See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions.
+See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v0.99.0 release notes](docs/releases/v0.99.0.md) for the packaged feature and validation boundary.
 
 ## Install on a new Mac
 
-Choose one installation line deliberately.
-
-### Install the current accepted full-feature baseline
-
-Use this when you want the six adapted models, persistent in-app settings, top/left/right placement, no-task selection, and the final native-aligned settings page:
+Install the immutable full-feature pre-release tag:
 
 ```bash
 xcode-select --install
-git clone https://github.com/Wineondili/copicker.git
+git clone --branch v0.99.0 --depth 1 https://github.com/Wineondili/copicker.git
 cd copicker
-git checkout c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
 ./script/install.sh
 ```
 
-### Install the latest published pre-release
-
-Use this only when you specifically want the immutable published `v0.11.0` three-model release:
+For forensic comparison or rollback to the exact code that was installed during live acceptance, use the runtime anchor instead:
 
 ```bash
-xcode-select --install
-git clone --branch v0.11.0 --depth 1 https://github.com/Wineondili/copicker.git
-cd copicker
+git clone https://github.com/Wineondili/copicker.git copicker-c0343d4
+cd copicker-c0343d4
+git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
 ./script/install.sh
 ```
 
 Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`, and the `codex` CLI must be available because the current full-feature installer registers the local settings plugin.
 
+The pre-release is source-distributed. GitHub supplies its standard source archives; no unsigned or non-notarized prebuilt executable is attached. Building on the target Mac avoids shipping a machine-specific native binary.
+
 The installer may inject an already-running Codex process when it loads the watcher. It never quits or restarts Codex. For the cleanest first acceptance, run the installer, then quit and reopen Codex yourself.
 
-Full prerequisites, both version paths, verification, settings migration, reinstall, update, rollback, recovery, permissions, and uninstall instructions are in [docs/installation.md](docs/installation.md).
+Full prerequisites, release and runtime-anchor paths, verification, settings migration, reinstall, update, rollback, recovery, permissions, and uninstall instructions are in [docs/installation.md](docs/installation.md).
 
 ## Use CoPicker
 
@@ -181,6 +177,7 @@ Before changing UI, model behavior, selectors, versions, installation, or live c
 
 ## Documentation map
 
+- [v0.99.0 release notes](docs/releases/v0.99.0.md)
 - [Accepted product and compatibility baseline](docs/accepted-baseline.md)
 - [Install on a new Mac, update, recover, or uninstall](docs/installation.md)
 - [Use the selector and settings](docs/usage.md)

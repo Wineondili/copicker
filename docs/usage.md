@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide describes the accepted full-feature runtime at commit `c0343d4`, CLI/plugin `0.12.0-dev`, and renderer `0.12.8`. It was accepted against Codex `26.820.60940` build `7119`. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
+This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`. Its unchanged renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
 
 CoPicker appears only with the official compact first-level model/reasoning picker. It does not replace the full-width model list opened from the composer input.
 

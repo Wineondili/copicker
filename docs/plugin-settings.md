@@ -6,11 +6,12 @@ Current versions:
 
 | Layer | Value |
 | --- | --- |
-| CLI/plugin | `0.12.0-dev` |
+| CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v2.html` |
 | Renderer fallback | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
+| Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
 
 ## Package layout

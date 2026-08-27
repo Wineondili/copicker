@@ -1,17 +1,18 @@
 # Installing CoPicker on another Mac
 
-CoPicker is source-distributed. Building on the target Mac avoids distributing an unsigned/non-notarized executable and produces a native binary for that machine.
+CoPicker `v0.99.0` is source-distributed. Building on the target Mac avoids distributing an unsigned/non-notarized executable and produces a native binary for that machine.
 
-This guide covers both the immutable public release and the newer accepted full-feature runtime. Read [accepted-baseline.md](accepted-baseline.md) before choosing a version.
+This guide covers the current immutable pre-release, its live-accepted runtime anchor, and historical rollback. Read [accepted-baseline.md](accepted-baseline.md) before choosing a version.
 
 ## Choose the intended version
 
 | Choice | Ref | Feature set | Publication status |
 | --- | --- | --- | --- |
-| Current accepted full-feature runtime | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Six models, settings page, persistence, Apply now, top/left/right placement, no-task selection, final native settings geometry | Accepted development baseline; not tagged |
-| Latest GitHub pre-release | `v0.11.0` | Older Sol/Terra/Luna rail and guarded autostart | Published pre-release |
+| Recommended current pre-release | `v0.99.0` | Six models, settings page, persistence, Apply now, top/left/right placement, no-task selection, final native settings geometry | Published full-feature pre-release |
+| Live-accepted runtime anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Same renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact installed/UI/restart evidence and rollback anchor |
+| Historical pre-release | `v0.11.0` | Older Sol/Terra/Luna rail and guarded autostart | Immutable historical pre-release |
 
-Do not install moving `main` when reproducibility matters. Pin the exact accepted commit or an exact release tag. The repository's documentation may advance without changing the accepted runtime code, so the latest docs can be read on `main` while installation remains pinned to `c0343d4`.
+Do not install moving `main` when reproducibility matters. Use `v0.99.0` for a normal new installation. The annotated tag resolves the exact release commit through `v0.99.0^{commit}`. Use `c0343d4` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
 
 ## Compatibility boundary
 
@@ -52,19 +53,20 @@ xcode-select --install
 
 If the Codex CLI is unavailable, install or update Codex through its normal supported distribution before installing the full-feature CoPicker baseline. Do not work around the check by copying another machine's native executable.
 
-## Install the current accepted full-feature baseline
+## Install the current full-feature pre-release
 
-Clone the repository, then detach at the exact runtime commit:
+Clone the exact `v0.99.0` tag and run the installer:
 
 ```bash
-git clone https://github.com/Wineondili/copicker.git copicker-c0343d4
-cd copicker-c0343d4
-git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+git clone --branch v0.99.0 --depth 1 \
+  https://github.com/Wineondili/copicker.git \
+  copicker-v0.99.0
+cd copicker-v0.99.0
 git status --short --branch
 ./script/install.sh
 ```
 
-The detached HEAD is intentional for a reproducible installation. Do not make development commits in this checkout.
+The tag checkout is detached by design. Do not make development commits in this checkout.
 
 Run the script as the logged-in user, never with `sudo`.
 
@@ -83,19 +85,20 @@ The full-feature installer:
 
 If Codex is already running, loading the watcher may inject that PID immediately. The installer never quits or restarts Codex. For a clean acceptance boundary, let the installer finish, then quit and reopen Codex yourself.
 
-## Install the latest published pre-release
+This pre-release has no attached unsigned/non-notarized executable. GitHub's standard source archives and the pinned clone above are the package; the native executable is built on the target Mac.
 
-Use this only when the older published three-model release is intentional:
+## Reproduce the live-accepted runtime anchor
+
+Use this only for exact evidence reproduction or rollback. It reports CLI/plugin `0.12.0-dev` but contains the same accepted renderer `0.12.8` behavior packaged by `v0.99.0`:
 
 ```bash
-git clone --branch v0.11.0 --depth 1 \
-  https://github.com/Wineondili/copicker.git \
-  copicker-v0.11.0
-cd copicker-v0.11.0
+git clone https://github.com/Wineondili/copicker.git copicker-c0343d4
+cd copicker-c0343d4
+git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
 ./script/install.sh
 ```
 
-The exact tag checkout is detached by design. `v0.11.0` does not contain the current six-model settings plugin/fallback and should not be described as the current full-feature baseline.
+The older `v0.11.0` tag remains available as historical three-model source. It is not the recommended installation and does not contain the current six-model settings plugin/fallback.
 
 ## First start and first acceptance
 
@@ -126,17 +129,17 @@ codex plugin list --json
 lsof -nP -iTCP:9229 -sTCP:LISTEN
 ```
 
-For the accepted development baseline, confirm:
+For the `v0.99.0` pre-release, confirm:
 
 ```text
-Copicker 0.12.0-dev
+Copicker 0.99.0
 LaunchAgent plist: installed
 LaunchAgent service: loaded
 Installed executable: present
 Installed resource bundle: present
 Last watcher phase: injected
 Last result: injection-succeeded
-Watcher Copicker version: 0.12.0-dev
+Watcher Copicker version: 0.99.0
 ```
 
 When Codex is not running, `waiting-for-codex` is expected. Immediately after install, the asynchronous watcher state may briefly contain an earlier phase; wait several seconds and recheck.
@@ -264,7 +267,7 @@ If the current process must be cleaned before quitting:
 
 `remove` is a live guarded Inspector action. Do not run it without the applicable authorization.
 
-The accepted full-feature rollback anchor is `c0343d4`; the published older line is `v0.11.0`.
+The current packaged rollback point is `v0.99.0`; the exact live-acceptance runtime anchor is `c0343d4`; the historical three-model release is `v0.11.0`.
 
 ## Recover from an interrupted or failed install
 
