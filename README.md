@@ -1,74 +1,48 @@
-# Copicker
+# CoPicker
 
-Copicker is a local macOS CLI that adds a user-designed model-and-effort control in its own popover beside the official Codex first-level model/reasoning popover.
+CoPicker is a local macOS companion for the official Codex desktop app. It adds a compact model, reasoning-effort, and Fast-tier rail beside Codex's first-level model picker, plus a persistent CoPicker page under **Settings → Integrations**.
 
-The project is designed around one non-negotiable safety property: it does not modify or re-sign `/Applications/ChatGPT.app`. The injector briefly connects to the Electron main-process Inspector on loopback, injects a self-contained DOM component through `webContents.executeJavaScript`, and closes the Inspector connection immediately afterward.
+CoPicker does **not** modify, unpack into, replace, or re-sign `/Applications/ChatGPT.app`. A guarded local injector briefly enables Electron's loopback Node Inspector, installs a versioned renderer hook through `webContents.executeJavaScript`, and closes the Inspector immediately. The official OpenAI bundle, signature, permissions, Keychain access groups, App Groups, and update path remain unchanged.
 
-## Documentation
+## Current baseline
 
-- [Install, update, reinstall, recover, or uninstall](docs/installation.md)
-- [Use the model and effort selector](docs/usage.md)
-- [Develop the native CoPicker settings plugin](docs/plugin-settings.md)
-- [Build, test, and continue development](docs/development.md)
+CoPicker has independent release, CLI/plugin, renderer, settings-schema, and settings-resource versions. Do not treat them as interchangeable.
 
-## Goals
+| Layer | Current value | Meaning |
+| --- | --- | --- |
+| Latest GitHub release | `v0.11.0` pre-release | Published three-model source release; older than the current settings work |
+| Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Current six-model, persistent-settings, no-task, placement, and native-geometry baseline |
+| CLI and plugin version | `0.12.0-dev` | Development line installed by the accepted runtime baseline |
+| Renderer compatibility version | `0.12.8` | Forces replacement of older in-memory renderer/settings integrations |
+| Settings schema | `1` | Version of `settings.json` |
+| MCP settings resource | `ui://copicker/settings/v2.html` | Versioned CoPicker settings document |
+| Live-accepted Codex build | `26.820.60940` (`7119`) | Build on which the current UI and interaction baseline was accepted |
 
-- Preserve the official OpenAI signature, Team ID, permissions, Keychain access, App Groups, and update path.
-- Keep the Inspector bound to `127.0.0.1` and open only for the injection window.
-- Avoid reading, storing, or logging conversation content.
-- Discover model IDs, supported efforts, and the Fast service tier from the current Codex app-server model catalog instead of hard-coding account-specific values.
-- Stop safely when a Codex update changes the expected DOM anchors.
+The current runtime baseline was installed and accepted on Apple silicon with Codex `26.820.60940` build `7119`. The user confirmed that the final CoPicker settings geometry matches the official settings page. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-## Current status
+The repository's latest documentation may be newer than `c0343d4`, but that commit remains the immutable accepted **runtime-code** anchor until a later runtime change is separately accepted. `main` is the latest development source, not a published stable release.
 
-The selector and watcher behavior frozen in Copicker `0.11.0` is live-verified on Apple silicon against Codex `26.818.41705` (build `6971`), including guarded automatic injection after Codex restarts and Inspector shutdown after injection. The current development renderer payload uses the independent `0.12.4` compatibility identifier so it can replace older injected renderer state without renaming the legacy hook keys. Autostart remains opt-in and is never enabled by the default read-only command.
+See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions.
 
-`v0.11.0` is the public pre-release baseline. The earlier `v0.10.1-dev` tag remains available only as an immutable historical development snapshot; it is not the recommended installation version.
+## Install on a new Mac
 
-The current `main` branch is `0.12.0-dev`. It adds the native CoPicker settings surface, persistent preferences, configurable model rows, placement latching, and light appearance; it has not replaced the verified `v0.11.0` installation baseline yet.
+Choose one installation line deliberately.
 
-- The read-only status command verifies the installed Codex bundle, version, executable, and Electron fuse wire.
-- Live injection is an explicit command and refuses to attach when Inspector port `9229` already belongs to an unknown process.
-- The Inspector is bound to loopback, and shutdown is scheduled immediately after the renderer hook is installed.
-- The only accepted anchor lifecycle is the first-level popover opened from `[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]`.
-- A valid anchor surface must be an open menu containing `[data-reasoning-slider]` and the current model-picker controls.
-- The custom popover scaffold is appended directly to `document.body`; it is never inserted into, or made a child of, the official first-level popover.
-- The scaffold uses the official popover rectangle only for positioning. Its persisted preference can be top, left, or right, and every position keeps a 12-pixel separation from official surfaces.
-- Every placement candidate must fit the viewport and must not overlap either the official first-level popover or another visible Radix/`role="menu"` submenu, including nested model and reasoning-effort pickers. Those submenus remain open while the rail moves around their rectangles instead of disappearing.
-- The full-width model list opened directly above the composer input is intentionally not a placement obstacle. It may sit behind the higher-z-index rail and does not move the rail away from its normal above-primary position.
-- Opening and closing use a short opacity, scale, and vertical-motion transition; obstacle-driven position changes animate through the same 180-millisecond motion curve.
-- The custom popover renders at 50% scale. The original three-row configuration retains its 289.75-by-134.75-pixel footprint, while the card grows to fit additional enabled rows and longer labels. Its internal stage is 388 pixels wide, with equal 64-pixel internal horizontal and vertical dot spacing, producing 32-pixel spacing in the rendered component.
-- The top row contains `Faster`, the moving model/effort/Fast labels, and `Smarter`; the old bottom status row is hidden. The shell background is `rgb(44, 44, 44)`.
-- Settings can expose Sol, Terra, Luna, Daybreak, GPT-5.5, and Codex Spark in that fixed order. Sol, Terra, and Daybreak have six efforts; Luna has five; GPT-5.5 and Codex Spark have four. GPT-5.4 and GPT-5.4 Mini remain unsupported.
-- When the official trigger reports any of those six adapted models with a supported effort, the detached selector recognizes it even when that model is hidden from the selectable rows. Unsupported official models produce an empty state with a centered gray `Other` label.
-- While the rail is visible, the arrow keys move through enabled model and effort cells. Space toggles Fast only for models that support it. Daybreak and Codex Spark clear Fast when selected and cannot toggle it.
-- The renderer reuses Codex's existing `electronBridge` and local app-server connection. It resolves availability through `model/list`; an existing task uses `thread/settings/update`, while an unsent task with no identifier proxies only the exact official Model, Effort, and Speed controls so Codex performs its complete default-settings workflow. The injected settings fallback additionally uses `thread/loaded/list` and `mcpServer/tool/call` to reach the private CoPicker settings tools.
-- Settings save automatically and normally take effect on the next Codex-process injection. The settings page also offers an explicit **Apply now** action that reuses the same guarded `copicker inject` path for the current process without restarting Codex; ordinary reads and autosaves never open Inspector.
-- Adapted model IDs are matched from their official catalog display names. Supported effort levels and the service tier named `Fast` are validated from that catalog before any write, and no model ID or tier ID is persisted. Daybreak and Codex Spark always submit the normal service tier.
-- A settings update in an existing task is scoped to its identifier and waits for `thread/settings/updated`. On a new unsent task, CoPicker uses the official accessible controls and confirms the official trigger state instead; it never writes raw config keys or invents a task identifier.
-- Both paths serialize rapid changes and restore the last confirmed rail selection on failure. Model or effort changes may trigger the same compaction behavior as the equivalent official picker action.
-- Pointer interaction inside the custom popover is treated as part of the combined picker region, so local clicks do not dismiss the official popover. Clicking outside, pressing `Escape`, hiding the document, blurring the window, or closing the official picker dismisses the custom popover.
-- All selector markup and styles are isolated in the detached Shadow DOM host.
+### Install the current accepted full-feature baseline
 
-## Quick use
+Use this when you want the six adapted models, persistent in-app settings, top/left/right placement, no-task selection, and the final native-aligned settings page:
 
-After automatic or manual injection, open an existing Codex task or a new unsent task and click the composer control that displays the current model and reasoning effort. Copicker appears at the configured top, left, or right side of the official first-level picker.
+```bash
+xcode-select --install
+git clone https://github.com/Wineondili/copicker.git
+cd copicker
+git checkout c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+./script/install.sh
+```
 
-| Input | Action |
-| --- | --- |
-| Click or drag | Select a supported model and effort |
-| Up / Down | Move between models enabled in settings |
-| Left / Right | Change reasoning effort |
-| Space | Toggle Fast when the selected model supports it |
-| Escape or outside click | Close the combined picker |
+### Install the latest published pre-release
 
-The six adapted models, effort counts, Fast restrictions, and account-access notes are documented in [the usage guide](docs/usage.md#supported-selections). Unsupported models such as GPT-5.4 and GPT-5.4 Mini show `Other`. `Ctrl+Shift+M` opens a different, full-width composer model list and does not activate Copicker.
-
-See [docs/usage.md](docs/usage.md) for task requirements, confirmation behavior, supported selections, closing behavior, and troubleshooting.
-
-## Install on another Mac
-
-Copicker `0.11.0` is distributed as source in this pre-release. The recommended installation pins the exact release tag, builds a native release executable with SwiftPM, performs the read-only compatibility check, and then explicitly enables the user LaunchAgent:
+Use this only when you specifically want the immutable published `v0.11.0` three-model release:
 
 ```bash
 xcode-select --install
@@ -77,133 +51,153 @@ cd copicker
 ./script/install.sh
 ```
 
-Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`. Enabling autostart may inject the currently running Codex process; the installer never terminates Codex and never modifies or re-signs its application bundle.
+Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`, and the `codex` CLI must be available because the current full-feature installer registers the local settings plugin.
 
-See [docs/installation.md](docs/installation.md) for prerequisites, environment checks, verification, permissions, repeat installation, updates, recovery, complete uninstall, and troubleshooting on another device.
+The installer may inject an already-running Codex process when it loads the watcher. It never quits or restarts Codex. For the cleanest first acceptance, run the installer, then quit and reopen Codex yourself.
 
-## Build and test
+Full prerequisites, both version paths, verification, settings migration, reinstall, update, rollback, recovery, permissions, and uninstall instructions are in [docs/installation.md](docs/installation.md).
+
+## Use CoPicker
+
+1. Open an existing Codex task or a new unsent task.
+2. Click the compact composer control that displays the current model and reasoning effort.
+3. Wait for Codex's first-level model/reasoning picker. CoPicker appears in its own non-overlapping popover at the configured top, left, or right position.
+
+`Ctrl+Shift+M` opens a different full-width model list above the composer. That list is intentionally **not** CoPicker's activation surface and does not make the rail move away from its normal position.
+
+| Input | Action |
+| --- | --- |
+| Click a dot or rail cell | Select a supported model and effort |
+| Drag horizontally | Move through that model's supported efforts |
+| Up / Down | Move through models enabled in CoPicker settings |
+| Left / Right | Decrease or increase effort |
+| Space | Toggle Fast when the selected model supports it |
+| Escape or outside click | Close the official picker and CoPicker |
+
+CoPicker supports Sol, Terra, Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark in a fixed order. GPT-5.4, GPT-5.4 Mini, and other unsupported models display centered gray `Other`. Daybreak and Codex Spark do not support Fast in CoPicker.
+
+Changing a model or effort may trigger the same compaction behavior as the equivalent official Codex action. That is normal Codex behavior, not a separate CoPicker compaction mechanism.
+
+See [docs/usage.md](docs/usage.md) for the exact model/effort matrix, Fast behavior, no-task workflow, placement latching, closing rules, settings, and troubleshooting.
+
+## Configure CoPicker
+
+Open **Settings → Integrations → CoPicker**. The entry appears below the built-in Plugins/Browser area and uses the supplied model-grid icon.
+
+Settings include:
+
+- enable or disable CoPicker;
+- show or hide each of the six adapted models, while retaining at least one;
+- prefer top, left, or right placement;
+- follow Codex, follow macOS, or force light or dark appearance.
+
+Changes save automatically to `~/Library/Application Support/Copicker/settings.json`. By default, the saved snapshot applies during the next process injection, normally the next time Codex opens. After saving completes, **Apply now** can inject the saved snapshot into the current Codex process without restarting it.
+
+The settings page is implemented locally rather than importing private minified React components. It follows current Codex host tokens and measured native geometry. The final alignment uses the actual official scroll viewport below the 46-pixel toolbar, a 20-pixel panel inset, a 768-pixel maximum content column, and the official 24-pixel/28.8-pixel page heading.
+
+See [docs/plugin-settings.md](docs/plugin-settings.md) for persistence, MCP metadata, native/fallback routing, CSP isolation, and the exact settings-page visual contract.
+
+## Verify an installation
+
+The installed copy is independent of the source checkout:
 
 ```bash
-swift build
-swift test
+"$HOME/Library/Application Support/Copicker/bin/copicker" version
+"$HOME/Library/Application Support/Copicker/bin/copicker" autostart status
+codex plugin marketplace list --json
+codex plugin list --json
+lsof -nP -iTCP:9229 -sTCP:LISTEN
 ```
 
-The project-local run entrypoint is:
+A healthy running installation reports a loaded LaunchAgent, installed executable and resource bundle, `Last result: injection-succeeded`, the intended CoPicker version, and the current Codex PID. No `lsof` output is the expected idle Inspector state.
+
+Treat the following as separate gates:
+
+1. exact Git commit or tag;
+2. debug/release build;
+3. offline tests;
+4. read-only Codex compatibility status;
+5. installed LaunchAgent and plugin;
+6. successful current-process injection;
+7. UI and interaction acceptance;
+8. reinjection after a Codex restart;
+9. cold login or reboot behavior;
+10. Inspector closure.
+
+A passing build or test suite does not prove every live gate. See [docs/validation.md](docs/validation.md).
+
+## How it works
+
+The installation and runtime path is:
+
+1. SwiftPM builds a native `copicker` executable and an adjacent resource bundle.
+2. `script/install.sh` copies managed artifacts into the user Library, installs the local CoPicker plugin, and loads an opt-in user LaunchAgent.
+3. The watcher detects each new `com.openai.codex` PID and performs guarded app-path, bundle-ID, Electron-fuse, and Inspector-port ownership checks.
+4. It sends `SIGUSR1`, connects only to `127.0.0.1:9229`, installs the versioned Electron/renderer hook, schedules `inspector.close()`, and disconnects.
+5. The renderer observes only the private model/reasoning controls needed for CoPicker. It appends an independent Shadow DOM popover to `document.body` and uses official surfaces only as anchors and collision obstacles.
+6. Existing tasks use `thread/settings/update` and wait for `thread/settings/updated`. A new unsent task uses the exact official Model, Effort, and Speed controls so Codex performs its own default-task workflow.
+7. The settings plugin runs over private stdio MCP and persists only the versioned CoPicker preference snapshot.
+
+The full component and data flow is documented in [docs/architecture.md](docs/architecture.md).
+
+## Safety and privacy
+
+- The default `copicker`/`status` action is read-only.
+- Automatic injection is opt-in and user-scoped.
+- Unknown or pre-existing Inspector ownership fails closed.
+- The payload makes no external network request.
+- CoPicker does not log or persist conversation text, composer text, task contents, authentication data, cookies, or tokens.
+- Diagnostic probes return scoped control metadata and never return task identifiers or conversation bodies.
+- Settings persistence is limited to enablement, visible model keys, placement, appearance, schema version, and revision; the file is written atomically with mode `0600`.
+- CoPicker does not require Accessibility or Screen Recording permissions.
+- Reinstalling CoPicker does not change permissions already granted to the official Codex app because its bundle and signature are untouched.
+
+## Build and develop
+
+```bash
+swift package dump-package >/dev/null
+swift build
+swift test
+node --check Sources/CopickerCLI/Resources/model-rail.js
+bash -n script/build_and_run.sh script/install.sh
+swift build -c release
+git diff --check
+```
+
+The default project script is read-only:
 
 ```bash
 ./script/build_and_run.sh
 ```
 
-Live injection is always an explicit action:
+Live actions are explicit:
 
 ```bash
 ./script/build_and_run.sh --inject
-```
-
-Remove the current-process hook and any injected visual with:
-
-```bash
 ./script/build_and_run.sh --remove
 ```
 
-Without autostart, the hook lasts for the current Codex process, so run the command again after every Codex restart. After an app update, run the normal status/test gates first because private DOM anchors may have changed.
+Before changing UI, model behavior, selectors, versions, installation, or live commands, read [CONTRIBUTING.md](CONTRIBUTING.md), [docs/accepted-baseline.md](docs/accepted-baseline.md), [docs/architecture.md](docs/architecture.md), [docs/development.md](docs/development.md), and [docs/validation.md](docs/validation.md).
 
-## Automatic injection (opt-in)
+## Documentation map
 
-Inspect autostart without changing launchd, signaling Codex, or opening Inspector:
+- [Accepted product and compatibility baseline](docs/accepted-baseline.md)
+- [Install on a new Mac, update, recover, or uninstall](docs/installation.md)
+- [Use the selector and settings](docs/usage.md)
+- [Architecture and data flow](docs/architecture.md)
+- [Settings plugin and persistence contract](docs/plugin-settings.md)
+- [Development workflow and release checklist](docs/development.md)
+- [Validation layers and acceptance evidence](docs/validation.md)
+- [Historical visual QA record](design-qa.md)
+- [Contribution and collaboration agreement](CONTRIBUTING.md)
+- [Timestamped change history](CHANGELOG.md)
 
-```bash
-swift run copicker autostart status
-```
+## Known boundaries
 
-Explicitly install a stable copy of the current executable and Swift resource bundle, create the user LaunchAgent, and load its watcher:
-
-```bash
-swift run copicker autostart enable
-```
-
-The managed files are limited to:
-
-- `~/Library/Application Support/Copicker/bin/copicker`
-- `~/Library/Application Support/Copicker/bin/Copicker_CopickerCLI.bundle`
-- `~/Library/Application Support/Copicker/autostart-state.json`
-- `~/Library/Application Support/Copicker/settings.json`
-- `~/Library/Application Support/Copicker/plugin-marketplace`
-- `~/Library/LaunchAgents/io.github.wineondili.copicker.plist`
-- `~/Library/Logs/Copicker/autostart.log`
-- `~/Library/Logs/Copicker/autostart-error.log`
-
-The LaunchAgent starts a long-running `copicker watch` process in the logged-in GUI session. The watcher polls only for the `com.openai.codex` process, injects once per new PID, and waits for the next PID after Codex quits. A restarted watcher may safely call the installer again because the renderer and Electron main-process hooks are versioned and idempotent.
-
-The installer also registers the stable `copicker-local` marketplace and installs `copicker@copicker-local` through the Codex CLI. That plugin provides the settings tools and native settings metadata. Because some Codex builds gate local plugin settings entries behind a remote allowlist, the renderer injects the same CoPicker sidebar item when the native item is absent and removes the fallback if the host later exposes the native one. The source checkout is not required after installation.
-
-After first seeing a new Codex PID, the watcher allows a five-second startup grace period, then uses the finite `0`, `1`, `2`, `4`, and `8` second retry schedule. An Inspector timeout is retried because Electron may finish opening the endpoint after the first attempt times out. A later attempt may reuse that endpoint only after `lsof` confirms that its sole listener is the exact Codex PID signaled by the same in-memory attempt; pre-existing or unknown Inspector ownership still fails closed. An incompatible Codex installation or an unconfirmed installer result stops retries for that PID and records a structured result code. The state file contains only Copicker/Codex versions, process identifiers, timestamps, phases, and result codes.
-
-Disable future automatic injection without changing the current Codex process:
-
-```bash
-swift run copicker autostart disable
-```
-
-Disable autostart and also remove the current-process hook when Codex is running:
-
-```bash
-swift run copicker autostart disable --remove
-```
-
-`autostart enable` and `autostart disable` must run as the logged-in user, never through `sudo`. Enabling autostart may inject the currently running Codex process as soon as the LaunchAgent starts. Disabling autostart removes the LaunchAgent plist but intentionally leaves the stable CLI copy and privacy-safe logs in place for inspection and later re-enabling.
-
-## Injection safety gates
-
-Both manual and automatic injection perform these gates before sending a signal:
-
-1. Confirm `/Applications/ChatGPT.app` exists and decode its version.
-2. Read the Electron fuse wire and require `EnableNodeCliInspectArguments=1`.
-3. Confirm the running process has bundle identifier `com.openai.codex` and the expected executable path.
-4. Refuse to proceed if `127.0.0.1:9229` is already serving an unknown or pre-existing Inspector target. The watcher may recover only an endpoint opened late by its own immediately preceding timed-out signal and owned exclusively by the expected Codex PID.
-5. Send `SIGUSR1`, connect to the Electron main process, and inject through `webContents.executeJavaScript`.
-6. Schedule `inspector.close()` and disconnect the local client.
-
-## Visual tuning page
-
-[`tools/model-rail-tuner.html`](tools/model-rail-tuner.html) is a standalone local tuning page for the selector geometry. It does not inject into Codex or change the runtime payload.
-
-The page keeps the preview at the current 289.75-by-134.75-pixel footprint and sets both horizontal and vertical dot spacing to 32 pixels.
-
-- the global text scale covering model and effort labels;
-- the visible gap between the Sol/Terra/Luna column and the selector stage;
-- the visible distance from the top effort labels to the popover's top edge.
-
-The current values are encoded in the page URL fragment and exported by the `复制参数` button as a `MODEL_RAIL_TUNING_V1` text block. Paste that block into the task before applying the geometry to the injected component.
-
-## Mount contract
-
-The intended lifecycle is:
-
-1. Click the bottom composer control that currently displays the selected model and reasoning effort, such as `5.6 Sol / 极高`.
-2. Wait for that exact trigger to report `aria-expanded="true"` and `data-state="open"`.
-3. Resolve the nearest visible first-level menu containing the reasoning slider and model-picker controls as a positioning anchor only.
-4. Discover simultaneously visible Radix/`role="menu"` secondary surfaces as placement obstacles, while explicitly ignoring the full-width composer model list under `[data-composer-overlay-floating-ui]` unless it is a nested model-row surface.
-5. Append an independent popover host to `document.body`, outside the official popover DOM subtree.
-6. Position it above the official popover without intersection; shift it along the top edge or use a fallback side when needed to clear a secondary menu.
-7. Keep it present while a secondary menu is open, and animate it closed only when the first-level surface itself closes or the combined picker loses focus.
-
-For a scoped live check of this target:
-
-```bash
-./script/build_and_run.sh --probe-primary
-```
-
-For a direct settings round trip that first verifies a same-value write, switches to a supported alternate model/effort/Fast combination, confirms it, and restores the original settings:
-
-```bash
-./script/build_and_run.sh --probe-selector
-```
-
-`Ctrl+Shift+M` opens the full-width model list above the composer in the current build. `--probe-picker` verifies that this input-origin list does not become an avoidance obstacle; it is not the custom component's mount trigger.
-
-## Privacy and rollback
-
-The payload makes no external network request and performs no storage write, cookie access, or conversation logging. It observes only the private model/reasoning control anchors and sends the two allowlisted app-server methods through Codex's existing renderer bridge. Selector and catalog state exist only in renderer memory and disappear with the Codex process. The diagnostic probe reports control metadata, supported selection state, and task-marker counts without returning task identifiers, conversation body text, or composer text.
-
-The injected hook lasts only for the running Codex process. Quit Codex or run `./script/build_and_run.sh --remove` to remove it. Use the installed executable's `autostart disable` command to stop future automatic injection. The official application bundle is never changed.
+- Only Apple silicon is currently live-verified. The Swift package declares macOS 14 or later.
+- Codex private DOM, Electron fuses, settings routes, and bridge methods may change without notice.
+- Model availability still depends on the signed-in account's official `model/list` catalog. Enabling a row does not grant model access.
+- Daybreak Blue may require Codex Trusted Access for Cyber and required network access.
+- Codex Spark may require an eligible ChatGPT Pro subscription.
+- The repository does not currently include a cross-version macOS/Codex CI matrix.
+- The repository has no general open-source license. Public visibility alone does not grant redistribution or derivative-work rights.

@@ -1,50 +1,202 @@
 # CoPicker settings plugin
 
-CoPicker's settings entry is packaged as a local Codex plugin backed by the existing native `copicker` executable. This keeps the settings integration outside the signed Codex application bundle and avoids adding another persistent helper process.
+CoPicker's settings entry is a local Codex plugin backed by the installed native `copicker` executable. It keeps settings outside the signed Codex bundle and adds no persistent network service or second preference store.
 
-## Current phase
+Current versions:
 
-The repository currently contains the offline integration and persistence foundation:
+| Layer | Value |
+| --- | --- |
+| CLI/plugin | `0.12.0-dev` |
+| Settings schema | `1` |
+| MCP App resource | `ui://copicker/settings/v2.html` |
+| Renderer fallback | `0.12.8` |
+| Accepted runtime code | `c0343d4` |
+| Accepted Codex | `26.820.60940` build `7119` |
 
-- `Plugin/copicker/`: distributable Codex plugin package;
-- `Plugin/copicker/assets/model-picker-grid.svg`: the supplied source icon;
-- explicit light and dark icon variants for plugin surfaces;
-- `copicker mcp-server`: a private stdio MCP server mode;
-- `ui://copicker/settings/v2.html`: the versioned MCP App resource;
-- a native `CoPicker` MCP settings entrypoint plus an injected sidebar fallback placed after the built-in Plugins and Browser entries;
-- a Codex-native-styled, transparent, network-free interactive settings page;
-- a versioned preference store at `~/Library/Application Support/Copicker/settings.json`.
+## Package layout
 
-The store contains only CoPicker enablement, visible supported-model keys, preferred placement, appearance, schema version, and revision. Writes are validated, atomic, permissioned `0600`, and protected by an optimistic revision check so a stale settings page cannot silently replace a newer edit.
+- `Plugin/copicker/.codex-plugin/plugin.json`: plugin metadata and light/dark icon references;
+- `Plugin/copicker/.mcp.json`: private stdio MCP server registration;
+- `Plugin/copicker/bin/copicker-mcp`: launcher for the stable installed CLI;
+- `Plugin/copicker/assets/model-picker-grid.svg`: source icon;
+- `model-picker-grid-light.svg` and `model-picker-grid-dark.svg`: explicit host variants;
+- `.agents/plugins/marketplace.json`: repository-local marketplace descriptor;
+- `Sources/CopickerCore/CopickerMCPProtocol.swift`: app-only tool/resource contract;
+- `Sources/CopickerCore/CopickerSettings.swift`: validated atomic store;
+- `Sources/CopickerCLI/CopickerMCPServer.swift`: newline-delimited stdio transport;
+- `Sources/CopickerCLI/Resources/copicker-settings-v2.html`: interactive network-free document;
+- `Sources/CopickerCLI/Resources/model-rail.js`: native-entry detection and compatibility fallback.
 
-The page exposes native, keyboard-accessible controls for:
+The installer copies the marketplace/plugin into a stable Application Support directory and registers `copicker@copicker-local`. The source checkout is unnecessary after installation.
 
-- enabling or disabling the injected rail;
-- showing GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark, with at least one model retained;
-- selecting a top, left, or right preferred placement;
-- following Codex, following macOS, or forcing a light or dark rail.
+## Settings data model
 
-The right pane mirrors the current Codex settings hierarchy: a 42-pixel page-top inset, a 24-pixel normal-weight page title, the native 32-pixel title-wrapper clearance, a first settings group named **General** (`常规` in Simplified Chinese), and compact headers for every settings group below it. The top inset visually balances the whitespace from the bottom of the page title to the first group title instead of leaving the page heading against the host toolbar edge. The responsive content column is capped at 768 pixels and centered so wider panes add equal side whitespace instead of stretching the settings. Groups retain 16-pixel settings cards using the renderer's 8-percent default border, inset row separators, and 32-by-20 switches with a 16-pixel thumb. The immediate-apply row sits directly below the CoPicker enablement row instead of creating a separate bottom group. Placement and appearance use Codex's default segmented-control variant: the group itself is transparent, only the selected option receives the 5-percent text fill, and no selected-item shadow is added. Apply and retry actions use the same borderless 28-pixel `secondary` toolbar-button treatment as built-in settings actions. The document implements those primitives locally instead of importing private Codex React modules, so the native MCP App route and the injected sandboxed fallback share one stable visual surface without coupling preference behavior to minified host component names. The native MCP route consumes Codex's injected MCP style variables directly; the fallback resolves the corresponding current renderer variables and forwards them into its script-disabled frame so both paths follow the active Codex typography, page-title scale, surfaces, default border, focus ring, blue accent, font, and shadow scale without fixed theme approximations.
+The only persisted fields are:
 
-Autosaves are serialized and always use the last authoritative revision. A stale window displays the newer stored values instead of overwriting them. The UI never uses browser storage. By default, saved settings take effect when Codex is next started and the next process injection runs. The explicit **Apply now** button is enabled only after saving finishes and applies the persisted snapshot to the current Codex process without restarting it.
+| Field | Type/values | Default |
+| --- | --- | --- |
+| `schemaVersion` | integer, currently `1` | `1` |
+| `revision` | non-negative integer | `0` |
+| `enabled` | boolean | `true` |
+| `visibleModels` | ordered adapted-model keys, at least one | Sol, Terra, Luna |
+| `preferredPlacement` | `top`, `left`, `right` | `top` |
+| `appearance` | `codex`, `system`, `light`, `dark` | `dark` |
 
-The settings copy records the non-Fast contracts for Daybreak and Codex Spark, the possible Codex Trusted Access for Cyber requirement for Daybreak, and the possible ChatGPT Pro 5x / 20x requirement for Codex Spark. These notices do not grant model access; availability still comes from the signed-in account's official `model/list` catalog.
+The file is `~/Library/Application Support/Copicker/settings.json`. Writes are validated, normalized to the fixed model order, atomic, and mode `0600`.
 
-## Runtime contract
+Saves carry the caller's expected revision. An identical save is idempotent. A real change increments the revision. A stale save fails with the current authoritative snapshot so an old window cannot overwrite a newer edit.
 
-All three settings tools are host-only. Their `_meta.ui.visibility` contains only `app`, so they are not offered as normal model-callable tools. `copicker_settings` is the read-only render entrypoint and declares the standard MCP App resource through `_meta.ui.resourceUri`; `copicker_settings_save` accepts a complete preference snapshot plus the caller's expected revision. Repeating an already-applied save is idempotent, while a stale save returns the current authoritative snapshot. `copicker_settings_apply` is called only by the explicit UI action and launches the installed executable's existing guarded `inject` command.
+The page never uses localStorage, sessionStorage, IndexedDB, cookies, or a second settings file.
 
-The current Codex settings sidebar additionally discovers `_meta["openai/ui"].entrypoints` entries whose type is `settings`. That metadata and server-icon handling are private Codex compatibility points and must be rechecked after desktop updates.
+## App-only MCP tools
 
-Codex `26.820.60940` parses that metadata but filters local plugin settings views behind a remote rollout gate and plugin allowlist. CoPicker therefore also installs a renderer-side compatibility entry when the native item is absent. The fallback clones the built-in Browser navigation control, replaces only its icon and label, and opens the same bundled settings document over the right settings pane. If a later Codex build admits the native CoPicker entry, the fallback removes itself instead of creating a duplicate.
+All three tools have `_meta.ui.visibility: ["app"]`; they are Codex host controls and are not presented as ordinary model-callable tools.
 
-The fallback does not add a port or a second settings store. Codex's top-level CSP blocks inline scripts inherited by `about:srcdoc`, so the fallback removes scripts from its frame copy, keeps the frame in a script-disabled same-origin sandbox, and attaches the form controller from the already injected parent world. The parent controller permits only the three CoPicker tool names, resolves an already loaded task, and uses the documented `mcpServer/tool/call` app-server method to reach the same native stdio server and atomic preference store. The original MCP App resource keeps its inline controller for a future native settings entry, along with networking and nested frames disabled by CSP.
+### `copicker_settings`
 
-The server advertises the supplied icon as `data:` SVGs with separate `light` and `dark` themes. It serves the settings page with `text/html;profile=mcp-app`, an empty network CSP allowlist, and no iframe or external-resource domains.
+- read-only entrypoint;
+- returns the authoritative snapshot;
+- declares `_meta.ui.resourceUri` and `openai/outputTemplate` for `ui://copicker/settings/v2.html`;
+- advertises the private settings entry metadata.
+
+### `copicker_settings_save`
+
+- accepts a complete preference snapshot plus expected revision;
+- validates schema, revision, model keys/count, placement, and appearance;
+- returns the authoritative saved/current snapshot;
+- does not open Inspector or mutate the current renderer.
+
+### `copicker_settings_apply`
+
+- invoked only through the explicit **Apply now** action;
+- requires the installed host apply handler;
+- reuses the guarded current-process `inject` path;
+- does not restart Codex;
+- reports current-process success or a fail-closed error;
+- schedules Inspector shutdown after the bounded action.
+
+## Native entry and compatibility fallback
+
+The plugin declares a settings entry through private Codex metadata, including an `openai/ui` settings entrypoint and themed icon data. Routing is keyed by the CoPicker server/tool contract.
+
+Codex `26.820.60940` build `7119` parses this metadata but may filter local plugin settings views behind a remote rollout/allowlist. The accepted renderer therefore supplies a fallback only when the native item is absent.
+
+The fallback:
+
+1. finds the built-in Browser or Plugins settings item;
+2. checks for an existing native `CoPicker` item;
+3. clones the native sidebar control structure;
+4. replaces only the ID, icon, label, slug, and click behavior;
+5. inserts CoPicker after the built-in integration items;
+6. opens the same bundled settings document over the official right scroll viewport;
+7. removes/suppresses itself when a native CoPicker item appears;
+8. closes when Settings navigation leaves CoPicker.
+
+Only one settings entry and one preference store are allowed.
+
+## CSP and controller boundary
+
+The original MCP App resource contains its inline controller for a future/allowed native settings route. Its CSP disables all external resources, network connections, and nested frames.
+
+Codex's top-level CSP prevents inline scripts inherited by an `about:srcdoc` fallback. The renderer therefore:
+
+- parses the settings document;
+- removes scripts from the fallback copy;
+- sets `sandbox="allow-same-origin"` without `allow-scripts`;
+- attaches the form controller from the already injected parent world;
+- permits only `copicker_settings`, `copicker_settings_save`, and `copicker_settings_apply` through `mcpServer/tool/call`;
+- uses the same stdio server and atomic settings file.
+
+The fallback adds no port and makes no external network request.
+
+## Native-aligned visual contract
+
+The page implements semantic local controls because private minified Codex React modules cannot be safely imported into both the native MCP App and script-disabled fallback.
+
+Visual inputs are:
+
+- current Codex theme/font/border/focus/shadow variables;
+- explicit light/dark fallbacks;
+- measured official DOM/computed geometry;
+- local controls with native checkbox/radio semantics.
+
+### Page shell
+
+The fallback host targets the actual full-width official settings scroll viewport, leaving the native 46-pixel toolbar visible. It does not cover the whole right pane and then guess a replacement top inset.
+
+Accepted shell values:
+
+| Parameter | Value |
+| --- | ---: |
+| Official toolbar | `46px` |
+| Frame body inset | `20px` on all sides |
+| Content max width | `768px`, centered |
+| Page heading | `24px`, weight `400`, line height `28.8px` |
+| Heading wrapper bottom padding | `32px` |
+| Group gap | `40px` |
+| Section header | minimum `46px`, bottom padding `6px`, gap `16px` |
+| First group title | `常规`, `14px`, weight `500`, line height `21px` |
+
+At the accepted `1440 × 810`, DPR 2 window, the official scroll viewport was measured as `left=268.828125`, `top=46`, `width=1171.171875`, `height=764`; the heading was at `y=66`, and the first group-title top was 70.3 pixels below the heading top. The implementation dynamically targets the viewport rather than hard-coding those window coordinates.
+
+### Local control primitives
+
+- card: 1-pixel native default border, 16-pixel radius;
+- row: 12-by-16 padding and 24-pixel content/control gap;
+- inset separator: 0.5 pixel with 16-pixel sides;
+- switch: 32-by-20 track, 16-by-16 thumb, 2/14-pixel translations;
+- segmented group: transparent, 2-pixel gaps, selected-only 5-percent fill, no shadow;
+- segment: 24-pixel minimum height, 2-by-8 padding, full pill radius;
+- Apply/retry: borderless/transparent-border 28-pixel action, 8-pixel horizontal padding, 10-pixel radius;
+- responsive stacking: adaptive rows below 640 pixels, page header below 420 pixels.
+
+The Apply row sits below Enable CoPicker. There is no separate bottom Apply group.
+
+The earlier screenshot-derived 42-pixel iframe inset is superseded. It incorrectly combined toolbar and panel spacing while retaining a 32-pixel text-2xl line height. Renderer `0.12.8` uses the native viewport plus 20-pixel inset and the official 1.2 heading line height.
+
+## Settings behavior
+
+The page exposes:
+
+- enabled/disabled rail;
+- visibility toggles for all six adapted models, with one retained;
+- top/left/right preferred placement;
+- Codex/system/light/dark appearance.
+
+Autosaves are serialized from the last authoritative revision. Loading and saving do not open Inspector. Save state remains separate from current-process apply state.
+
+By default, a saved snapshot takes effect on the next injection. **Apply now** becomes available only after saving completes. On success it reports that the current window was updated without restart. On failure it states that the saved snapshot will still apply on the next normal injection.
+
+The page includes the Daybreak Trusted Access/network notice, Codex Spark subscription notice, effort counts, and non-Fast behavior. Those notices do not grant model availability.
+
+## Theme forwarding
+
+The native MCP page consumes Codex-provided MCP style variables. The fallback maps current renderer tokens for:
+
+- surfaces and panels;
+- primary/secondary/tertiary text;
+- default border and focus ring;
+- info/warning/danger and chart blue;
+- font family, text scales, weights, and page-heading size;
+- shadows and white thumb token.
+
+The page-heading line height deliberately does not fall back to the unrelated `text-2xl` line-height variable; it uses the official heading value when present and otherwise unitless `1.2`.
+
+## Installation and update behavior
+
+`script/install.sh`:
+
+1. installs the CLI/resource bundle and watcher;
+2. copies the marketplace/plugin package into Application Support;
+3. adds marketplace `copicker-local` when absent;
+4. removes the old registration for `copicker@copicker-local` when present;
+5. adds the refreshed plugin under the same ID.
+
+This refreshes the package without duplicating the entry. `settings.json` remains separate and persists.
+
+The settings item is normally available after Codex next opens and the new renderer payload is injected.
 
 ## Offline validation
-
-The following checks do not install the plugin, open Inspector, signal Codex, or modify the user LaunchAgent:
 
 ```bash
 swift build
@@ -57,21 +209,17 @@ printf '%s\n' \
   | .build/debug/copicker mcp-server
 ```
 
-Expected output is three newline-delimited JSON-RPC responses. They should report the `CoPicker` server, app-only `copicker_settings`, `copicker_settings_save`, and `copicker_settings_apply` tools, and the versioned HTML resource with the MCP App MIME type. This listing does not call the apply tool and therefore does not open Inspector.
+Expected responses advertise CoPicker server metadata, the three app-only tools, the versioned MCP App resource, themed icons, and empty network/frame allowlists. Listing/reading these contracts does not call Apply and does not open Inspector.
 
-## Installation
+## Live acceptance status
 
-`script/install.sh` copies the marketplace descriptor and plugin package to `~/Library/Application Support/Copicker/plugin-marketplace`, registers the `copicker-local` marketplace, and installs `copicker@copicker-local` through the Codex CLI. This stable copy keeps the settings entry working after the source checkout is removed. Reinstallation refreshes the same plugin ID.
+The current settings surface is no longer in a pending visual phase. For runtime commit `c0343d4` on Codex build `7119`:
 
-Reading and autosaving settings do not open Inspector or mutate a live task. Saved changes are consumed by the watcher on the next Codex process injection. Clicking **Apply now** is the sole settings-page action that deliberately opens the temporary loopback Inspector through the existing guarded injection path; it does not restart Codex, and Inspector shutdown is scheduled immediately afterward. Disabling CoPicker prevents the watcher from opening Inspector for a later Codex process, while applying that disabled snapshot removes the active rail behavior from the current renderer.
+- sidebar fallback/native deduplication was operational;
+- persistence and Apply-now behavior were operational;
+- the final settings layout was measured against the live official General page;
+- the corrected version was installed;
+- the user confirmed that the result is completely identical;
+- Inspector closure was verified.
 
-## Remaining host-loop validation
-
-After the settings contents are approved:
-
-1. install it explicitly on a test device;
-2. restart Codex only outside an active Codex task;
-3. verify sidebar order, fallback/native deduplication, light and dark icons, settings rendering, persistence, each configured model shape, all three placements, latching, and existing selection behavior separately;
-4. record the exact Codex version and build used for host-loop acceptance.
-
-The offline suite and a standalone app-server smoke test validate the package, MCP runtime, read path, and non-mutating stale-write conflict transport. A real Codex restart is still required to accept the injected sidebar placement and end-to-end save behavior for each desktop build.
+A later Codex build still requires new host-loop checks. Use [validation.md](validation.md#live-settings-acceptance-checklist) and record the exact build rather than carrying this acceptance forward automatically.
