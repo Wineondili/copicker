@@ -11,21 +11,99 @@
     <style>
       :root {
         color-scheme: light dark;
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        font-family: var(
+          --font-sans,
+          -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "SF Pro",
+          "Segoe UI",
+          sans-serif
+        );
         font-synthesis: none;
-        --text-default: light-dark(#202123, #f2f2f2);
-        --text-secondary: light-dark(rgb(32 33 35 / 62%), rgb(242 242 242 / 58%));
-        --text-tertiary: light-dark(rgb(32 33 35 / 46%), rgb(242 242 242 / 42%));
-        --panel: light-dark(rgb(255 255 255 / 88%), rgb(255 255 255 / 5%));
-        --border-default: light-dark(rgb(0 0 0 / 14%), rgb(255 255 255 / 12%));
-        --border-subtle: light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 9%));
-        --control-selected: light-dark(rgb(0 0 0 / 6%), rgb(255 255 255 / 9%));
-        --control-hover: light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 11%));
-        --switch-off: light-dark(rgb(32 33 35 / 12%), rgb(242 242 242 / 14%));
-        --accent: light-dark(#087cf0, #65a9ff);
-        --warning: light-dark(#895c08, #d7aa58);
-        --danger: light-dark(#b42318, #ff8a80);
-        --focus: light-dark(#087cf0, #8bbcff);
+        --copicker-text-primary: var(
+          --color-text-primary,
+          light-dark(#202123, #f2f2f2)
+        );
+        --copicker-text-secondary: var(
+          --color-text-secondary,
+          light-dark(rgb(32 33 35 / 62%), rgb(242 242 242 / 58%))
+        );
+        --copicker-text-tertiary: var(
+          --color-text-tertiary,
+          light-dark(rgb(32 33 35 / 46%), rgb(242 242 242 / 42%))
+        );
+        --copicker-panel: var(
+          --copicker-host-panel,
+          var(
+            --color-background-secondary,
+            light-dark(rgb(255 255 255 / 88%), rgb(255 255 255 / 5%))
+          )
+        );
+        --copicker-surface: var(
+          --color-background-primary,
+          light-dark(#fff, #242424)
+        );
+        --copicker-control-track: color-mix(
+          in srgb,
+          var(
+            --color-background-tertiary,
+            light-dark(rgb(0 0 0 / 6%), rgb(255 255 255 / 9%))
+          ) 92%,
+          transparent
+        );
+        --copicker-control-hover: var(
+          --copicker-host-control-hover,
+          color-mix(in srgb, var(--copicker-text-primary) 8%, transparent)
+        );
+        --copicker-button-background: var(
+          --copicker-host-primary-soft-alpha,
+          color-mix(in srgb, var(--copicker-text-primary) 5%, transparent)
+        );
+        --copicker-border-primary: var(
+          --color-border-primary,
+          light-dark(rgb(0 0 0 / 14%), rgb(255 255 255 / 12%))
+        );
+        --copicker-border-secondary: var(
+          --color-border-secondary,
+          light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 9%))
+        );
+        --copicker-switch-off: color-mix(
+          in srgb,
+          var(--copicker-text-primary) 10%,
+          transparent
+        );
+        --copicker-accent: var(
+          --copicker-host-chart-blue,
+          var(--color-text-info, light-dark(#087cf0, #65a9ff))
+        );
+        --copicker-warning: var(
+          --color-text-warning,
+          light-dark(#895c08, #d7aa58)
+        );
+        --copicker-danger: var(
+          --color-text-danger,
+          light-dark(#b42318, #ff8a80)
+        );
+        --copicker-focus: var(
+          --color-ring-primary,
+          light-dark(#087cf0, #8bbcff)
+        );
+        --copicker-thumb: var(--copicker-host-gray-zero, #fff);
+        --copicker-shadow-sm: var(
+          --shadow-sm,
+          0 1px 2px rgb(0 0 0 / 20%)
+        );
+        --copicker-font-xs: var(--font-text-xs-size, 12px);
+        --copicker-line-xs: var(--font-text-xs-line-height, 16px);
+        --copicker-font-sm: var(--font-text-sm-size, 13px);
+        --copicker-line-sm: var(--font-text-sm-line-height, 18px);
+        --copicker-font-base: var(--font-text-md-size, 14px);
+        --copicker-line-base: var(--font-text-md-line-height, 20px);
+        --copicker-heading: var(--font-heading-md-size, 24px);
+        --copicker-heading-line: var(--font-heading-md-line-height, 1.2);
+        --copicker-weight-normal: var(--font-weight-normal, 400);
+        --copicker-weight-medium: var(--font-weight-medium, 500);
       }
 
       * {
@@ -39,10 +117,12 @@
 
       body {
         margin: 0;
+        padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
         background: transparent;
-        color: var(--text-default);
-        font-size: 14px;
-        line-height: 18px;
+        color: var(--copicker-text-primary);
+        font-family: inherit;
+        font-size: var(--copicker-font-sm);
+        line-height: var(--copicker-line-sm);
       }
 
       button,
@@ -51,9 +131,10 @@
       }
 
       main {
-        width: min(100%, 768px);
+        width: 100%;
+        max-width: 768px;
         margin: 0 auto;
-        padding: 32px 32px calc(48px + env(safe-area-inset-bottom));
+        padding: 0;
       }
 
       .page-header {
@@ -74,10 +155,10 @@
 
       h1 {
         min-width: 0;
-        color: var(--text-default);
-        font-size: 20px;
-        font-weight: 400;
-        line-height: 26px;
+        color: var(--copicker-text-primary);
+        font-size: var(--copicker-heading);
+        font-weight: var(--copicker-weight-normal);
+        line-height: var(--copicker-heading-line);
         text-wrap: balance;
       }
 
@@ -85,15 +166,15 @@
         max-width: 240px;
         flex: 0 1 auto;
         padding-top: 4px;
-        color: var(--text-secondary);
-        font-size: 12px;
-        line-height: 16px;
+        color: var(--copicker-text-secondary);
+        font-size: var(--copicker-font-xs);
+        line-height: var(--copicker-line-xs);
         text-align: right;
         text-wrap: pretty;
       }
 
       .save-state[data-tone="error"] {
-        color: var(--danger);
+        color: var(--copicker-danger);
       }
 
       .settings-content {
@@ -118,10 +199,10 @@
       }
 
       .section-header h2 {
-        color: var(--text-default);
-        font-size: 16px;
-        font-weight: 500;
-        line-height: 20px;
+        color: var(--copicker-text-primary);
+        font-size: var(--copicker-font-base);
+        font-weight: var(--copicker-weight-medium);
+        line-height: var(--copicker-line-base);
         text-wrap: balance;
       }
 
@@ -130,16 +211,15 @@
         min-width: 0;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid var(--border-default);
+        border: 1px solid var(--copicker-border-primary);
         border-radius: 16px;
-        background: var(--panel);
+        background: var(--copicker-panel);
       }
 
       .setting-row {
         position: relative;
         display: flex;
         min-width: 0;
-        min-height: 64px;
         align-items: center;
         justify-content: space-between;
         gap: 24px;
@@ -153,7 +233,7 @@
         bottom: 0;
         left: 16px;
         height: 0.5px;
-        background: var(--border-subtle);
+        background: var(--copicker-border-secondary);
         content: "";
         pointer-events: none;
       }
@@ -174,10 +254,10 @@
       .setting-copy h3,
       .apply-copy h3 {
         min-width: 0;
-        color: var(--text-default);
-        font-size: 14px;
-        font-weight: 500;
-        line-height: 18px;
+        color: var(--copicker-text-primary);
+        font-size: var(--copicker-font-sm);
+        font-weight: var(--copicker-weight-medium);
+        line-height: var(--copicker-line-sm);
         text-wrap: balance;
       }
 
@@ -186,17 +266,17 @@
       .apply-note,
       .apply-result,
       .section-footer {
-        color: var(--text-secondary);
-        font-size: 12px;
-        line-height: 16px;
+        color: var(--copicker-text-secondary);
+        font-size: var(--copicker-font-xs);
+        line-height: var(--copicker-line-xs);
         text-wrap: pretty;
       }
 
       .model-warning {
         margin-top: 2px;
-        color: var(--warning);
-        font-size: 12px;
-        line-height: 16px;
+        color: var(--copicker-warning);
+        font-size: var(--copicker-font-xs);
+        line-height: var(--copicker-line-xs);
         text-wrap: pretty;
       }
 
@@ -231,7 +311,8 @@
         width: 32px;
         height: 20px;
         border-radius: 999px;
-        background: var(--switch-off);
+        background: var(--copicker-switch-off);
+        transition: background-color 120ms ease-out;
       }
 
       .switch-track::after {
@@ -240,15 +321,16 @@
         left: 2px;
         width: 16px;
         height: 16px;
-        border: 1px solid #fff;
+        border: 1px solid var(--copicker-thumb);
         border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+        background: var(--copicker-thumb);
+        box-shadow: var(--copicker-shadow-sm);
         content: "";
+        transition: transform 120ms ease-out;
       }
 
       .switch input:checked + .switch-track {
-        background: var(--accent);
+        background: var(--copicker-accent);
       }
 
       .switch input:checked + .switch-track::after {
@@ -256,13 +338,13 @@
       }
 
       .switch input:focus-visible + .switch-track {
-        outline: 2px solid var(--focus);
+        outline: 2px solid var(--copicker-focus);
         outline-offset: 2px;
       }
 
       .switch input:disabled + .switch-track {
         cursor: default;
-        opacity: 0.45;
+        opacity: 0.6;
       }
 
       fieldset {
@@ -293,8 +375,11 @@
         max-width: 100%;
         align-items: center;
         gap: 2px;
+        padding: 2px;
         overflow-x: auto;
         overflow-y: hidden;
+        border-radius: 10px;
+        background: var(--copicker-control-track);
         scrollbar-width: none;
       }
 
@@ -311,38 +396,42 @@
 
       .segment span {
         display: flex;
-        min-height: 28px;
+        height: 24px;
         align-items: center;
         justify-content: center;
-        padding: 3px 10px;
+        padding: 0 8px;
         border: 1px solid transparent;
-        border-radius: 7px;
-        color: var(--text-tertiary);
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 18px;
+        border-radius: 8px;
+        color: var(--copicker-text-tertiary);
+        font-size: var(--copicker-font-xs);
+        font-weight: var(--copicker-weight-normal);
+        line-height: var(--copicker-line-xs);
         text-align: center;
         white-space: nowrap;
+        transition:
+          background-color 120ms ease-out,
+          color 120ms ease-out;
       }
 
       .segment:hover span {
-        background: var(--control-hover);
-        color: var(--text-default);
+        background: var(--copicker-control-hover);
+        color: var(--copicker-text-primary);
       }
 
       .segment input:checked + span {
-        background: var(--control-selected);
-        color: var(--text-default);
+        background: var(--copicker-surface);
+        box-shadow: var(--copicker-shadow-sm);
+        color: var(--copicker-text-primary);
       }
 
       .segment input:focus-visible + span {
-        outline: 2px solid var(--focus);
+        outline: 2px solid var(--copicker-focus);
         outline-offset: -2px;
       }
 
       .segment input:disabled + span {
         cursor: default;
-        opacity: 0.45;
+        opacity: 0.4;
       }
 
       .apply-result {
@@ -354,46 +443,43 @@
       }
 
       .apply-result[data-tone="success"] {
-        color: var(--accent);
+        color: var(--copicker-accent);
       }
 
       .apply-result[data-tone="error"] {
-        color: var(--danger);
+        color: var(--copicker-danger);
       }
 
       .apply-now,
       .retry {
-        min-height: 32px;
+        min-height: 24px;
         flex: 0 0 auto;
-        padding: 5px 12px;
-        border: 1px solid var(--border-default);
-        border-radius: 7px;
-        background: var(--panel);
-        color: var(--text-default);
+        padding: 2px 8px;
+        border: 1px solid var(--copicker-border-primary);
+        border-radius: 999px;
+        background: var(--copicker-button-background);
+        color: var(--copicker-text-primary);
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        line-height: 18px;
-      }
-
-      .apply-now {
-        min-width: 88px;
+        font-size: var(--copicker-font-sm);
+        font-weight: var(--copicker-weight-normal);
+        line-height: var(--copicker-line-sm);
+        transition: background-color 120ms ease-out;
       }
 
       .apply-now:hover:not(:disabled),
       .retry:hover {
-        background: var(--control-hover);
+        background: var(--copicker-control-hover);
       }
 
       .apply-now:focus-visible,
       .retry:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 1px;
+        outline: 2px solid var(--copicker-focus);
+        outline-offset: 0;
       }
 
       .apply-now:disabled {
         cursor: default;
-        opacity: 0.45;
+        opacity: 0.4;
       }
 
       .error-panel {
@@ -404,9 +490,9 @@
         justify-content: space-between;
         gap: 16px;
         padding: 10px 16px;
-        color: var(--danger);
-        font-size: 12px;
-        line-height: 16px;
+        color: var(--copicker-danger);
+        font-size: var(--copicker-font-xs);
+        line-height: var(--copicker-line-xs);
       }
 
       .error-panel[data-visible="true"] {
@@ -423,15 +509,24 @@
         pointer-events: none;
       }
 
+      @supports (corner-shape: superellipse(1.5)) {
+        .settings-card {
+          border-radius: 20px;
+          corner-shape: superellipse(1.5);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .switch-track,
+        .switch-track::after,
+        .segment span,
+        .apply-now,
+        .retry {
+          transition: none;
+        }
+      }
+
       @media (max-width: 640px) {
-        main {
-          padding: 24px 20px calc(40px + env(safe-area-inset-bottom));
-        }
-
-        .page-header {
-          padding-bottom: 28px;
-        }
-
         .setting-row--adaptive {
           align-items: stretch;
           flex-direction: column;
