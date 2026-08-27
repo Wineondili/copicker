@@ -99,6 +99,8 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     let settingsHTML = try String(contentsOf: settingsURL, encoding: .utf8)
 
     #expect(settingsHTML.contains("<h1>CoPicker</h1>"))
+    #expect(settingsHTML.contains("<h2 id=\"general-title\">常规</h2>"))
+    #expect(settingsHTML.contains("aria-labelledby=\"general-title\""))
     #expect(settingsHTML.contains("background: transparent"))
     #expect(settingsHTML.contains("class=\"page-header\""))
     #expect(settingsHTML.contains("class=\"settings-card\""))
@@ -111,6 +113,9 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(settingsHTML.contains("transform: translateX(14px)"))
     #expect(settingsHTML.contains("--color-text-primary"))
     #expect(settingsHTML.contains("width: min(100%, 768px)"))
+    #expect(settingsHTML.contains("--font-heading-lg-size"))
+    #expect(settingsHTML.contains("var(--text-heading-lg, 24px)"))
+    #expect(settingsHTML.contains("padding-bottom: 32px"))
     #expect(settingsHTML.contains("min-height: 24px"))
     #expect(settingsHTML.contains("height: 28px"))
     #expect(settingsHTML.contains("border: 1px solid transparent"))
@@ -143,13 +148,19 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(settingsHTML.contains("当前窗口已更新，无需重启"))
     #expect(!settingsHTML.contains("id=\"apply-title\""))
 
+    let pageTitleRange = settingsHTML.range(of: "<h1>CoPicker</h1>")
+    let generalRange = settingsHTML.range(of: "id=\"general-title\"")
     let enabledRange = settingsHTML.range(of: "启用 CoPicker")
     let applyRange = settingsHTML.range(of: "应用设置")
     let modelsRange = settingsHTML.range(of: "id=\"models-title\"")
+    #expect(pageTitleRange != nil)
+    #expect(generalRange != nil)
     #expect(enabledRange != nil)
     #expect(applyRange != nil)
     #expect(modelsRange != nil)
-    if let enabledRange, let applyRange, let modelsRange {
+    if let pageTitleRange, let generalRange, let enabledRange, let applyRange, let modelsRange {
+        #expect(pageTitleRange.lowerBound < generalRange.lowerBound)
+        #expect(generalRange.lowerBound < enabledRange.lowerBound)
         #expect(enabledRange.lowerBound < applyRange.lowerBound)
         #expect(applyRange.lowerBound < modelsRange.lowerBound)
     }

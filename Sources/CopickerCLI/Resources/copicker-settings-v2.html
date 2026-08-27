@@ -117,6 +117,15 @@
         );
         --copicker-font-base: var(--font-text-md-size, 14px);
         --copicker-line-base: var(--font-text-md-line-height, 1.5);
+        --copicker-font-page-title: var(
+          --font-heading-lg-size,
+          var(--text-heading-lg, 24px)
+        );
+        --copicker-line-page-title: var(--font-heading-lg-line-height, 1.2);
+        --copicker-tracking-page-title: var(
+          --font-heading-lg-tracking,
+          normal
+        );
         --copicker-weight-normal: var(--font-weight-normal, 400);
         --copicker-weight-medium: var(--font-weight-medium, 500);
       }
@@ -156,11 +165,10 @@
       .page-header {
         display: flex;
         min-width: 0;
-        min-height: 46px;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        padding-bottom: 6px;
+        padding-bottom: 32px;
       }
 
       h1,
@@ -173,9 +181,10 @@
       h1 {
         min-width: 0;
         color: var(--copicker-text-primary);
-        font-size: var(--copicker-font-base);
-        font-weight: var(--copicker-weight-medium);
-        line-height: var(--copicker-line-base);
+        font-size: var(--copicker-font-page-title);
+        font-weight: var(--copicker-weight-normal);
+        letter-spacing: var(--copicker-tracking-page-title);
+        line-height: var(--copicker-line-page-title);
         text-wrap: balance;
       }
 
@@ -590,7 +599,10 @@
       </header>
 
       <div class="settings-content">
-        <section class="settings-section" aria-label="常规">
+        <section class="settings-section" aria-labelledby="general-title">
+          <div class="section-header">
+            <h2 id="general-title">常规</h2>
+          </div>
           <div class="settings-card">
             <div class="setting-row">
               <div class="setting-copy">
