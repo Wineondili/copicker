@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-28 02:04:43 +0800
+
+- Closed the public documentation around one accepted product baseline, separating the immutable `v0.11.0` three-model pre-release from the full-feature runtime at `c0343d4`, CLI/plugin `0.12.0-dev`, renderer `0.12.8`, settings schema `1`, and Codex `26.820.60940` build `7119`.
+- Rewrote the README, new-machine installation, usage, settings, and development guides; added architecture, validation, accepted-requirement, and contribution documents covering exact model behavior, placement, persistence, safety, rollback, live-effect boundaries, cross-device evidence, and future collaboration.
+- Marked the screenshot-derived 42-pixel settings inset as historical and superseded, preserving the final live DOM measurements and user acceptance as the current visual authority.
+- Added offline documentation contracts that tie published install refs, version layers, requirement IDs, native settings measurements, source geometry, plugin metadata, and superseded assumptions to the implementation; all 35 tests, syntax checks, manifest loading, link validation, whitespace validation, and the production build passed without installing, injecting, or restarting Codex.
+
 ## 2026-08-28 01:33:13 +0800
 
 - Replaced the screenshot-derived CoPicker settings top inset with the live Codex settings geometry: the injected host now targets the native full-width scroll viewport below the 46-pixel toolbar and uses the same 20-pixel panel padding.

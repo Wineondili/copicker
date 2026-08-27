@@ -32,11 +32,24 @@ This repository builds Copicker, a local macOS CLI that adds a model-selection r
 - `.agents/plugins/marketplace.json`: local marketplace descriptor used to install the settings plugin from a stable user-scoped copy.
 - `docs/usage.md`: user interaction, supported selection, task, closing, and troubleshooting behavior.
 - `docs/installation.md`: cross-device prerequisites, install, update, reinstall, recovery, permissions, and uninstall guidance.
+- `docs/accepted-baseline.md`: authoritative accepted requirements, version layers, model matrix, geometry, live DOM measurements, compatibility anchors, and superseded assumptions.
+- `docs/architecture.md`: installer, watcher, Inspector, renderer, selection, settings, persistence, and failure-boundary design.
+- `docs/validation.md`: offline, live-process, UI, restart, cold-login, and publication proof gates.
 - `docs/development.md`: SwiftPM onboarding, command mutation boundaries, compatibility contracts, cross-device validation, and release checklist.
-- `docs/plugin-settings.md`: settings plugin architecture, offline checks, installation boundary, and remaining host-loop work.
+- `docs/plugin-settings.md`: settings plugin architecture, persistence, native/fallback routing, visual contract, validation, and installation boundary.
+- `CONTRIBUTING.md`: public collaboration, Git, documentation, test, safety, and publication agreement.
 - `.codex/environments/environment.toml`: Codex Run action.
 
 The existing `codex-model-rail` state keys, host IDs, and log subsystem are legacy runtime compatibility identifiers. Do not rename them without an explicit migration that can remove an already injected older payload.
+
+## Documentation authority
+
+- Read `docs/accepted-baseline.md` before changing runtime behavior, supported models, placement, settings, or visual geometry.
+- When historical screenshots, tuning artifacts, comments, or QA passes conflict with a later accepted correction, preserve the history but label it superseded. Do not restore the older value silently.
+- For native settings fidelity, prefer bounded live `getBoundingClientRect()` and computed-style measurements from the exact Codex build over screenshot estimates or guessed minified utility classes.
+- Treat the public release tag, CLI/plugin version, renderer version, settings schema, settings resource, accepted runtime commit, and accepted Codex build as independent version layers.
+- When an accepted requirement changes, update source, offline contract tests, `docs/accepted-baseline.md`, the relevant focused guide, `design-qa.md` when visual evidence is involved, and `CHANGELOG.md` in the same coherent batch.
+- A documentation-only commit, green offline test suite, pushed branch, installed binary, successful injection, visual acceptance, restart reinjection, cold-login result, tag, and GitHub Release are separate proof/publication gates. Report only the gates actually observed.
 
 ## Commands
 

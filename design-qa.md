@@ -68,7 +68,9 @@ final result: passed
 
 final result: passed
 
-## 2026-08-28 — CoPicker balanced page-top inset
+## 2026-08-28 — Superseded screenshot-derived page-top inset
+
+> Historical result only. This screenshot-based 42-pixel inset was later disproved by direct live DOM and computed-style measurements. The current accepted contract is recorded in the final section below and in `docs/accepted-baseline.md`.
 
 - Source visual truth:
   - `/Users/jonas/Library/Mobile Documents/com~apple~CloudDocs/Downloads/Pasted 2026-08-28 at 01.15.19.png` — live CoPicker settings at 3104 × 1844 pixels before the correction, showing the page title too close to the host toolbar edge.
@@ -90,4 +92,34 @@ final result: passed
   - Copy and content: all labels, descriptions, access notices, model order, and save/apply messages are unchanged.
 - Interaction evidence: the preview loaded the authoritative snapshot and **立即应用** still completed with `已应用到当前 Codex` and `当前窗口已更新，无需重启。` after the spacing-only change.
 
-final result: passed
+historical result: superseded; do not use the 42-pixel inset as a current implementation target
+
+## 2026-08-28 — CoPicker live native settings viewport alignment
+
+- Source of truth: bounded `getBoundingClientRect()` and `getComputedStyle()` readings from the running official General settings page, not screenshot estimation or guessed minified utility classes.
+- Exact environment:
+  - runtime source `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb`;
+  - CoPicker CLI/plugin `0.12.0-dev`;
+  - renderer compatibility `0.12.8`;
+  - Codex desktop `26.820.60940` build `7119`;
+  - Apple silicon `arm64`;
+  - `1440 × 810` CSS-pixel window at device-pixel ratio `2`.
+- Direct official measurements:
+  - right-pane toolbar: `top=0`, `height=46`;
+  - scroll viewport: `left=268.828125`, `top=46`, `width=1171.171875`, `height=764`, `overflow-y=auto`, and `20px` padding on every side;
+  - centered content: `left=470.41`, `top=66`, `width=768`, `max-width=768px`;
+  - page heading: `top=66`, `height=28.8`, `font-size=24px`, `line-height=28.8px`, `font-weight=400`;
+  - title block: `height=60.8`, including `32px` bottom padding;
+  - first group title: `top=136.3`, `height=21`, `font-size=14px`, `line-height=21px`, `font-weight=500`;
+  - heading top to group-title top: `70.3px`; heading bottom to group-title top: `41.5px`.
+- Root cause of the superseded pass: the fallback host covered the whole right pane from `y=0`, so the fixed 42-pixel body inset attempted to absorb both the toolbar and panel spacing. It also inherited a 32-pixel `text-2xl` line height instead of the official unitless `1.2` heading line height.
+- Accepted implementation:
+  - detect the full-width native `overflow-y: auto|scroll` viewport inside the settings panel;
+  - position the fallback host to that viewport rectangle below the toolbar;
+  - use a 20-pixel iframe body inset, centered 768-pixel maximum content column, 24-pixel heading, unitless `1.2` line height, 32-pixel title bottom padding, and 40-pixel group gaps;
+  - retain responsive measurement instead of hard-coding the observed sidebar width or window coordinate.
+- Regression boundary: `model-rail.js` keeps the wide-scroll-viewport predicate, forwards the native heading line-height variable, and deliberately does not forward `--text-2xl--line-height`; `copicker-settings-v2.html` keeps `--copicker-page-top-inset: 20px`.
+- Acceptance: the corrected payload was installed and reviewed in the running Codex app. The user explicitly confirmed that the page was completely identical to the official settings geometry.
+- Safety evidence: the bounded inspection/injection closed Inspector afterward; the official app bundle was not modified or re-signed, and Codex was not terminated or restarted by the agent.
+
+final result: passed for the exact runtime and Codex build above; later Codex builds require independent remeasurement
