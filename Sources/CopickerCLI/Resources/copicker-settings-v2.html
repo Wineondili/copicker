@@ -36,46 +36,60 @@
         --copicker-panel: var(
           --copicker-host-panel,
           var(
-            --color-background-secondary,
-            light-dark(rgb(255 255 255 / 88%), rgb(255 255 255 / 5%))
+            --color-background-panel,
+            var(
+              --color-background-primary-soft-alpha,
+              light-dark(
+                #fff,
+                color-mix(
+                  in oklab,
+                  var(--copicker-text-primary) 2.5%,
+                  transparent
+                )
+              )
+            )
           )
-        );
-        --copicker-surface: var(
-          --color-background-primary,
-          light-dark(#fff, #242424)
-        );
-        --copicker-control-track: color-mix(
-          in srgb,
-          var(
-            --color-background-tertiary,
-            light-dark(rgb(0 0 0 / 6%), rgb(255 255 255 / 9%))
-          ) 92%,
-          transparent
         );
         --copicker-control-hover: var(
           --copicker-host-control-hover,
-          color-mix(in srgb, var(--copicker-text-primary) 8%, transparent)
+          var(
+            --color-background-primary-ghost-hover,
+            color-mix(
+              in oklab,
+              var(--copicker-text-primary) 8%,
+              transparent
+            )
+          )
         );
-        --copicker-button-background: var(
-          --copicker-host-primary-soft-alpha,
-          color-mix(in srgb, var(--copicker-text-primary) 5%, transparent)
+        --copicker-button-background: color-mix(
+          in oklab,
+          var(--copicker-text-primary) 5%,
+          transparent
         );
-        --copicker-border-primary: var(
-          --color-border-primary,
-          light-dark(rgb(0 0 0 / 14%), rgb(255 255 255 / 12%))
+        --copicker-button-hover: color-mix(
+          in oklab,
+          var(--copicker-text-primary) 10%,
+          transparent
         );
-        --copicker-border-secondary: var(
-          --color-border-secondary,
-          light-dark(rgb(0 0 0 / 9%), rgb(255 255 255 / 9%))
+        --copicker-border-default: var(
+          --copicker-host-border-default,
+          var(
+            --color-border,
+            color-mix(
+              in oklab,
+              var(--copicker-text-primary) 8%,
+              transparent
+            )
+          )
         );
         --copicker-switch-off: color-mix(
-          in srgb,
+          in oklab,
           var(--copicker-text-primary) 10%,
           transparent
         );
         --copicker-accent: var(
           --copicker-host-chart-blue,
-          var(--color-text-info, light-dark(#087cf0, #65a9ff))
+          var(--color-text-info, light-dark(#3a83f7, #65a9ff))
         );
         --copicker-warning: var(
           --color-text-warning,
@@ -87,26 +101,29 @@
         );
         --copicker-focus: var(
           --color-ring-primary,
-          light-dark(#087cf0, #8bbcff)
+          light-dark(#3a83f7, #8bbcff)
         );
         --copicker-thumb: var(--copicker-host-gray-zero, #fff);
         --copicker-shadow-sm: var(
           --shadow-sm,
-          0 1px 2px rgb(0 0 0 / 20%)
+          0 1px 2px -1px rgb(0 0 0 / 8%)
         );
-        --copicker-font-xs: var(--font-text-xs-size, 12px);
+        --copicker-font-xs: var(--font-text-xs-size, 11px);
         --copicker-line-xs: var(--font-text-xs-line-height, 16px);
-        --copicker-font-sm: var(--font-text-sm-size, 13px);
-        --copicker-line-sm: var(--font-text-sm-line-height, 18px);
+        --copicker-font-sm: var(--font-text-sm-size, 12px);
+        --copicker-line-sm: var(
+          --font-text-sm-line-height,
+          calc(1.25 / 0.875)
+        );
         --copicker-font-base: var(--font-text-md-size, 14px);
-        --copicker-line-base: var(--font-text-md-line-height, 20px);
-        --copicker-heading: var(--font-heading-md-size, 24px);
-        --copicker-heading-line: var(--font-heading-md-line-height, 1.2);
+        --copicker-line-base: var(--font-text-md-line-height, 1.5);
         --copicker-weight-normal: var(--font-weight-normal, 400);
         --copicker-weight-medium: var(--font-weight-medium, 500);
       }
 
-      * {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
       }
 
@@ -140,10 +157,11 @@
       .page-header {
         display: flex;
         min-width: 0;
-        align-items: flex-start;
+        min-height: 46px;
+        align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding-bottom: 32px;
+        padding-bottom: 6px;
       }
 
       h1,
@@ -156,16 +174,15 @@
       h1 {
         min-width: 0;
         color: var(--copicker-text-primary);
-        font-size: var(--copicker-heading);
-        font-weight: var(--copicker-weight-normal);
-        line-height: var(--copicker-heading-line);
+        font-size: var(--copicker-font-base);
+        font-weight: var(--copicker-weight-medium);
+        line-height: var(--copicker-line-base);
         text-wrap: balance;
       }
 
       .save-state {
         max-width: 240px;
         flex: 0 1 auto;
-        padding-top: 4px;
         color: var(--copicker-text-secondary);
         font-size: var(--copicker-font-xs);
         line-height: var(--copicker-line-xs);
@@ -191,7 +208,7 @@
 
       .section-header {
         display: flex;
-        min-height: 28px;
+        min-height: 46px;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
@@ -211,7 +228,7 @@
         min-width: 0;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid var(--copicker-border-primary);
+        border: 1px solid var(--copicker-border-default);
         border-radius: 16px;
         background: var(--copicker-panel);
       }
@@ -233,7 +250,7 @@
         bottom: 0;
         left: 16px;
         height: 0.5px;
-        background: var(--copicker-border-secondary);
+        background: var(--copicker-border-default);
         content: "";
         pointer-events: none;
       }
@@ -289,6 +306,7 @@
         display: inline-flex;
         width: 32px;
         height: 20px;
+        align-items: center;
         flex: 0 0 auto;
         cursor: pointer;
       }
@@ -307,34 +325,35 @@
 
       .switch-track {
         position: relative;
-        display: block;
+        display: inline-flex;
         width: 32px;
         height: 20px;
+        align-items: center;
+        flex: 0 0 auto;
         border-radius: 999px;
         background: var(--copicker-switch-off);
-        transition: background-color 120ms ease-out;
+        transition: background-color 150ms ease-out;
       }
 
-      .switch-track::after {
-        position: absolute;
-        top: 2px;
-        left: 2px;
+      .switch-thumb {
+        display: block;
         width: 16px;
         height: 16px;
+        flex: 0 0 auto;
         border: 1px solid var(--copicker-thumb);
         border-radius: 50%;
         background: var(--copicker-thumb);
         box-shadow: var(--copicker-shadow-sm);
-        content: "";
-        transition: transform 120ms ease-out;
+        transform: translateX(2px);
+        transition: transform 150ms ease-out;
       }
 
       .switch input:checked + .switch-track {
         background: var(--copicker-accent);
       }
 
-      .switch input:checked + .switch-track::after {
-        transform: translateX(12px);
+      .switch input:checked + .switch-track .switch-thumb {
+        transform: translateX(14px);
       }
 
       .switch input:focus-visible + .switch-track {
@@ -372,14 +391,14 @@
 
       .segmented-control {
         display: inline-flex;
+        position: relative;
+        min-width: 0;
         max-width: 100%;
         align-items: center;
         gap: 2px;
-        padding: 2px;
         overflow-x: auto;
         overflow-y: hidden;
-        border-radius: 10px;
-        background: var(--copicker-control-track);
+        background: transparent;
         scrollbar-width: none;
       }
 
@@ -396,21 +415,21 @@
 
       .segment span {
         display: flex;
-        height: 24px;
+        min-height: 24px;
         align-items: center;
         justify-content: center;
-        padding: 0 8px;
+        padding: 2px 8px;
         border: 1px solid transparent;
-        border-radius: 8px;
+        border-radius: 9999px;
         color: var(--copicker-text-tertiary);
-        font-size: var(--copicker-font-xs);
+        font-size: var(--copicker-font-sm);
         font-weight: var(--copicker-weight-normal);
-        line-height: var(--copicker-line-xs);
+        line-height: 18px;
         text-align: center;
         white-space: nowrap;
         transition:
-          background-color 120ms ease-out,
-          color 120ms ease-out;
+          background-color 150ms ease-out,
+          color 150ms ease-out;
       }
 
       .segment:hover span {
@@ -419,9 +438,12 @@
       }
 
       .segment input:checked + span {
-        background: var(--copicker-surface);
-        box-shadow: var(--copicker-shadow-sm);
+        background: var(--copicker-button-background);
         color: var(--copicker-text-primary);
+      }
+
+      .segment:hover input:checked + span {
+        background: var(--copicker-button-hover);
       }
 
       .segment input:focus-visible + span {
@@ -452,23 +474,23 @@
 
       .apply-now,
       .retry {
-        min-height: 24px;
+        height: 28px;
         flex: 0 0 auto;
-        padding: 2px 8px;
-        border: 1px solid var(--copicker-border-primary);
-        border-radius: 999px;
+        padding: 0 8px;
+        border: 1px solid transparent;
+        border-radius: 10px;
         background: var(--copicker-button-background);
         color: var(--copicker-text-primary);
         cursor: pointer;
-        font-size: var(--copicker-font-sm);
+        font-size: var(--copicker-font-base);
         font-weight: var(--copicker-weight-normal);
-        line-height: var(--copicker-line-sm);
-        transition: background-color 120ms ease-out;
+        line-height: 18px;
+        transition: background-color 150ms ease-out;
       }
 
       .apply-now:hover:not(:disabled),
       .retry:hover {
-        background: var(--copicker-control-hover);
+        background: var(--copicker-button-hover);
       }
 
       .apply-now:focus-visible,
@@ -509,16 +531,9 @@
         pointer-events: none;
       }
 
-      @supports (corner-shape: superellipse(1.5)) {
-        .settings-card {
-          border-radius: 20px;
-          corner-shape: superellipse(1.5);
-        }
-      }
-
       @media (prefers-reduced-motion: reduce) {
         .switch-track,
-        .switch-track::after,
+        .switch-thumb,
         .segment span,
         .apply-now,
         .retry {
@@ -576,10 +591,7 @@
       </header>
 
       <div class="settings-content">
-        <section class="settings-section" aria-labelledby="general-title">
-          <div class="section-header">
-            <h2 id="general-title">常规</h2>
-          </div>
+        <section class="settings-section" aria-label="常规">
           <div class="settings-card">
             <div class="setting-row">
               <div class="setting-copy">
@@ -588,7 +600,7 @@
               </div>
               <label class="switch">
                 <input id="enabled" type="checkbox" aria-label="启用 CoPicker" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
           </div>
@@ -606,7 +618,7 @@
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="sol" aria-label="显示 GPT-5.6 Sol" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
             <div class="setting-row model-row">
@@ -616,7 +628,7 @@
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="terra" aria-label="显示 GPT-5.6 Terra" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
             <div class="setting-row model-row">
@@ -626,7 +638,7 @@
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="luna" aria-label="显示 GPT-5.6 Luna" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
             <div class="setting-row model-row">
@@ -637,7 +649,7 @@
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="daybreak-blue" aria-label="显示 Daybreak Blue" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
             <div class="setting-row model-row">
@@ -647,7 +659,7 @@
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="gpt-5.5" aria-label="显示 GPT-5.5" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
             <div class="setting-row model-row">
@@ -658,7 +670,7 @@
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="gpt-5.3-codex-spark" aria-label="显示 GPT-5.3 Codex Spark" />
-                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
           </div>
