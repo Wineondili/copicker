@@ -20,7 +20,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Renderer development candidate | `0.12.10` | `model-rail.js` `VERSION`; offline only until a separately authorized live pass |
+| Renderer development candidate | `0.12.9` | `model-rail.js` `VERSION`; offline only until a separately authorized live pass |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
@@ -28,7 +28,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Current `main` advances the renderer to `0.12.10` for post-release capture-phase pointer and commit-context reliability work; it must not be described as installed or live-accepted until those gates are run. Intermediate renderer `0.12.9` has partial user-observed evidence: no-task routing passed, rapid continuous release did not. `v0.11.0` remains an immutable historical three-model release.
+The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Current `main` advances the renderer to `0.12.9` for post-release interaction reliability work; it must not be described as installed or live-accepted until those gates are run. `v0.11.0` remains an immutable historical three-model release.
 
 ## Supported development boundary
 
@@ -174,13 +174,13 @@ The complete normative behavior is in [accepted-baseline.md](accepted-baseline.m
 - Activate only for the compact first-level model/reasoning picker, never for the full-width composer list.
 - Keep the rail as a body-level Shadow DOM sibling rather than inserting it into official menu DOM.
 - Resolve account model IDs, effort availability, and the Fast tier from `model/list`; do not persist or hard-code account-specific IDs.
-- Resolve an active task ID only from the unique open trigger's own composer; freeze that exact trigger/task context with a queued commit, reject a newly opened different composer, and never fall back to a document-wide or cached task marker.
+- Resolve an active task ID only from the unique open trigger's own composer; never fall back to a document-wide or cached task marker.
 - With that exact active task ID, use `thread/settings/update` and require the matching `thread/settings/updated` confirmation.
 - Before the current composer has a task ID, proxy only the exact official Model, Effort, and Speed controls and confirm the resulting official trigger state.
 - Preserve the six-row order and effort matrix. Daybreak and Codex Spark cannot use Fast and must clear it.
 - Recognize hidden adapted models without selecting an invisible row; show empty centered `Other` for unsupported models.
 - Preserve top/left/right placement, nested-menu avoidance, no-flicker latching, pointer-gated side restoration, viewport clamping, and the 12-pixel separation/inset contract.
-- Preserve window-capture ownership for pointer events whose composed path belongs to the rail, preview-only dragging with one frozen release selection/context, the 120-millisecond keyboard commit delay, 180-millisecond open/close motion, and 420-millisecond placement return delay unless a later accepted requirement supersedes them.
+- Preserve preview-only pointer dragging with one release snapshot, the 120-millisecond keyboard commit delay, 180-millisecond open/close motion, and 420-millisecond placement return delay unless a later accepted requirement supersedes them.
 - Fail closed when private DOM, bridge, task, catalog, or confirmation anchors are absent.
 
 Legacy runtime names including `__CODEX_MODEL_RAIL__`, `codex-model-rail-popover-host`, related state keys, host IDs, and the logging subsystem are migration anchors. Do not rename them without code that can dispose of an older already injected payload.

@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.10";
+  const VERSION = "0.12.9";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -1275,7 +1275,6 @@
     commitTimer: null,
     commitQueue: Promise.resolve(),
     commitInFlight: false,
-    pointerInteractionCleanup: null,
     pendingRequests: new Map(),
     settingsWaiters: new Set(),
     modelCatalog: null,
@@ -1316,8 +1315,6 @@
     if (!animated) {
       window.clearTimeout(state.closeTimer);
       state.closeTimer = null;
-      state.pointerInteractionCleanup?.();
-      state.pointerInteractionCleanup = null;
       host.remove();
       if (state.popoverHost === host) state.popoverHost = null;
       return;
@@ -1331,8 +1328,6 @@
     host.style.transform = "translateY(6px) scale(0.98)";
     window.clearTimeout(state.closeTimer);
     state.closeTimer = window.setTimeout(() => {
-      state.pointerInteractionCleanup?.();
-      state.pointerInteractionCleanup = null;
       host.remove();
       if (state.popoverHost === host) state.popoverHost = null;
       state.closeTimer = null;
@@ -1812,33 +1807,6 @@
         element.getAttribute("data-above-composer-conversation-id")
       ),
     );
-  }
-
-  function captureSelectionCommitContext() {
-    const trigger = findOpenTrigger();
-    return Object.freeze({
-      trigger,
-      threadID: resolveCurrentThreadID(trigger),
-    });
-  }
-
-  function resolveCommitTrigger(openTrigger, commitContext) {
-    if (openTrigger) return openTrigger;
-    const capturedTrigger = commitContext?.trigger || null;
-    if (
-      state.trigger &&
-      capturedTrigger &&
-      state.trigger !== capturedTrigger
-    ) {
-      return null;
-    }
-    return officialControlIsUsable(capturedTrigger) ? capturedTrigger : null;
-  }
-
-  function resolveCommitThreadID(openTrigger, commitTrigger, commitContext) {
-    if (openTrigger) return resolveCurrentThreadID(openTrigger);
-    if (!commitTrigger || commitTrigger !== commitContext?.trigger) return null;
-    return exactValidThreadID([commitContext?.threadID]);
   }
 
   function makeRequestID() {
@@ -2576,12 +2544,7 @@
     }
   }
 
-  async function performSelectionCommit(
-    selection,
-    revision,
-    { force = false } = {},
-    commitContext = null,
-  ) {
+  async function performSelectionCommit(selection, revision, { force = false } = {}) {
     if (!Number.isInteger(selection?.rowIndex) || !selection.effort) {
       throw new Error("A supported model and effort must be selected.");
     }
@@ -2597,20 +2560,8 @@
     }
     if (revision < state.selectionRevision) return { skipped: "superseded" };
 
-    const openTrigger = findOpenTrigger();
-    if (
-      openTrigger &&
-      commitContext?.trigger &&
-      openTrigger !== commitContext.trigger
-    ) {
-      return { skipped: "composer-changed" };
-    }
-    const commitTrigger = resolveCommitTrigger(openTrigger, commitContext);
-    const threadID = resolveCommitThreadID(
-      openTrigger,
-      commitTrigger,
-      commitContext,
-    );
+    const commitTrigger = findOpenTrigger();
+    const threadID = resolveCurrentThreadID(commitTrigger);
     state.trigger = commitTrigger;
     state.currentThreadID = threadID;
     if (!threadID) {
@@ -2669,33 +2620,18 @@
   }
 
   function enqueueSelectionCommit(options = {}) {
-    const commitContext = captureSelectionCommitContext();
     return enqueueSelectionSnapshot(
       snapshotSelection(),
       state.selectionRevision,
       options,
-      commitContext,
     );
   }
 
-  function enqueueSelectionSnapshot(
-    selection,
-    revision,
-    options = {},
-    commitContext = captureSelectionCommitContext(),
-  ) {
+  function enqueueSelectionSnapshot(selection, revision, options = {}) {
     const committedSelection = Object.freeze({ ...selection });
-    const committedContext = Object.freeze({ ...commitContext });
     const task = state.commitQueue
       .catch(() => {})
-      .then(() =>
-        performSelectionCommit(
-          committedSelection,
-          revision,
-          options,
-          committedContext,
-        )
-      );
+      .then(() => performSelectionCommit(committedSelection, revision, options));
     state.commitQueue = task.catch(() => {});
     return task;
   }
@@ -3515,51 +3451,26 @@
     let gestureStartSelection = null;
     const clickMoveThreshold = 5;
 
-    const interceptPointerEvent = (event) => {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    };
-
-    const releaseActivePointerCapture = (pointerID) => {
-      if (stage?.hasPointerCapture(pointerID)) {
-        stage.releasePointerCapture(pointerID);
-      }
-    };
-
-    const resetPointerGesture = ({ restore = false } = {}) => {
-      const pointerID = activePointerID;
-      if (restore && gestureStartSelection) {
-        applySelection(gestureStartSelection);
-      }
-      activePointerID = null;
-      if (pointerID !== null) releaseActivePointerCapture(pointerID);
+    const resetPointerGesture = () => {
       stage?.classList.remove("dragging");
       pointerDownOnThumb = false;
       pointerMoved = false;
+      activePointerID = null;
       gestureStartSelection = null;
     };
 
-    const handlePointerDown = (event) => {
-      if (
-        !event.isPrimary ||
-        event.button !== 0 ||
-        activePointerID !== null ||
-        !event.composedPath().includes(stage)
-      ) {
-        return;
-      }
-      interceptPointerEvent(event);
+    stage?.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0 || activePointerID !== null) return;
       activePointerID = event.pointerId;
-      pointerDownOnThumb =
-        event.composedPath().includes(thumb) && hasSelectorSelection();
+      pointerDownOnThumb = event.target === thumb && hasSelectorSelection();
       pointerStartX = event.clientX;
       pointerStartY = event.clientY;
       pointerMoved = false;
       gestureStartSelection = snapshotSelection();
       window.clearTimeout(state.commitTimer);
       state.commitTimer = null;
-      stage?.setPointerCapture(event.pointerId);
-      stage?.classList.add("dragging");
+      stage.setPointerCapture(event.pointerId);
+      stage.classList.add("dragging");
       if (!pointerDownOnThumb) {
         previewPointerSelection(
           host,
@@ -3568,11 +3479,15 @@
           gestureStartSelection.fastMode,
         );
       }
-    };
+    });
 
-    const handlePointerMove = (event) => {
-      if (event.pointerId !== activePointerID) return;
-      interceptPointerEvent(event);
+    stage?.addEventListener("pointermove", (event) => {
+      if (
+        event.pointerId !== activePointerID ||
+        !stage.hasPointerCapture(event.pointerId)
+      ) {
+        return;
+      }
       if (Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) > clickMoveThreshold) {
         pointerMoved = true;
       }
@@ -3584,11 +3499,10 @@
           gestureStartSelection.fastMode,
         );
       }
-    };
+    });
 
-    const handlePointerUp = (event) => {
+    stage?.addEventListener("pointerup", (event) => {
       if (event.pointerId !== activePointerID) return;
-      interceptPointerEvent(event);
       let shouldCommit = true;
       const action = pointerReleaseAction(
         pointerDownOnThumb,
@@ -3619,45 +3533,32 @@
           state.selectionRevision += 1;
         }
       }
+      if (stage.hasPointerCapture(event.pointerId)) {
+        stage.releasePointerCapture(event.pointerId);
+      }
       window.clearTimeout(state.commitTimer);
       state.commitTimer = null;
-      const commitContext = captureSelectionCommitContext();
-      const selection = shouldCommit ? snapshotSelection() : null;
-      const revision = state.selectionRevision;
-      resetPointerGesture();
       if (shouldCommit) {
-        void enqueueSelectionSnapshot(
-          selection,
-          revision,
-          {},
-          commitContext,
-        ).catch(() => {});
+        const selection = snapshotSelection();
+        const revision = state.selectionRevision;
+        void enqueueSelectionSnapshot(selection, revision).catch(() => {});
       }
-    };
+      resetPointerGesture();
+    });
 
-    const handlePointerCancel = (event) => {
+    stage?.addEventListener("pointercancel", (event) => {
       if (event.pointerId !== activePointerID) return;
-      interceptPointerEvent(event);
-      resetPointerGesture({ restore: true });
-    };
-
-    const disposePointerInteraction = () => {
-      window.removeEventListener("pointerdown", handlePointerDown, true);
-      window.removeEventListener("pointermove", handlePointerMove, true);
-      window.removeEventListener("pointerup", handlePointerUp, true);
-      window.removeEventListener("pointercancel", handlePointerCancel, true);
-      resetPointerGesture({ restore: true });
-      if (state.pointerInteractionCleanup === disposePointerInteraction) {
-        state.pointerInteractionCleanup = null;
+      if (gestureStartSelection) applySelection(gestureStartSelection);
+      if (stage.hasPointerCapture(event.pointerId)) {
+        stage.releasePointerCapture(event.pointerId);
       }
-    };
+      resetPointerGesture();
+    });
 
-    window.addEventListener("pointerdown", handlePointerDown, true);
-    window.addEventListener("pointermove", handlePointerMove, true);
-    window.addEventListener("pointerup", handlePointerUp, true);
-    window.addEventListener("pointercancel", handlePointerCancel, true);
-    state.pointerInteractionCleanup = disposePointerInteraction;
-
+    shadow.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
     shadow.addEventListener("click", (event) => event.stopPropagation());
     updateSelectorUI(host);
   }
