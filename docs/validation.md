@@ -163,7 +163,8 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Current package | `v0.99.0`; CLI/plugin `0.99.0` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
-| Current `main` renderer candidate | `0.12.9`; offline pointer/routing proof only |
+| Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
+| Current `main` renderer candidate | `0.12.10`; current-Codex tag-agnostic official-item selector, offline proof only |
 | Codex | `26.820.60940` build `7119` |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |

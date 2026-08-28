@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.9";
+  const VERSION = "0.12.10";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -21,7 +21,7 @@
   const PRIMARY_CONTROL_SELECTOR =
     "[data-model-picker-power-slider], [data-model-picker-view-toggle]";
   const SECONDARY_SURFACE_SELECTOR = "[data-composer-overlay-floating-ui]";
-  const SECONDARY_ITEM_SELECTOR = "button[data-list-navigation-item]";
+  const SECONDARY_ITEM_SELECTOR = '[data-list-navigation-item="true"]';
   const MODEL_ROW_SELECTOR = "[data-model-picker-model-row]";
   const CONVERSATION_CONTEXT_SELECTOR = "[data-above-composer-conversation-id]";
   const FAST_MODE_SELECTOR = '[role="menuitemcheckbox"][data-fast-mode-enabled]';

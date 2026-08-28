@@ -18,7 +18,7 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.9
+renderer_version=0.12.10
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v2.html
 marketplace_name=copicker-local
@@ -44,7 +44,8 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Renderer development candidate | `0.12.9` | Current `main` payload; offline-validated pointer finalization fix, not yet installed or live-accepted |
+| Renderer development candidate | `0.12.10` | Current `main` payload; current-Codex no-task menu-item compatibility fix, not yet installed or live-accepted |
+| Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
 | Settings resource | `ui://copicker/settings/v2.html` | Current MCP App document |
@@ -58,7 +59,9 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
 
-Current `main` advances only the renderer compatibility layer to `0.12.9`. It treats a pointer gesture as preview-only until release, recomputes drag intent from the final release coordinates, commits one frozen final selection, and restores the pre-gesture selection on cancellation. This development candidate has offline behavior coverage but no new installation, live interaction, restart, or cold-login acceptance yet.
+Renderer `0.12.9` was deliberately installed and the user confirmed that a continuous rapid drag commits the release cell without pausing. The same live pass confirmed that selection on a new unsent task still did not update the official composer trigger. Read-only inspection of the current Codex bundle then showed why: its menu item component renders a `div[role="menuitem"][data-list-navigation-item="true"]`, while the proxy still required `button[data-list-navigation-item]` and therefore failed before invoking the official new-thread draft-setting callbacks.
+
+Current `main` advances only the renderer compatibility layer to `0.12.10`. It preserves the live-passed `0.12.9` pointer state machine and broadens only the versioned official menu-item anchor to `[data-list-navigation-item="true"]`, allowing the current Codex `div` item while retaining exact-surface, visibility, disabled-state, option-count, and final-trigger confirmation checks. This selector correction has offline coverage but no installation, live new-task interaction, restart, or cold-login acceptance yet.
 
 The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
 
@@ -213,7 +216,7 @@ The following private selectors and identifiers are compatibility points, not pu
 
 - trigger: `[data-codex-intelligence-trigger][data-composer-navigation-target="reasoning"]`;
 - first-level surfaces: `[data-radix-menu-content], [role="menu"]` containing `[data-reasoning-slider]` and current model-picker controls;
-- nested obstacles: `[data-composer-overlay-floating-ui]`, `button[data-list-navigation-item]`, and `[data-model-picker-model-row]` under the bounded rules above;
+- nested obstacles and official proxy items: `[data-composer-overlay-floating-ui]`, `[data-list-navigation-item="true"]`, and `[data-model-picker-model-row]` under the bounded rules above; the current Codex item root is a `div`, not a `button`;
 - task marker: `[data-above-composer-conversation-id]`;
 - Fast control: `[role="menuitemcheckbox"][data-fast-mode-enabled]`;
 - settings anchor: Browser or Plugins settings buttons identified by `data-settings-panel-slug`;

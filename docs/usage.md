@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.9`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` has offline pointer-finalization coverage but has not yet replaced that live acceptance anchor. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
+This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.10`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` subsequently passed the focused rapid-drag live check but failed the new-unsent-task official-trigger update. Renderer `0.12.10` corrects the current Codex menu-item anchor and has not yet replaced the live acceptance anchor. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
 
 CoPicker appears only with the official compact first-level model/reasoning picker. It does not replace the full-width model list opened from the composer input.
 
