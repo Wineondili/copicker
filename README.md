@@ -13,7 +13,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Current six-model, persistent-settings, no-task, placement, and native-geometry baseline |
 | CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
-| Renderer development candidate | `0.12.9` on `main` | Post-release pointer/no-task reliability work; forces replacement of older in-memory integrations when deliberately installed |
+| Renderer development candidate | `0.12.10` on `main` | Post-release pointer-capture/commit-context reliability work; forces replacement of older in-memory integrations when deliberately installed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
 | MCP settings resource | `ui://copicker/settings/v2.html` | Versioned CoPicker settings document |
@@ -22,7 +22,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 The current runtime baseline was installed and accepted on Apple silicon with Codex `26.820.60940` build `7119`. The user confirmed that the final CoPicker settings geometry matches the official settings page. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-`v0.99.0` packages that accepted full-feature implementation with release metadata and the completed public documentation. Its renderer `0.12.8` is unchanged from `c0343d4`; the release-only version bump does not create a second live-installation claim. `main` is now a moving `0.12.9` development candidate and must be validated separately, while `v0.99.0` remains the immutable install ref.
+`v0.99.0` packages that accepted full-feature implementation with release metadata and the completed public documentation. Its renderer `0.12.8` is unchanged from `c0343d4`; the release-only version bump does not create a second live-installation claim. `main` is now a moving `0.12.10` development candidate and must be validated separately, while `v0.99.0` remains the immutable install ref. Intermediate renderer `0.12.9` was user-tested after installation: its exact no-task routing fix worked, but its stage-level rapid-release handling did not.
 
 See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v0.99.0 release notes](docs/releases/v0.99.0.md) for the packaged feature and validation boundary.
 

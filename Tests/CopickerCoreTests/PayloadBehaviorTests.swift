@@ -91,15 +91,32 @@ func threadResolutionRequiresOneExactCurrentComposerIdentifier() throws {
 }
 
 @Test
-func pointerHandlerCommitsOneFrozenReleaseSnapshotAndRollsBackCancellation() throws {
+func pointerHandlerCapturesTheWholeGestureBeforeHostMenus() throws {
     let payload = try payloadSource()
 
     #expect(payload.contains("const action = pointerReleaseAction("))
     #expect(payload.contains("previewPointerSelection("))
     #expect(payload.contains("gestureStartSelection.fastMode"))
+    #expect(payload.contains("event.composedPath().includes(stage)"))
+    #expect(payload.contains("window.addEventListener(\"pointerdown\", handlePointerDown, true)"))
+    #expect(payload.contains("window.addEventListener(\"pointermove\", handlePointerMove, true)"))
+    #expect(payload.contains("window.addEventListener(\"pointerup\", handlePointerUp, true)"))
+    #expect(payload.contains("window.addEventListener(\"pointercancel\", handlePointerCancel, true)"))
+    #expect(payload.contains("event.stopImmediatePropagation()"))
+    #expect(payload.contains("state.pointerInteractionCleanup = disposePointerInteraction"))
+    #expect(payload.contains("window.removeEventListener(\"pointerup\", handlePointerUp, true)"))
+    #expect(!payload.contains("stage?.addEventListener(\"pointerup\""))
+}
+
+@Test
+func pointerHandlerCommitsOneFrozenReleaseSnapshotAndRollsBackCancellation() throws {
+    let payload = try payloadSource()
+
     #expect(payload.contains("Object.freeze({ ...selection })"))
-    #expect(payload.contains("enqueueSelectionSnapshot(selection, revision)"))
-    #expect(payload.contains("if (gestureStartSelection) applySelection(gestureStartSelection)"))
+    #expect(payload.contains("const commitContext = captureSelectionCommitContext()"))
+    #expect(payload.contains("enqueueSelectionSnapshot(\n          selection,"))
+    #expect(payload.contains("commitContext,\n        ).catch"))
+    #expect(payload.contains("resetPointerGesture({ restore: true })"))
     #expect(payload.contains(".stage.dragging .thumb"))
     #expect(!payload.contains("function updateFromPointer("))
 }
@@ -117,8 +134,10 @@ func selectionCommitScopesThreadResolutionToTheOpenComposer() throws {
     #expect(resolver.contains("composer?.querySelector(CONVERSATION_CONTEXT_SELECTOR)"))
     #expect(resolver.contains("return exactValidThreadID("))
     #expect(!resolver.contains("document.querySelectorAll"))
-    #expect(payload.contains("const commitTrigger = findOpenTrigger();"))
-    #expect(payload.contains("const threadID = resolveCurrentThreadID(commitTrigger);"))
+    #expect(payload.contains("const openTrigger = findOpenTrigger();"))
+    #expect(payload.contains("const commitTrigger = resolveCommitTrigger(openTrigger, commitContext);"))
+    #expect(payload.contains("const threadID = resolveCommitThreadID("))
+    #expect(payload.contains("threadID: resolveCurrentThreadID(trigger)"))
     #expect(!payload.contains("state.currentThreadID || resolveCurrentThreadID"))
     #expect(payload.contains("const triggerChanged = previousTrigger !== target.trigger;"))
     #expect(payload.contains("state.currentThreadID = null;\n      removeDetachedPopover();"))
