@@ -1,5 +1,16 @@
 # Design QA
 
+## 2026-08-28 — Pointer-release reliability candidate
+
+- Target flow: isolated Model Rail tuner loads, a non-thumb cell click commits once, a continuous drag commits the final release cell once without pausing, and a stationary thumb click toggles Fast once.
+- Environment: Codex in-app browser, `http://127.0.0.1:8766/tools/model-rail-tuner.html`, native browser viewport, rendered stage `194 × 88` CSS pixels. The server and tab were temporary development surfaces.
+- Interaction evidence: a Terra/low cell click changed the commit counter from `0` to `1`; one continuous Terra/low-to-Luna/xhigh drag changed it to `2` with committed row `2`, index `3`, Fast `false`; a stationary click on that final thumb changed it to `3` with Fast `true` and did not change the selected cell.
+- Rendered evidence: the final screenshot showed the unchanged accepted rail geometry in Luna/xhigh/Fast state, with no clipping, overlap, blank page, framework overlay, console warning, or console error. Position easing is disabled only during an active drag; resting appearance is unchanged.
+- Source behavior evidence: executable JavaScriptCore tests cover a release displacement with no qualifying intermediate move, a moved gesture returning to its start, ordinary cell selection, Fast preservation across preview-only compatible rows, non-Fast clearing, pointer cancellation rollback, and exact/ambiguous task-ID resolution.
+- Boundary: this is isolated browser and offline source validation for renderer `0.12.9`. It did not attach to, inject, restart, or mutate the running Codex app and is not new live-runtime acceptance.
+
+candidate result: isolated interaction passed; live Codex acceptance not tested
+
 ## 2026-08-15 — Runtime Model Rail v0.8.0
 
 - Historical source reference: a 752 × 724 pixel Sol/xhigh preview was compared with the runtime component. The original image existed only in a machine-local temporary directory and is not a portable repository asset.

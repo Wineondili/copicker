@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.8";
+  const VERSION = "0.12.9";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -159,6 +159,39 @@
       supportsFast: false,
     },
   ];
+
+  /* COPICKER_BEHAVIOR_CONTRACT_BEGIN */
+  function isValidThreadID(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      String(value || ""),
+    );
+  }
+
+  function exactValidThreadID(values) {
+    const threadIDs = [...new Set(values.filter(isValidThreadID))];
+    return threadIDs.length === 1 ? threadIDs[0] : null;
+  }
+
+  function pointerReleaseAction(
+    startedOnThumb,
+    movedDuringGesture,
+    startX,
+    startY,
+    endX,
+    endY,
+    threshold,
+  ) {
+    const movedAtRelease =
+      Math.hypot(endX - startX, endY - startY) > threshold;
+    return startedOnThumb && !movedDuringGesture && !movedAtRelease
+      ? "toggle-fast"
+      : "select";
+  }
+
+  function pointerPreviewFastMode(startFastMode, targetSupportsFast) {
+    return Boolean(startFastMode && targetSupportsFast);
+  }
+  /* COPICKER_BEHAVIOR_CONTRACT_END */
 
   function normalizeConfig(rawConfig) {
     const visibleModelIDs = new Set(
@@ -1347,12 +1380,13 @@
   }
 
   function findOpenTrigger() {
-    return [...document.querySelectorAll(TRIGGER_SELECTOR)].find(
+    const openTriggers = [...document.querySelectorAll(TRIGGER_SELECTOR)].filter(
       (trigger) =>
         isVisible(trigger) &&
         (trigger.getAttribute("aria-expanded") === "true" ||
           trigger.getAttribute("data-state") === "open"),
     );
+    return openTriggers.length === 1 ? openTriggers[0] : null;
   }
 
   function findPrimarySurface(trigger) {
@@ -1760,44 +1794,19 @@
     state.popoverHost?.setAttribute("data-switch-state", value);
   }
 
-  function isValidThreadID(value) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      String(value || ""),
-    );
-  }
-
   function resolveCurrentThreadID(trigger) {
     const composer = trigger?.closest("[data-codex-composer-root]") || null;
+    if (!composer) return null;
     const directCandidates = [
       trigger?.closest(CONVERSATION_CONTEXT_SELECTOR),
       composer?.closest(CONVERSATION_CONTEXT_SELECTOR),
       composer?.querySelector(CONVERSATION_CONTEXT_SELECTOR),
     ].filter(Boolean);
-    const documentCandidates = [...document.querySelectorAll(CONVERSATION_CONTEXT_SELECTOR)];
-    const candidates = [...new Set([...directCandidates, ...documentCandidates])];
-    const validCandidates = candidates
-      .map((element) => ({
-        element,
-        threadID: element.getAttribute("data-above-composer-conversation-id"),
-      }))
-      .filter(({ threadID }) => isValidThreadID(threadID));
-    if (validCandidates.length === 0) return null;
-    if (validCandidates.length === 1) return validCandidates[0].threadID;
-
-    const triggerRect = trigger?.getBoundingClientRect();
-    return validCandidates
-      .sort((left, right) => {
-        const score = ({ element }) => {
-          if (element.contains(trigger)) return -100000;
-          if (!triggerRect) return 0;
-          const rect = element.getBoundingClientRect();
-          return Math.hypot(
-            rect.left + rect.width / 2 - (triggerRect.left + triggerRect.width / 2),
-            rect.top + rect.height / 2 - (triggerRect.top + triggerRect.height / 2),
-          );
-        };
-        return score(left) - score(right);
-      })[0].threadID;
+    return exactValidThreadID(
+      directCandidates.map((element) =>
+        element.getAttribute("data-above-composer-conversation-id")
+      ),
+    );
   }
 
   function makeRequestID() {
@@ -2549,10 +2558,13 @@
     if (selection.fastMode && !catalogEntry.fastTierID) {
       throw new Error("Fast is unavailable for the selected model.");
     }
+    if (revision < state.selectionRevision) return { skipped: "superseded" };
 
-    const threadID = state.currentThreadID || resolveCurrentThreadID(state.trigger);
+    const commitTrigger = findOpenTrigger();
+    const threadID = resolveCurrentThreadID(commitTrigger);
+    state.trigger = commitTrigger;
+    state.currentThreadID = threadID;
     if (!threadID) {
-      state.currentThreadID = null;
       return performNoThreadSelectionCommit(
         selection,
         revision,
@@ -2560,8 +2572,6 @@
         { force },
       );
     }
-    state.currentThreadID = threadID;
-
     const previousConfirmed = state.confirmedSelection;
     const sameAsConfirmed = selectionsEqual(previousConfirmed, selection);
     if (sameAsConfirmed && !force) {
@@ -2610,11 +2620,18 @@
   }
 
   function enqueueSelectionCommit(options = {}) {
-    const selection = snapshotSelection();
-    const revision = state.selectionRevision;
+    return enqueueSelectionSnapshot(
+      snapshotSelection(),
+      state.selectionRevision,
+      options,
+    );
+  }
+
+  function enqueueSelectionSnapshot(selection, revision, options = {}) {
+    const committedSelection = Object.freeze({ ...selection });
     const task = state.commitQueue
       .catch(() => {})
-      .then(() => performSelectionCommit(selection, revision, options));
+      .then(() => performSelectionCommit(committedSelection, revision, options));
     state.commitQueue = task.catch(() => {});
     return task;
   }
@@ -2847,20 +2864,46 @@
     return best;
   }
 
-  function updateFromPointer(host, clientX, clientY) {
+  function pointerSelection(host, clientX, clientY) {
     const stage = host.shadowRoot?.querySelector("#stage");
-    if (!stage) return;
+    if (!stage) return null;
     const rect = stage.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
     const x = clamp(clientX - rect.left, 0, rect.width);
     const y = clamp(clientY - rect.top, 0, rect.height);
     const scaledX = (x / rect.width) * STAGE_WIDTH;
     const scaledY = (y / rect.height) * STAGE_HEIGHT;
-    const nextRow = nearestRowFromY(scaledY);
-    const nextIndex = nearestIndexInRow(nextRow, scaledX);
-    if (state.currentRow === nextRow && state.currentIndex === nextIndex) return;
-    state.currentRow = nextRow;
-    state.currentIndex = nextIndex;
-    markSelectionChanged(host);
+    const rowIndex = nearestRowFromY(scaledY);
+    return {
+      rowIndex,
+      indexInRow: nearestIndexInRow(rowIndex, scaledX),
+    };
+  }
+
+  function previewPointerSelection(
+    host,
+    clientX,
+    clientY,
+    startFastMode = state.fastMode,
+  ) {
+    const target = pointerSelection(host, clientX, clientY);
+    if (!target) return false;
+    if (
+      state.currentRow === target.rowIndex &&
+      state.currentIndex === target.indexInRow
+    ) {
+      return false;
+    }
+
+    state.currentRow = target.rowIndex;
+    state.currentIndex = target.indexInRow;
+    const row = ROWS[target.rowIndex];
+    state.recognizedRow = row;
+    state.recognizedEffort = EFFORTS[row.dots[target.indexInRow] - 1];
+    state.fastMode = pointerPreviewFastMode(startFastMode, row.supportsFast);
+    state.lastSwitchError = null;
+    updateSelectorUI(host);
+    return true;
   }
 
   function handleSelectorKey(host, event) {
@@ -3255,6 +3298,17 @@
           pointer-events: none;
         }
 
+        .stage.dragging .selection {
+          transition: opacity 160ms ease, background 240ms ease;
+        }
+
+        .stage.dragging .thumb {
+          transition:
+            transform 150ms ease,
+            box-shadow 150ms ease,
+            opacity 160ms ease;
+        }
+
         :host([data-appearance-resolved="light"]) .thumb {
           box-shadow:
             0 10px 22px rgba(0, 0, 0, 0.18),
@@ -3393,55 +3447,112 @@
     let pointerStartX = 0;
     let pointerStartY = 0;
     let pointerMoved = false;
+    let activePointerID = null;
+    let gestureStartSelection = null;
     const clickMoveThreshold = 5;
 
+    const resetPointerGesture = () => {
+      stage?.classList.remove("dragging");
+      pointerDownOnThumb = false;
+      pointerMoved = false;
+      activePointerID = null;
+      gestureStartSelection = null;
+    };
+
     stage?.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0 || activePointerID !== null) return;
+      activePointerID = event.pointerId;
       pointerDownOnThumb = event.target === thumb && hasSelectorSelection();
       pointerStartX = event.clientX;
       pointerStartY = event.clientY;
       pointerMoved = false;
+      gestureStartSelection = snapshotSelection();
+      window.clearTimeout(state.commitTimer);
+      state.commitTimer = null;
       stage.setPointerCapture(event.pointerId);
       stage.classList.add("dragging");
-      if (!pointerDownOnThumb) updateFromPointer(host, event.clientX, event.clientY);
+      if (!pointerDownOnThumb) {
+        previewPointerSelection(
+          host,
+          event.clientX,
+          event.clientY,
+          gestureStartSelection.fastMode,
+        );
+      }
     });
 
     stage?.addEventListener("pointermove", (event) => {
-      if (!stage.hasPointerCapture(event.pointerId)) return;
+      if (
+        event.pointerId !== activePointerID ||
+        !stage.hasPointerCapture(event.pointerId)
+      ) {
+        return;
+      }
       if (Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) > clickMoveThreshold) {
         pointerMoved = true;
       }
       if (!pointerDownOnThumb || pointerMoved) {
-        updateFromPointer(host, event.clientX, event.clientY);
+        previewPointerSelection(
+          host,
+          event.clientX,
+          event.clientY,
+          gestureStartSelection.fastMode,
+        );
       }
     });
 
     stage?.addEventListener("pointerup", (event) => {
-      if (stage.hasPointerCapture(event.pointerId)) {
-        let shouldCommit = true;
-        if (pointerDownOnThumb && !pointerMoved) {
-          if (ROWS[state.currentRow]?.supportsFast) {
-            state.fastMode = !state.fastMode;
-            markSelectionChanged(host);
-          } else {
-            shouldCommit = false;
-          }
+      if (event.pointerId !== activePointerID) return;
+      let shouldCommit = true;
+      const action = pointerReleaseAction(
+        pointerDownOnThumb,
+        pointerMoved,
+        pointerStartX,
+        pointerStartY,
+        event.clientX,
+        event.clientY,
+        clickMoveThreshold,
+      );
+      if (action === "toggle-fast") {
+        if (ROWS[state.currentRow]?.supportsFast) {
+          state.fastMode = !state.fastMode;
+          markSelectionChanged(host);
         } else {
-          updateFromPointer(host, event.clientX, event.clientY);
+          shouldCommit = false;
         }
-        stage.releasePointerCapture(event.pointerId);
-        window.clearTimeout(state.commitTimer);
-        state.commitTimer = null;
-        if (shouldCommit) void enqueueSelectionCommit().catch(() => {});
+      } else {
+        previewPointerSelection(
+          host,
+          event.clientX,
+          event.clientY,
+          gestureStartSelection.fastMode,
+        );
+        if (selectionsEqual(gestureStartSelection, snapshotSelection())) {
+          shouldCommit = false;
+        } else {
+          state.selectionRevision += 1;
+        }
       }
-      stage.classList.remove("dragging");
-      pointerDownOnThumb = false;
-      pointerMoved = false;
+      if (stage.hasPointerCapture(event.pointerId)) {
+        stage.releasePointerCapture(event.pointerId);
+      }
+      window.clearTimeout(state.commitTimer);
+      state.commitTimer = null;
+      if (shouldCommit) {
+        const selection = snapshotSelection();
+        const revision = state.selectionRevision;
+        void enqueueSelectionSnapshot(selection, revision).catch(() => {});
+      }
+      resetPointerGesture();
     });
 
-    stage?.addEventListener("pointercancel", () => {
-      stage.classList.remove("dragging");
-      pointerDownOnThumb = false;
-      pointerMoved = false;
+    stage?.addEventListener("pointercancel", (event) => {
+      if (event.pointerId !== activePointerID) return;
+      if (gestureStartSelection) applySelection(gestureStartSelection);
+      if (stage.hasPointerCapture(event.pointerId)) {
+        stage.releasePointerCapture(event.pointerId);
+      }
+      resetPointerGesture();
     });
 
     shadow.addEventListener("pointerdown", (event) => {
@@ -3719,16 +3830,20 @@
     state.scheduled = false;
     removePreviousVisual();
 
+    const previousTrigger = state.trigger;
     const target = currentPrimaryTarget();
     state.trigger = target?.trigger ?? null;
     state.primarySurface = target?.surface ?? null;
 
     if (!target) {
+      state.currentThreadID = null;
       removeDetachedPopover();
       return;
     }
 
-    const shouldInitialize = state.observedSurface !== target.surface;
+    const triggerChanged = previousTrigger !== target.trigger;
+    const shouldInitialize =
+      triggerChanged || state.observedSurface !== target.surface;
     if (shouldInitialize) {
       resetPlacementSession();
       initializeSelectorFromTrigger(target.trigger);

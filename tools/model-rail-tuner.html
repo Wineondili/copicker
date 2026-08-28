@@ -338,7 +338,11 @@
     }
 
     .thumb.fast::after { opacity: 1; }
-    .stage.dragging .thumb { transform: translate(-50%, -50%) scale(1.02); }
+    .stage.dragging .selection { transition: none; }
+    .stage.dragging .thumb {
+      transform: translate(-50%, -50%) scale(1.02);
+      transition: transform 150ms ease;
+    }
 
     .current-selection {
       display: none;
@@ -754,6 +758,9 @@
       let pointerStartX = 0;
       let pointerStartY = 0;
       let pointerMoved = false;
+      let activePointerID = null;
+      let gestureStartSelection = null;
+      let commitCount = 0;
 
       const controlPairs = [
         {
@@ -910,6 +917,9 @@
         currentEffort.textContent = effort;
         currentEffort.classList.toggle("ultra", effort === "ultra");
         fastStatus.classList.toggle("active", fastMode);
+        stage.dataset.previewRow = String(currentRow);
+        stage.dataset.previewIndex = String(currentIndex);
+        stage.dataset.previewFast = String(fastMode);
       }
 
       function nearestRow(y) {
@@ -969,18 +979,47 @@
         }
       }
 
+      function pointerReleaseAction(event) {
+        const movedAtRelease =
+          Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) > 5;
+        return pointerStartedOnThumb && !pointerMoved && !movedAtRelease
+          ? "toggle-fast"
+          : "select";
+      }
+
+      function recordCommit() {
+        commitCount += 1;
+        stage.dataset.commitCount = String(commitCount);
+        stage.dataset.committedRow = String(currentRow);
+        stage.dataset.committedIndex = String(currentIndex);
+        stage.dataset.committedFast = String(fastMode);
+      }
+
+      function resetPointerGesture() {
+        stage.classList.remove("dragging");
+        pointerStartedOnThumb = false;
+        pointerMoved = false;
+        activePointerID = null;
+        gestureStartSelection = null;
+      }
+
+      stage.dataset.commitCount = "0";
+
       stage.addEventListener("pointerdown", (event) => {
+        if (!event.isPrimary || event.button !== 0 || activePointerID !== null) return;
+        activePointerID = event.pointerId;
         pointerStartedOnThumb = event.target === thumb;
         pointerStartX = event.clientX;
         pointerStartY = event.clientY;
         pointerMoved = false;
+        gestureStartSelection = { currentRow, currentIndex, fastMode };
         stage.setPointerCapture(event.pointerId);
         stage.classList.add("dragging");
         if (!pointerStartedOnThumb) updateFromPointer(event.clientX, event.clientY);
       });
 
       stage.addEventListener("pointermove", (event) => {
-        if (!stage.hasPointerCapture(event.pointerId)) return;
+        if (event.pointerId !== activePointerID || !stage.hasPointerCapture(event.pointerId)) return;
         if (Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) > 5) {
           pointerMoved = true;
         }
@@ -988,19 +1027,36 @@
       });
 
       stage.addEventListener("pointerup", (event) => {
-        if (stage.hasPointerCapture(event.pointerId)) {
-          if (pointerStartedOnThumb && !pointerMoved) {
-            fastMode = !fastMode;
-            renderSelection();
-          } else {
-            updateFromPointer(event.clientX, event.clientY);
+        if (event.pointerId !== activePointerID) return;
+        if (pointerReleaseAction(event) === "toggle-fast") {
+          fastMode = !fastMode;
+          renderSelection();
+          recordCommit();
+        } else {
+          updateFromPointer(event.clientX, event.clientY);
+          if (
+            gestureStartSelection.currentRow !== currentRow ||
+            gestureStartSelection.currentIndex !== currentIndex ||
+            gestureStartSelection.fastMode !== fastMode
+          ) {
+            recordCommit();
           }
+        }
+        if (stage.hasPointerCapture(event.pointerId)) {
           stage.releasePointerCapture(event.pointerId);
         }
-        stage.classList.remove("dragging");
+        resetPointerGesture();
       });
 
-      stage.addEventListener("pointercancel", () => stage.classList.remove("dragging"));
+      stage.addEventListener("pointercancel", (event) => {
+        if (event.pointerId !== activePointerID) return;
+        ({ currentRow, currentIndex, fastMode } = gestureStartSelection);
+        renderSelection();
+        if (stage.hasPointerCapture(event.pointerId)) {
+          stage.releasePointerCapture(event.pointerId);
+        }
+        resetPointerGesture();
+      });
 
       for (const pair of controlPairs) {
         const update = (rawValue) => {
