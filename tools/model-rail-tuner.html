@@ -995,38 +995,20 @@
         stage.dataset.committedFast = String(fastMode);
       }
 
-      function interceptPointerEvent(event) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-
       function resetPointerGesture() {
-        const pointerID = activePointerID;
-        activePointerID = null;
-        if (pointerID !== null && stage.hasPointerCapture(pointerID)) {
-          stage.releasePointerCapture(pointerID);
-        }
         stage.classList.remove("dragging");
         pointerStartedOnThumb = false;
         pointerMoved = false;
+        activePointerID = null;
         gestureStartSelection = null;
       }
 
       stage.dataset.commitCount = "0";
-      stage.dataset.hostPointerUpCount = "0";
 
-      function handlePointerDown(event) {
-        if (
-          !event.isPrimary ||
-          event.button !== 0 ||
-          activePointerID !== null ||
-          !event.composedPath().includes(stage)
-        ) {
-          return;
-        }
-        interceptPointerEvent(event);
+      stage.addEventListener("pointerdown", (event) => {
+        if (!event.isPrimary || event.button !== 0 || activePointerID !== null) return;
         activePointerID = event.pointerId;
-        pointerStartedOnThumb = event.composedPath().includes(thumb);
+        pointerStartedOnThumb = event.target === thumb;
         pointerStartX = event.clientX;
         pointerStartY = event.clientY;
         pointerMoved = false;
@@ -1034,20 +1016,18 @@
         stage.setPointerCapture(event.pointerId);
         stage.classList.add("dragging");
         if (!pointerStartedOnThumb) updateFromPointer(event.clientX, event.clientY);
-      }
+      });
 
-      function handlePointerMove(event) {
-        if (event.pointerId !== activePointerID) return;
-        interceptPointerEvent(event);
+      stage.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== activePointerID || !stage.hasPointerCapture(event.pointerId)) return;
         if (Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) > 5) {
           pointerMoved = true;
         }
         if (!pointerStartedOnThumb || pointerMoved) updateFromPointer(event.clientX, event.clientY);
-      }
+      });
 
-      function handlePointerUp(event) {
+      stage.addEventListener("pointerup", (event) => {
         if (event.pointerId !== activePointerID) return;
-        interceptPointerEvent(event);
         if (pointerReleaseAction(event) === "toggle-fast") {
           fastMode = !fastMode;
           renderSelection();
@@ -1062,26 +1042,21 @@
             recordCommit();
           }
         }
+        if (stage.hasPointerCapture(event.pointerId)) {
+          stage.releasePointerCapture(event.pointerId);
+        }
         resetPointerGesture();
-      }
+      });
 
-      function handlePointerCancel(event) {
+      stage.addEventListener("pointercancel", (event) => {
         if (event.pointerId !== activePointerID) return;
-        interceptPointerEvent(event);
         ({ currentRow, currentIndex, fastMode } = gestureStartSelection);
         renderSelection();
+        if (stage.hasPointerCapture(event.pointerId)) {
+          stage.releasePointerCapture(event.pointerId);
+        }
         resetPointerGesture();
-      }
-
-      window.addEventListener("pointerdown", handlePointerDown, true);
-      window.addEventListener("pointermove", handlePointerMove, true);
-      window.addEventListener("pointerup", handlePointerUp, true);
-      window.addEventListener("pointercancel", handlePointerCancel, true);
-      document.addEventListener("pointerup", () => {
-        stage.dataset.hostPointerUpCount = String(
-          Number(stage.dataset.hostPointerUpCount) + 1,
-        );
-      }, true);
+      });
 
       for (const pair of controlPairs) {
         const update = (rawValue) => {

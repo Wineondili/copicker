@@ -9,7 +9,7 @@ Current versions:
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v2.html` |
-| Renderer fallback on current `main` | `0.12.10` development candidate |
+| Renderer fallback on current `main` | `0.12.9` development candidate |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |

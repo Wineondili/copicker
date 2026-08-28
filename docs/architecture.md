@@ -171,9 +171,7 @@ When the currently open trigger's own `[data-codex-composer-root]` contains exac
 5. commits the rail state only after confirmation;
 6. restores the last confirmed state on error or timeout.
 
-The renderer never scans the full document for a convenient task identifier and never prefers a task ID cached from a previous composer. When a commit is queued, it freezes the unique open trigger and the identifier resolved from that trigger's own composer. Execution may retain that exact snapshot if the menu closes immediately after release, but rejects it if a different composer trigger has opened; a trigger or primary-surface change also invalidates mutable routing state. This prevents retained background task DOM from capturing a new-composer selection without making commit success depend on menu animation timing.
-
-Pointer gestures are intercepted at `window` capture phase only when `event.composedPath()` contains the CoPicker stage. This precedes Codex's document/menu handlers, keeps the official picker open as one combined interaction region, and guarantees that a rapid terminal `pointerup` reaches CoPicker. Move events remain preview-only; release freezes one selection plus the commit context, while cancellation restores the pre-gesture snapshot without writing.
+The renderer never scans the full document for a convenient task identifier and never prefers a task ID cached from a previous composer. Every commit re-resolves the identifier from the unique currently open trigger. A trigger or primary-surface change invalidates the previous value, preventing retained background task DOM from capturing a new-composer selection.
 
 ### New unsent task
 
