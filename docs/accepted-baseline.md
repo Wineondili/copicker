@@ -18,7 +18,7 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.9
+renderer_version=0.12.10
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v2.html
 marketplace_name=copicker-local
@@ -44,7 +44,8 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Renderer development candidate | `0.12.9` | Current `main` payload; offline-validated pointer finalization fix, not yet installed or live-accepted |
+| Renderer development candidate | `0.12.10` | Current `main` payload; capture-phase pointer and frozen commit-context fix, not yet installed or live-accepted |
+| Intermediate renderer | `0.12.9` | User-tested after installation: no-task routing succeeded; rapid release still failed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
 | Settings resource | `ui://copicker/settings/v2.html` | Current MCP App document |
@@ -58,7 +59,9 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
 
-Current `main` advances only the renderer compatibility layer to `0.12.9`. It treats a pointer gesture as preview-only until release, recomputes drag intent from the final release coordinates, commits one frozen final selection, and restores the pre-gesture selection on cancellation. This development candidate has offline behavior coverage but no new installation, live interaction, restart, or cold-login acceptance yet.
+Current `main` advances only the renderer compatibility layer to `0.12.10`. It captures CoPicker pointerdown/move/up/cancel at `window` before Codex's document/menu handlers, treats movement as preview-only until release, freezes both the final selection and the exact composer/task context at release, and restores the pre-gesture selection on cancellation. This development candidate has offline behavior coverage but no installation, live interaction, restart, or cold-login acceptance yet.
+
+Renderer `0.12.9` is retained as partial live evidence rather than accepted rapid-drag proof. The user confirmed that its exact-current-composer routing repaired selection before a task exists, but also confirmed that rapid continuous drag-and-release still failed. Its isolated tuner pass therefore proved only its local coordinate logic, not the production event-delivery boundary.
 
 The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
 
@@ -75,11 +78,11 @@ The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex bu
 ### Selection and keyboard behavior
 
 - **CP-SEL-001 — Two-dimensional selection.** The vertical axis selects an enabled model row; the horizontal axis selects a supported reasoning effort.
-- **CP-SEL-002 — Pointer behavior.** Pressing a dot/cell previews its model and effort. A click commits that cell once on release. Dragging updates only the rail preview; release recomputes the exact final cell from the release coordinates and commits that immutable selection once.
+- **CP-SEL-002 — Pointer behavior.** Pressing a dot/cell previews its model and effort. A click commits that cell once on release. Dragging updates only the rail preview; CoPicker captures its own complete pointer lifecycle before host-menu handlers, and release recomputes the exact final cell from the release coordinates and commits that immutable selection once.
 - **CP-SEL-003 — Keyboard behavior.** Up/Down move between enabled rows, Left/Right move between efforts, and Space toggles Fast only when the selected model supports it.
 - **CP-SEL-004 — Confirmed commits.** Rapid keyboard input is coalesced for 120 milliseconds. Pointer release and Space commit immediately. A cancelled pointer gesture restores its pre-gesture state without a settings write. Failed committed changes restore the last confirmed state.
 - **CP-SEL-005 — Catalog authority.** Account-specific model IDs, effort availability, and the service-tier ID/order named `Fast` are resolved from Codex `model/list`; they are not hard-coded or persisted.
-- **CP-SEL-006 — Existing task path.** A task identifier is accepted only from the currently open trigger's own `[data-codex-composer-root]`; document-wide or previously cached identifiers are never a fallback. With that exact active identifier, changes use `thread/settings/update` and require `thread/settings/updated` confirmation for that task.
+- **CP-SEL-006 — Existing task path.** A task identifier is accepted only from the currently open trigger's own `[data-codex-composer-root]`; document-wide or previously cached identifiers are never a fallback. The exact trigger and task identifier are frozen when a commit is queued so a menu closing immediately after release cannot erase its route; a different subsequently opened composer invalidates that snapshot. With that exact active identifier, changes use `thread/settings/update` and require `thread/settings/updated` confirmation for that task.
 - **CP-SEL-007 — New unsent task path.** When the currently open trigger's composer has no task identifier, CoPicker proxies only the exact official Model, Effort, and Speed controls and requires the official trigger state to confirm the full selection. It does not adopt a retained background task ID, invent a task ID, or write raw config keys.
 - **CP-SEL-008 — Normal compaction.** A model or effort change may cause the same compaction as the equivalent official Codex action. CoPicker must not label that as its own defect.
 

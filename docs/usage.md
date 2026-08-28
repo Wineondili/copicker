@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.9`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` has offline pointer-finalization coverage but has not yet replaced that live acceptance anchor. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
+This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.10`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Intermediate renderer `0.12.9` repaired no-task routing in a user test but did not repair rapid continuous release. Renderer `0.12.10` addresses the remaining capture-phase event boundary and still requires a separate installed/live pass. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
 
 CoPicker appears only with the official compact first-level model/reasoning picker. It does not replace the full-width model list opened from the composer input.
 
@@ -40,7 +40,7 @@ Check automatic state without opening Inspector or changing Codex:
 | Space | Toggle Fast when supported by the selected row |
 | Escape | Close the official picker and CoPicker |
 
-Keyboard movement is coalesced for 120 milliseconds so rapid arrows do not send redundant settings writes. Pointer release and Space commit immediately. Drag classification uses both delivered move events and the final release displacement, so a rapid drag does not need to pause before release. A cancelled drag restores the selection present before the gesture and sends no settings write.
+Keyboard movement is coalesced for 120 milliseconds so rapid arrows do not send redundant settings writes. Pointer release and Space commit immediately. On current `main`, CoPicker intercepts only pointer events whose composed path belongs to its stage at window capture phase; this keeps Codex's host menus from swallowing a fast terminal event. Drag classification uses both delivered move events and the final release displacement, so a rapid drag should not need to pause before release. A cancelled drag restores the selection present before the gesture and sends no settings write.
 
 In an existing task, CoPicker waits for the official settings notification. In a new unsent task, it waits for the official picker controls and trigger to confirm the complete result. A failed or unavailable selection restores the last confirmed rail state.
 

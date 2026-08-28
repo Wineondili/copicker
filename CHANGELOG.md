@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-28 21:14:02 +0800
+
+- Recorded the installed `0.12.9` result precisely: exact no-task routing succeeded, while rapid continuous drag-and-release still failed, invalidating the isolated coordinate pass as production event-delivery proof.
+- Moved CoPicker's pointerdown/move/up/cancel lifecycle to a stage-scoped `window` capture handler so Codex document/menu listeners cannot swallow a fast terminal event, while retaining cancellation rollback and cleaning all global listeners with the popover lifecycle.
+- Froze the exact open trigger and composer-scoped task identifier beside each queued release snapshot, allowing the intended commit to survive immediate menu closure while rejecting a different subsequently opened composer.
+- Advanced the renderer candidate to `0.12.10`, synchronized the local tuner, added capture-phase and commit-context contracts, and passed all 40 offline tests plus a rendered no-pause Sol-to-Terra drag and direct Fast click; the simulated host document received neither terminal event.
+
 ## 2026-08-28 20:49:51 +0800
 
 - Reworked pointer gestures so presses and moves update only a local rail preview, while release recomputes intent from the final coordinates and queues one frozen selection snapshot.
