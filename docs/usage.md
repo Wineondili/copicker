@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`. Its unchanged renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
+This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.9`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` has offline pointer-finalization coverage but has not yet replaced that live acceptance anchor. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
 
 CoPicker appears only with the official compact first-level model/reasoning picker. It does not replace the full-width model list opened from the composer input.
 
@@ -33,14 +33,14 @@ Check automatic state without opening Inspector or changing Codex:
 
 | Input | Action |
 | --- | --- |
-| Click a dot or cell | Select its model and effort |
-| Drag horizontally on a row | Move across supported efforts |
+| Click a dot or cell | Preview on press and commit that model/effort once on release |
+| Drag on the rail | Preview model/effort changes without writing; commit the final release cell once |
 | Up / Down | Move through the model rows enabled in settings |
 | Left / Right | Decrease or increase effort |
 | Space | Toggle Fast when supported by the selected row |
 | Escape | Close the official picker and CoPicker |
 
-Keyboard movement is coalesced for 120 milliseconds so rapid arrows do not send redundant settings writes. Pointer release and Space commit immediately.
+Keyboard movement is coalesced for 120 milliseconds so rapid arrows do not send redundant settings writes. Pointer release and Space commit immediately. Drag classification uses both delivered move events and the final release displacement, so a rapid drag does not need to pause before release. A cancelled drag restores the selection present before the gesture and sends no settings write.
 
 In an existing task, CoPicker waits for the official settings notification. In a new unsent task, it waits for the official picker controls and trigger to confirm the complete result. A failed or unavailable selection restores the last confirmed rail state.
 
@@ -82,7 +82,7 @@ When a valid task identifier exists, CoPicker:
 
 ### New unsent task
 
-Before the first message creates a task identifier, CoPicker uses Codex's exact official Model, Effort, and Speed controls. This preserves Codex's own default-settings, cache, and prewarmed-task workflow.
+Before the first message creates a task identifier for the currently open composer, CoPicker uses Codex's exact official Model, Effort, and Speed controls. It resolves task state only from that composer's marker, never from retained background task DOM or a cached previous task. This preserves Codex's own default-settings, cache, and prewarmed-task workflow.
 
 The fallback is deliberately strict. It requires the accepted trigger, Model row, catalog-backed ordered Effort options, ordered Speed options, and final official trigger confirmation. If any anchor or option is missing or ambiguous, it fails closed. After Codex creates a task ID, CoPicker returns to the direct task path.
 

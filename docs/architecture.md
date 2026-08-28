@@ -162,7 +162,7 @@ Only stable CoPicker row keys and display-name aliases exist in source. Account-
 
 ### Existing task
 
-When `[data-above-composer-conversation-id]` supplies a valid active task identifier:
+When the currently open trigger's own `[data-codex-composer-root]` contains exactly one valid `[data-above-composer-conversation-id]` value:
 
 1. CoPicker serializes the requested selection;
 2. resolves current catalog IDs and availability;
@@ -171,9 +171,11 @@ When `[data-above-composer-conversation-id]` supplies a valid active task identi
 5. commits the rail state only after confirmation;
 6. restores the last confirmed state on error or timeout.
 
+The renderer never scans the full document for a convenient task identifier and never prefers a task ID cached from a previous composer. Every commit re-resolves the identifier from the unique currently open trigger. A trigger or primary-surface change invalidates the previous value, preventing retained background task DOM from capturing a new-composer selection.
+
 ### New unsent task
 
-Before Codex creates a task identifier, CoPicker does not fabricate one and does not write raw config keys. It instead:
+Before Codex creates an identifier for that exact current composer, CoPicker does not fabricate one, adopt another composer's identifier, or write raw config keys. It instead:
 
 1. validates the official first-level picker structure;
 2. opens the exact Model row and chooses a catalog-backed option;

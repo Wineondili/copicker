@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-28 20:49:51 +0800
+
+- Reworked pointer gestures so presses and moves update only a local rail preview, while release recomputes intent from the final coordinates and queues one frozen selection snapshot.
+- Prevented fast release from being misclassified as a Fast click when Chromium has not delivered a qualifying intermediate `pointermove`; cancelled gestures now restore the pre-gesture state without a settings write.
+- Scoped task-ID resolution to the unique open trigger's own composer, removed document-wide and cached-ID fallbacks, and invalidated routing state whenever the active trigger or primary surface changes so new unsent tasks cannot target retained background tasks.
+- Disabled fill/thumb position easing only while dragging, synchronized the isolated tuner interaction state machine, advanced the renderer development candidate to `0.12.9`, and added executable JavaScriptCore behavior coverage plus source integration contracts for rapid release, cancellation, exact composer IDs, and no-task routing.
+- Passed all 39 offline tests, JavaScript syntax validation, SwiftPM manifest loading, whitespace checks, the production build, and an isolated in-app-browser click/drag/Fast interaction pass without attaching to or modifying the running Codex process.
+
 ## 2026-08-28 02:22:41 +0800
 
 - Promoted the CLI and local plugin from `0.12.0-dev` to the full-feature `0.99.0` public pre-release while retaining renderer compatibility `0.12.8`, settings schema `1`, and settings resource `ui://copicker/settings/v2.html`.

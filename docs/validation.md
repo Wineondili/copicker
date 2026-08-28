@@ -116,13 +116,13 @@ Record the exact CoPicker commit/tag and Codex version/build, then test:
 5. nested Model and Effort menus remain open and are avoided without flashing;
 6. pointer-gated side restoration and top latching behave as specified;
 7. open/close animation has no stale-coordinate fly-in;
-8. pointer click, horizontal drag, four arrow keys, and Space work;
+8. pointer click commits once, rapid drag commits its final release cell without pausing, cancellation restores without writing, and four arrow keys plus Space work;
 9. all enabled model rows have the correct effort count;
 10. Daybreak and Codex Spark cannot enter Fast;
 11. a hidden adapted model is recognized without an active selectable row;
 12. GPT-5.4/GPT-5.4 Mini and another unsupported model show empty `Other` state;
 13. existing-task changes confirm and failures restore state;
-14. new-unsent-task changes confirm through official controls;
+14. a new-unsent-task composer with retained background task markers still uses and confirms through official controls;
 15. normal Codex compaction is not misreported as a CoPicker-specific failure;
 16. Escape, outside click, window blur, document hide, and official close dismiss both surfaces correctly;
 17. Inspector port closes after the live action.
@@ -162,7 +162,8 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Live-accepted runtime source | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` |
 | Current package | `v0.99.0`; CLI/plugin `0.99.0` |
 | Live-accepted CLI label | `0.12.0-dev` |
-| Renderer | `0.12.8` |
+| Live-accepted/published renderer | `0.12.8` |
+| Current `main` renderer candidate | `0.12.9`; offline pointer/routing proof only |
 | Codex | `26.820.60940` build `7119` |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |
