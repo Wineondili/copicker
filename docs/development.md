@@ -20,7 +20,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Renderer development candidate | `0.12.9` | `model-rail.js` `VERSION`; offline only until a separately authorized live pass |
+| Renderer development candidate | `0.12.10` | `model-rail.js` `VERSION`; no-task selector correction is offline only until a separately authorized live pass |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
@@ -28,7 +28,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Current `main` advances the renderer to `0.12.9` for post-release interaction reliability work; it must not be described as installed or live-accepted until those gates are run. `v0.11.0` remains an immutable historical three-model release.
+The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Renderer `0.12.9` was installed for a focused live pass: rapid pointer release passed, but the new-unsent-task official-control proxy did not. Current `main` advances to `0.12.10` by changing only the official menu-item compatibility anchor from a button-specific selector to the current Codex tag-agnostic `data-list-navigation-item="true"` selector. That correction must not be described as live-accepted until the focused new-task gate is rerun. `v0.11.0` remains an immutable historical three-model release.
 
 ## Supported development boundary
 

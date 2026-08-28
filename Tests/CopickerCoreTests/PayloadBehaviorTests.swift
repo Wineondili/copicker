@@ -105,6 +105,18 @@ func pointerHandlerCommitsOneFrozenReleaseSnapshotAndRollsBackCancellation() thr
 }
 
 @Test
+func noTaskProxyAcceptsCurrentCodexDivMenuItems() throws {
+    let payload = try payloadSource()
+
+    #expect(payload.contains(
+        "const SECONDARY_ITEM_SELECTOR = '[data-list-navigation-item=\"true\"]'"
+    ))
+    #expect(payload.contains("surface.querySelectorAll(SECONDARY_ITEM_SELECTOR)"))
+    #expect(payload.contains("label.closest(SECONDARY_ITEM_SELECTOR)"))
+    #expect(!payload.contains("button[data-list-navigation-item]"))
+}
+
+@Test
 func selectionCommitScopesThreadResolutionToTheOpenComposer() throws {
     let payload = try payloadSource()
     let functionStart = try #require(payload.range(of: "function resolveCurrentThreadID(trigger)"))

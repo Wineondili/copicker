@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-28 23:47:38 +0800
+
+- Corrected the focused live record: renderer `0.12.9` passed continuous rapid pointer release, while selection on a new unsent task still failed to update the official composer trigger. Removed the subsequent uninstalled capture-phase pointer experiment so the live-passed drag state machine remains unchanged.
+- Read the current Codex renderer bundle without modifying it and traced its new-thread draft-setting callbacks through the official model picker. The current menu component renders selectable roots as `div[role="menuitem"][data-list-navigation-item="true"]`, not buttons.
+- Advanced the renderer compatibility identifier to `0.12.10` and broadened only the official navigation-item anchor from `button[data-list-navigation-item]` to `[data-list-navigation-item="true"]`, retaining exact-surface, visibility, disabled-state, catalog-order, and final-trigger confirmation guards.
+- Added a regression contract that rejects reintroducing the button-only selector, synchronized the public version/evidence documents, and passed all 40 offline tests, JavaScript syntax validation, whitespace checks, and the production build. No installation, injection, Codex restart, or live new-task acceptance was performed in this batch.
+
 ## 2026-08-28 20:49:51 +0800
 
 - Reworked pointer gestures so presses and moves update only a local rail preview, while release recomputes intent from the final coordinates and queues one frozen selection snapshot.
