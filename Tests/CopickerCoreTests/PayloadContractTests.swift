@@ -130,7 +130,7 @@ import Testing
     #expect(payload.contains("fallbackDocument.querySelectorAll(\"script\")"))
     #expect(payload.contains("frame.setAttribute(\"sandbox\", \"allow-same-origin\")"))
     #expect(!payload.contains("frame.setAttribute(\"sandbox\", \"allow-scripts\")"))
-    #expect(payload.contains("const VERSION = \"0.12.10\""))
+    #expect(payload.contains("const VERSION = \"0.12.11\""))
     #expect(payload.contains("SETTINGS_FRAME_STYLE_VARIABLES"))
     #expect(payload.contains("syncSettingsFrameStyleVariables"))
     #expect(payload.contains("nativeSettingsScrollViewport"))

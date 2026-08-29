@@ -20,7 +20,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Renderer development candidate | `0.12.10` | `model-rail.js` `VERSION`; no-task selector correction is offline only until a separately authorized live pass |
+| Renderer development candidate | `0.12.11` | `model-rail.js` `VERSION`; restored click/drag positional easing and the no-task selector correction remain offline only until a separately authorized live pass |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
@@ -28,7 +28,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Renderer `0.12.9` was installed for a focused live pass: rapid pointer release passed, but the new-unsent-task official-control proxy did not. Current `main` advances to `0.12.10` by changing only the official menu-item compatibility anchor from a button-specific selector to the current Codex tag-agnostic `data-list-navigation-item="true"` selector. That correction must not be described as live-accepted until the focused new-task gate is rerun. `v0.11.0` remains an immutable historical three-model release.
+The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Renderer `0.12.9` was installed for a focused live pass: rapid pointer release passed, but the new-unsent-task official-control proxy did not. Renderer `0.12.10` changed only the official menu-item compatibility anchor from a button-specific selector to the current Codex tag-agnostic `data-list-navigation-item="true"` selector. Current `main` advances to `0.12.11`, retaining that selector correction and the release-coordinate pointer state machine while restoring the original 240-millisecond click/drag positional easing. Neither candidate change may be described as live-accepted until the focused live gates are rerun. `v0.11.0` remains an immutable historical three-model release.
 
 ## Supported development boundary
 
@@ -180,7 +180,7 @@ The complete normative behavior is in [accepted-baseline.md](accepted-baseline.m
 - Preserve the six-row order and effort matrix. Daybreak and Codex Spark cannot use Fast and must clear it.
 - Recognize hidden adapted models without selecting an invisible row; show empty centered `Other` for unsupported models.
 - Preserve top/left/right placement, nested-menu avoidance, no-flicker latching, pointer-gated side restoration, viewport clamping, and the 12-pixel separation/inset contract.
-- Preserve preview-only pointer dragging with one release snapshot, the 120-millisecond keyboard commit delay, 180-millisecond open/close motion, and 420-millisecond placement return delay unless a later accepted requirement supersedes them.
+- Preserve preview-only pointer dragging with one release snapshot, the original 240-millisecond click/drag fill/thumb positional easing, the 120-millisecond keyboard commit delay, 180-millisecond open/close motion, and 420-millisecond placement return delay unless a later accepted requirement supersedes them.
 - Fail closed when private DOM, bridge, task, catalog, or confirmation anchors are absent.
 
 Legacy runtime names including `__CODEX_MODEL_RAIL__`, `codex-model-rail-popover-host`, related state keys, host IDs, and the logging subsystem are migration anchors. Do not rename them without code that can dispose of an older already injected payload.

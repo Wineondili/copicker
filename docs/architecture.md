@@ -160,6 +160,10 @@ The renderer uses the existing Codex `electronBridge`/app-server connection. It 
 
 Only stable CoPicker row keys and display-name aliases exist in source. Account-specific IDs and tier IDs remain in renderer memory for the process lifetime.
 
+### Pointer preview and release
+
+Pointer presses and moves update only the local rail preview. Click previews and active drags share the original 240-millisecond fill/thumb positional easing; that CSS transition never determines selection intent. On release, the renderer recomputes the exact final cell from the release coordinates, freezes one immutable selection snapshot, and queues one commit. A cancelled gesture restores its pre-gesture selection without a settings write.
+
 ### Existing task
 
 When the currently open trigger's own `[data-codex-composer-root]` contains exactly one valid `[data-above-composer-conversation-id]` value:

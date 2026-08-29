@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-30 03:09:58 +0800
+
+- Restored the original 240-millisecond fill/thumb positional easing for both click previews and active drags by removing only the drag-state transition overrides; retained the release-coordinate recomputation, immutable snapshot, cancellation rollback, and single-commit state machine unchanged.
+- Advanced the renderer development candidate to `0.12.11`, synchronized the isolated tuner, regression contracts, accepted baseline, focused guides, validation record, and visual QA evidence, and kept the published `v0.99.0` renderer at immutable version `0.12.8`.
+- Verified in the Codex in-app browser that a click animated through intermediate thumb coordinates and committed once, while one continuous drag retained fill/thumb easing and committed the final Luna/xhigh release cell exactly once; the isolated page had no console warnings or errors.
+- Passed all 41 offline tests, the SwiftPM manifest check, JavaScript and shell syntax checks, whitespace validation, and the production build. No installation, injection, Codex restart, live-task selection, LaunchAgent change, push, tag, or release was performed.
+
 ## 2026-08-28 23:47:38 +0800
 
 - Corrected the focused live record: renderer `0.12.9` passed continuous rapid pointer release, while selection on a new unsent task still failed to update the official composer trigger. Removed the subsequent uninstalled capture-phase pointer experiment so the live-passed drag state machine remains unchanged.

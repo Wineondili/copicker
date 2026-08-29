@@ -64,7 +64,7 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
     #expect(values["published_release_commit"] == "v0.99.0^{commit}")
     #expect(values["cli_version"] == ProjectInfo.version)
     #expect(plugin["version"] as? String == ProjectInfo.version)
-    #expect(rendererVersion == "0.12.10")
+    #expect(rendererVersion == "0.12.11")
     #expect(renderer.contains("const VERSION = \"\(rendererVersion)\""))
     #expect(values["settings_schema_version"] == String(CopickerSettings.currentSchemaVersion))
     #expect(values["settings_resource_uri"] == CopickerMCPProtocol.settingsResourceURI)
@@ -119,12 +119,14 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     #expect(installation.contains("never with `sudo`"))
     #expect(installation.contains("Optional preference migration"))
     #expect(usage.contains("New unsent task"))
+    #expect(usage.contains("original 240-millisecond fill/thumb positional transition"))
     #expect(pluginSettings.contains("Apply now"))
     #expect(development.contains(
         "documentation-only and version-only commits do not become runtime acceptance anchors"
     ))
     #expect(validation.contains("Use `not tested`"))
     #expect(architecture.contains("thread/settings/update"))
+    #expect(architecture.contains("CSS transition never determines selection intent"))
     #expect(contributing.contains("Never terminate or restart Codex"))
     #expect(installer.contains("codex plugin add copicker@copicker-local"))
     #expect(releaseNotes.contains("Copicker v0.99.0"))
