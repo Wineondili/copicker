@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.10`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` subsequently passed the focused rapid-drag live check but failed the new-unsent-task official-trigger update. Renderer `0.12.10` corrects the current Codex menu-item anchor and has not yet replaced the live acceptance anchor. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
+This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.11`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` subsequently passed the focused rapid-drag live check but failed the new-unsent-task official-trigger update. Renderer `0.12.10` corrected the current Codex menu-item anchor. Renderer `0.12.11` restores the original click/drag positional easing without changing release-coordinate commits and has not yet replaced the live acceptance anchor. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
 
 CoPicker appears only with the official compact first-level model/reasoning picker. It does not replace the full-width model list opened from the composer input.
 
@@ -33,14 +33,14 @@ Check automatic state without opening Inspector or changing Codex:
 
 | Input | Action |
 | --- | --- |
-| Click a dot or cell | Preview on press and commit that model/effort once on release |
-| Drag on the rail | Preview model/effort changes without writing; commit the final release cell once |
+| Click a dot or cell | Smoothly preview on press and commit that model/effort once on release |
+| Drag on the rail | Smoothly preview model/effort changes without writing; commit the final release cell once |
 | Up / Down | Move through the model rows enabled in settings |
 | Left / Right | Decrease or increase effort |
 | Space | Toggle Fast when supported by the selected row |
 | Escape | Close the official picker and CoPicker |
 
-Keyboard movement is coalesced for 120 milliseconds so rapid arrows do not send redundant settings writes. Pointer release and Space commit immediately. Drag classification uses both delivered move events and the final release displacement, so a rapid drag does not need to pause before release. A cancelled drag restores the selection present before the gesture and sends no settings write.
+Click and drag previews use the original 240-millisecond fill/thumb positional transition. That animation is visual only: pointer release and Space still commit immediately, and release recomputes the exact final cell independently of the animated position. Keyboard movement is coalesced for 120 milliseconds so rapid arrows do not send redundant settings writes. Drag classification uses both delivered move events and the final release displacement, so a rapid drag does not need to pause before release. A cancelled drag restores the selection present before the gesture and sends no settings write.
 
 In an existing task, CoPicker waits for the official settings notification. In a new unsent task, it waits for the official picker controls and trigger to confirm the complete result. A failed or unavailable selection restores the last confirmed rail state.
 

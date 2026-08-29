@@ -18,7 +18,7 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.10
+renderer_version=0.12.11
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v2.html
 marketplace_name=copicker-local
@@ -44,7 +44,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Renderer development candidate | `0.12.10` | Current `main` payload; current-Codex no-task menu-item compatibility fix, not yet installed or live-accepted |
+| Renderer development candidate | `0.12.11` | Current `main` payload; restores original click/drag positional easing on top of the no-task menu-item compatibility fix, not yet installed or live-accepted |
 | Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
@@ -61,7 +61,9 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 Renderer `0.12.9` was deliberately installed and the user confirmed that a continuous rapid drag commits the release cell without pausing. The same live pass confirmed that selection on a new unsent task still did not update the official composer trigger. Read-only inspection of the current Codex bundle then showed why: its menu item component renders a `div[role="menuitem"][data-list-navigation-item="true"]`, while the proxy still required `button[data-list-navigation-item]` and therefore failed before invoking the official new-thread draft-setting callbacks.
 
-Current `main` advances only the renderer compatibility layer to `0.12.10`. It preserves the live-passed `0.12.9` pointer state machine and broadens only the versioned official menu-item anchor to `[data-list-navigation-item="true"]`, allowing the current Codex `div` item while retaining exact-surface, visibility, disabled-state, option-count, and final-trigger confirmation checks. This selector correction has offline coverage but no installation, live new-task interaction, restart, or cold-login acceptance yet.
+Renderer `0.12.10` preserved the live-passed `0.12.9` pointer state machine and broadened only the versioned official menu-item anchor to `[data-list-navigation-item="true"]`, allowing the current Codex `div` item while retaining exact-surface, visibility, disabled-state, option-count, and final-trigger confirmation checks.
+
+Current `main` advances the renderer candidate to `0.12.11`. It retains the `0.12.10` selector correction and the release-coordinate commit state machine, while restoring the original 240-millisecond fill/thumb positional transitions for both click previews and active drags. The visual easing never changes the final cell recomputed from release coordinates or the immutable selection snapshot. This candidate has no installation, live new-task interaction, restart, or cold-login acceptance yet.
 
 The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
 
@@ -78,7 +80,7 @@ The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex bu
 ### Selection and keyboard behavior
 
 - **CP-SEL-001 — Two-dimensional selection.** The vertical axis selects an enabled model row; the horizontal axis selects a supported reasoning effort.
-- **CP-SEL-002 — Pointer behavior.** Pressing a dot/cell previews its model and effort. A click commits that cell once on release. Dragging updates only the rail preview; release recomputes the exact final cell from the release coordinates and commits that immutable selection once.
+- **CP-SEL-002 — Pointer behavior.** Pressing a dot/cell previews its model and effort. Click previews and active drags retain the original 240-millisecond fill/thumb positional easing. A click commits that cell once on release. Dragging updates only the rail preview; release recomputes the exact final cell from the release coordinates and commits that immutable selection once. Visual easing never changes commit intent.
 - **CP-SEL-003 — Keyboard behavior.** Up/Down move between enabled rows, Left/Right move between efforts, and Space toggles Fast only when the selected model supports it.
 - **CP-SEL-004 — Confirmed commits.** Rapid keyboard input is coalesced for 120 milliseconds. Pointer release and Space commit immediately. A cancelled pointer gesture restores its pre-gesture state without a settings write. Failed committed changes restore the last confirmed state.
 - **CP-SEL-005 — Catalog authority.** Account-specific model IDs, effort availability, and the service-tier ID/order named `Fast` are resolved from Codex `model/list`; they are not hard-coded or persisted.

@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.10";
+  const VERSION = "0.12.11";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -3296,17 +3296,6 @@
         .thumb.inactive {
           opacity: 0;
           pointer-events: none;
-        }
-
-        .stage.dragging .selection {
-          transition: opacity 160ms ease, background 240ms ease;
-        }
-
-        .stage.dragging .thumb {
-          transition:
-            transform 150ms ease,
-            box-shadow 150ms ease,
-            opacity 160ms ease;
         }
 
         :host([data-appearance-resolved="light"]) .thumb {

@@ -16,6 +16,15 @@ private func payloadSource() throws -> String {
     )
 }
 
+private func tunerSource() throws -> String {
+    try String(
+        contentsOf: payloadBehaviorRepositoryRoot.appendingPathComponent(
+            "tools/model-rail-tuner.html"
+        ),
+        encoding: .utf8
+    )
+}
+
 private func behaviorContractSource(_ payload: String) throws -> String {
     let startMarker = "/* COPICKER_BEHAVIOR_CONTRACT_BEGIN */"
     let endMarker = "/* COPICKER_BEHAVIOR_CONTRACT_END */"
@@ -102,6 +111,30 @@ func pointerHandlerCommitsOneFrozenReleaseSnapshotAndRollsBackCancellation() thr
     #expect(payload.contains("if (gestureStartSelection) applySelection(gestureStartSelection)"))
     #expect(payload.contains(".stage.dragging .thumb"))
     #expect(!payload.contains("function updateFromPointer("))
+}
+
+@Test
+func pointerPreviewKeepsOriginalPositionalEasingDuringClickAndDrag() throws {
+    for source in [try payloadSource(), try tunerSource()] {
+        #expect(source.contains(
+            "width 240ms cubic-bezier(0.22, 0.86, 0.2, 1)"
+        ))
+        #expect(source.contains(
+            "bottom 240ms cubic-bezier(0.22, 0.86, 0.2, 1)"
+        ))
+        #expect(source.contains(
+            "left 240ms cubic-bezier(0.22, 0.86, 0.2, 1)"
+        ))
+        #expect(source.contains(
+            "top 240ms cubic-bezier(0.22, 0.86, 0.2, 1)"
+        ))
+        #expect(!source.contains(".stage.dragging .selection"))
+        #expect(!source.contains(".stage.dragging .thumb {\n          transition:"))
+        #expect(!source.contains("scale(1.02);\n      transition:"))
+        #expect(source.contains(
+            "transform: translate(-50%, -50%) scale(1.02)"
+        ))
+    }
 }
 
 @Test

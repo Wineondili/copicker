@@ -116,7 +116,7 @@ Record the exact CoPicker commit/tag and Codex version/build, then test:
 5. nested Model and Effort menus remain open and are avoided without flashing;
 6. pointer-gated side restoration and top latching behave as specified;
 7. open/close animation has no stale-coordinate fly-in;
-8. pointer click commits once, rapid drag commits its final release cell without pausing, cancellation restores without writing, and four arrow keys plus Space work;
+8. pointer click and active drag preserve the 240-millisecond fill/thumb positional easing, click commits once, rapid drag commits its final release cell without pausing, cancellation restores without writing, and four arrow keys plus Space work;
 9. all enabled model rows have the correct effort count;
 10. Daybreak and Codex Spark cannot enter Fast;
 11. a hidden adapted model is recognized without an active selectable row;
@@ -164,7 +164,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
-| Current `main` renderer candidate | `0.12.10`; current-Codex tag-agnostic official-item selector, offline proof only |
+| Current `main` renderer candidate | `0.12.11`; restored click/drag positional easing plus the current-Codex tag-agnostic official-item selector, offline proof only |
 | Codex | `26.820.60940` build `7119` |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |

@@ -1,5 +1,17 @@
 # Design QA
 
+## 2026-08-30 — Restored click and drag positional easing candidate
+
+- Target flow: isolated Model Rail tuner loads, a non-thumb cell press visibly eases the fill/thumb to its preview cell and commits once on release, then one continuous drag visibly eases through preview cells and commits only the final release cell.
+- Environment: Codex in-app browser, `http://127.0.0.1:8767/model-rail-tuner.html`, native `1280 × 720` browser viewport, rendered stage `194 × 88` CSS pixels. The localhost server, browser tab, and screenshot were temporary development surfaces.
+- Click animation evidence: the thumb moved from `left=657.5, top=312` through sampled intermediate positions `631.01, 320.78` and `565.94, 342.16` to `561.5, 344`. While the pointer was held, computed transition properties remained `left, top, transform` with durations `240ms, 240ms, 150ms`; release recorded exactly one Terra/low commit.
+- Drag animation evidence: during one continuous Terra/low-to-Luna/xhigh gesture, the stage remained in `dragging` state while the thumb retained `left/top` 240-millisecond transitions and the selection fill retained `width/bottom` 240-millisecond transitions. Release recorded Luna/xhigh as row `2`, index `3`, and advanced the total commit count from `1` to `2` exactly once.
+- Rendered evidence: the final screenshot showed the unchanged accepted rail geometry in Luna/xhigh state, with no clipping, overlap, blank page, framework overlay, console warning, or console error.
+- Offline evidence: the new production/tuner animation contract and the existing final-displacement, frozen-snapshot, cancellation, thread-scoping, and no-task-selector contracts passed in the full 41-test suite. SwiftPM manifest loading, JavaScript and shell syntax checks, whitespace validation, and the production build also passed.
+- Boundary: this is isolated browser and offline source validation for renderer `0.12.11`. It did not attach to, install into, inject, restart, or mutate the running Codex app and is not new live-runtime acceptance.
+
+candidate result: original click/drag easing restored in isolation; release-coordinate commit semantics preserved; live Codex acceptance not tested
+
 ## 2026-08-28 — Pointer-release reliability candidate
 
 - Target flow: isolated Model Rail tuner loads, a non-thumb cell click commits once, a continuous drag commits the final release cell once without pausing, and a stationary thumb click toggles Fast once.
