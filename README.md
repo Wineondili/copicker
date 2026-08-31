@@ -13,7 +13,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
 | CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
-| Renderer development candidate | `0.12.11` on `main` | Restores original click/drag positional easing on top of the current-Codex no-task menu-item compatibility fix; forces replacement of older in-memory integrations when deliberately installed |
+| Renderer development candidate | `0.12.12` on `main` | Retains the restored click/drag easing and repairs the no-task official-control proxy for the statically inspected Codex `26.825.51511` build `7377`; forces replacement of older in-memory integrations when deliberately installed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
 | MCP settings resource | `ui://copicker/settings/v2.html` | Versioned CoPicker settings document |
@@ -22,7 +22,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 The current runtime baseline was installed and accepted on Apple silicon with Codex `26.820.60940` build `7119`. The user confirmed that the final CoPicker settings geometry matches the official settings page. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-`v0.99.0` packages that accepted full-feature implementation with release metadata and the completed public documentation. Its renderer `0.12.8` is unchanged from `c0343d4`; the release-only version bump does not create a second live-installation claim. Renderer `0.12.9` later passed the user's rapid-drag live check but failed the new-unsent-task check. Renderer `0.12.10` added the current-Codex menu-item compatibility correction. `main` is now a moving `0.12.11` candidate that keeps the release-coordinate state machine and restores the original 240-millisecond click/drag positional easing, while `v0.99.0` remains the immutable install ref.
+`v0.99.0` packages that accepted full-feature implementation with release metadata and the completed public documentation. Its renderer `0.12.8` is unchanged from `c0343d4`; the release-only version bump does not create a second live-installation claim. Renderer `0.12.9` later passed the user's rapid-drag live check but failed the new-unsent-task check. Renderer `0.12.10` generalized one obsolete item tag, and `0.12.11` restored the original 240-millisecond click/drag positional easing. `main` is now a moving `0.12.12` candidate that keeps both interaction fixes and adapts the official-control proxy to the statically inspected build `7377` active-panel, flyout-trigger, leaf-item, and pointer-down contracts. It has not been installed or live-accepted; `v0.99.0` remains the immutable install ref.
 
 See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v0.99.0 release notes](docs/releases/v0.99.0.md) for the packaged feature and validation boundary.
 
@@ -72,6 +72,10 @@ Full prerequisites, release and runtime-anchor paths, verification, settings mig
 | Escape or outside click | Close the official picker and CoPicker |
 
 CoPicker supports Sol, Terra, Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark in a fixed order. GPT-5.4, GPT-5.4 Mini, and other unsupported models display centered gray `Other`. Daybreak and Codex Spark do not support Fast in CoPicker.
+
+Current `main` has one explicit current-build exception: Codex build `7377` no longer normally presents Daybreak Blue as a Model option. It presents a separate Daybreak program checkbox that can also remap the base model and defaults. CoPicker therefore leaves that program fail-closed until a base-model/effort policy is chosen. When the exact program control is present, the Daybreak row is rejected on both task paths; ordinary model commits remain available only while the program is explicitly off, and are rejected while it is enabled, busy, disabled, or otherwise ambiguous. If neither that exact checkbox nor one exact legacy Daybreak Model leaf is observable, build `7377` exposes no public or bounded DOM signal that distinguishes no entitlement from unresolved verified access, so every mutation-bearing selection fails closed. An exact legacy Daybreak leaf may still be recognized read-only, but renderer `0.12.12` does not mutate through that legacy topology because its availability cannot be held atomically while Codex cycles mutually exclusive Model/Effort/Speed flyouts.
+
+The `0.12.12` no-task transaction also requires a restorable current Model/Effort/Speed state before changing the target. A hidden current model, a missing Speed submenu, or a visually Standard current model without a catalog-resolved Fast transition fails closed. This is intentional: build `7377` can display synthetic Standard while retaining an unsupported raw tier, so an unchanged Standard check is not sufficient proof. Speed is captured by the exact checked leaf's index, option count, and semantic label; Standard is re-established through Fast → Standard even when the rail selection appears unchanged.
 
 Changing a model or effort may trigger the same compaction behavior as the equivalent official Codex action. That is normal Codex behavior, not a separate CoPicker compaction mechanism.
 
@@ -132,7 +136,7 @@ The installation and runtime path is:
 3. The watcher detects each new `com.openai.codex` PID and performs guarded app-path, bundle-ID, Electron-fuse, and Inspector-port ownership checks.
 4. It sends `SIGUSR1`, connects only to `127.0.0.1:9229`, installs the versioned Electron/renderer hook, schedules `inspector.close()`, and disconnects.
 5. The renderer observes only the private model/reasoning controls needed for CoPicker. It appends an independent Shadow DOM popover to `document.body` and uses official surfaces only as anchors and collision obstacles.
-6. Existing tasks use `thread/settings/update` and wait for `thread/settings/updated`. A new unsent task uses the exact official Model, Effort, and Speed controls so Codex performs its own default-task workflow.
+6. Existing tasks use `thread/settings/update` and wait for a strictly newer `thread/settings/updated`. A new unsent task uses the exact official Model, Effort, and Speed controls so Codex performs its own default-task workflow. Build-`7377`'s separate Daybreak program is excluded on both paths, and the legacy Daybreak topology is read-only in renderer `0.12.12`.
 7. The settings plugin runs over private stdio MCP and persists only the versioned CoPicker preference snapshot.
 
 The full component and data flow is documented in [docs/architecture.md](docs/architecture.md).
@@ -196,6 +200,7 @@ Before changing UI, model behavior, selectors, versions, installation, or live c
 - Codex private DOM, Electron fuses, settings routes, and bridge methods may change without notice.
 - Model availability still depends on the signed-in account's official `model/list` catalog. Enabling a row does not grant model access.
 - Daybreak Blue may require Codex Trusted Access for Cyber and required network access.
+- On Codex build `7377`, Daybreak needs a product decision about which normal base model and effort the separate program should retain or select; current `main` fails closed instead of guessing.
 - Codex Spark may require an eligible ChatGPT Pro subscription.
 - The repository does not currently include a cross-version macOS/Codex CI matrix.
 - The repository has no general open-source license. Public visibility alone does not grant redistribution or derivative-work rights.

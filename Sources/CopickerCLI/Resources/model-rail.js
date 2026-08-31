@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.11";
+  const VERSION = "0.12.12";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -22,14 +22,29 @@
     "[data-model-picker-power-slider], [data-model-picker-view-toggle]";
   const SECONDARY_SURFACE_SELECTOR = "[data-composer-overlay-floating-ui]";
   const SECONDARY_ITEM_SELECTOR = '[data-list-navigation-item="true"]';
+  const OFFICIAL_MENU_ITEM_SELECTOR =
+    '[data-list-navigation-item="true"], [role="menuitem"]';
+  const OFFICIAL_SUBMENU_TRIGGER_SELECTOR =
+    '[data-list-navigation-item="true"][aria-haspopup="menu"][aria-controls], ' +
+    '[role="menuitem"][aria-haspopup="menu"][aria-controls]';
+  const OFFICIAL_LEAF_ITEM_SELECTOR =
+    '[data-list-navigation-item="true"]:not([aria-haspopup]), ' +
+    '[role="menuitem"]:not([aria-haspopup])';
+  const OFFICIAL_SELECTED_EFFORT_SELECTOR =
+    '[data-reasoning-selected="true"]';
+  const OFFICIAL_CHECK_ICON_SELECTOR = 'svg[width="17"][height="17"]';
   const MODEL_ROW_SELECTOR = "[data-model-picker-model-row]";
   const CONVERSATION_CONTEXT_SELECTOR = "[data-above-composer-conversation-id]";
   const FAST_MODE_SELECTOR = '[role="menuitemcheckbox"][data-fast-mode-enabled]';
+  const DAYBREAK_PROGRAM_CONTROL_SELECTOR =
+    '[role="menuitemcheckbox"]:not([data-fast-mode-enabled])';
   const APP_SERVER_HOST_ID = "local";
   const APP_SERVER_REQUEST_TIMEOUT_MS = 5000;
   const SETTINGS_APPLY_REQUEST_TIMEOUT_MS = 12000;
   const SETTINGS_CONFIRMATION_TIMEOUT_MS = 1800;
   const OFFICIAL_CONTROL_TIMEOUT_MS = 2400;
+  const OFFICIAL_POINTER_OPEN_GRACE_MS = 180;
+  const OFFICIAL_TRANSIENT_CONTROL_TIMEOUT_MS = 3000;
   const SETTINGS_FRAME_STYLE_VARIABLES = [
     ["--color-background-primary", [
       "--color-background-surface",
@@ -190,6 +205,206 @@
 
   function pointerPreviewFastMode(startFastMode, targetSupportsFast) {
     return Boolean(startFastMode && targetSupportsFast);
+  }
+
+  function normalizedDisplayName(value) {
+    return String(value || "")
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function officialExactLabelMatch(textValues, labelValues) {
+    const labels = new Set(
+      (Array.isArray(labelValues) ? labelValues : [])
+        .map(normalizedDisplayName)
+        .filter(Boolean),
+    );
+    return labels.size > 0 &&
+      (Array.isArray(textValues) ? textValues : []).some(
+        (value) => labels.has(normalizedDisplayName(value)),
+      );
+  }
+
+  function officialAdvancedLayout(
+    itemCount,
+    modelIndex,
+    selectedEffortIndices,
+    submenuIndices,
+    expectedEffortCount,
+    expectedSelectedEffortIndex,
+  ) {
+    if (!Number.isInteger(itemCount) || itemCount < 1) return null;
+    const validIndices = (values) => [...new Set(
+      (Array.isArray(values) ? values : []).filter(
+        (value) => Number.isInteger(value) && value >= 0 && value < itemCount,
+      ),
+    )].sort((left, right) => left - right);
+    const selected = validIndices(selectedEffortIndices);
+    const submenus = validIndices(submenuIndices);
+
+    if (Number.isInteger(modelIndex) && modelIndex >= 0 && modelIndex < itemCount) {
+      if (
+        Number.isInteger(expectedEffortCount) &&
+        expectedEffortCount > 0 &&
+        Number.isInteger(expectedSelectedEffortIndex) &&
+        expectedSelectedEffortIndex >= 0 &&
+        expectedSelectedEffortIndex < expectedEffortCount &&
+        modelIndex === expectedEffortCount &&
+        itemCount === modelIndex + 2 &&
+        selected.length === 1 &&
+        selected[0] === expectedSelectedEffortIndex &&
+        submenus.length === 2 &&
+        submenus[0] === modelIndex &&
+        submenus[1] === modelIndex + 1
+      ) {
+        return {
+          kind: "flat-effort",
+          modelIndex,
+          effortIndices: Array.from(
+            { length: expectedEffortCount },
+            (_, index) => index,
+          ),
+          speedIndex: submenus[1],
+        };
+      }
+
+      if (
+        itemCount === 3 &&
+        modelIndex === 0 &&
+        selected.length === 0 &&
+        submenus.length === 3 &&
+        submenus.every((index, position) => index === position)
+      ) {
+        return {
+          kind: "submenu-effort",
+          modelIndex,
+          effortIndex: submenus[1],
+          speedIndex: submenus[2],
+        };
+      }
+      return null;
+    }
+
+    if (
+      modelIndex === -1 &&
+      itemCount === 3 &&
+      selected.length === 0 &&
+      submenus.length === 3 &&
+      submenus.every((index, position) => index === position)
+    ) {
+      return {
+        kind: "power-submenus",
+        modelIndex: submenus[0],
+        effortIndex: submenus[1],
+        speedIndex: submenus[2],
+      };
+    }
+    return null;
+  }
+
+  function officialSpeedConfirmationSource(
+    enabled,
+    compactState,
+    selectedLeafIndex,
+    targetIndex,
+  ) {
+    if (enabled && compactState === true) return "checkbox";
+    if (
+      Number.isInteger(selectedLeafIndex) &&
+      Number.isInteger(targetIndex) &&
+      selectedLeafIndex === targetIndex
+    ) {
+      return "selected-leaf";
+    }
+    return null;
+  }
+
+  function officialServiceTierTransitionPlan(
+    targetIndex,
+    selectedIndex,
+    optionCount,
+    preferredNonStandardIndex,
+  ) {
+    if (
+      !Number.isInteger(targetIndex) ||
+      !Number.isInteger(selectedIndex) ||
+      !Number.isInteger(optionCount) ||
+      optionCount < 1 ||
+      targetIndex < 0 ||
+      targetIndex >= optionCount ||
+      selectedIndex < 0 ||
+      selectedIndex >= optionCount
+    ) {
+      return null;
+    }
+    if (targetIndex !== 0 || selectedIndex !== 0) return [targetIndex];
+    if (
+      optionCount < 2 ||
+      !Number.isInteger(preferredNonStandardIndex) ||
+      preferredNonStandardIndex <= 0 ||
+      preferredNonStandardIndex >= optionCount
+    ) {
+      return null;
+    }
+    return [preferredNonStandardIndex, 0];
+  }
+
+  function officialServiceTierFastState(serviceTier, fastTierID) {
+    if (serviceTier === null) return false;
+    if (fastTierID && serviceTier === fastTierID) return true;
+    return null;
+  }
+
+  function selectionIntentIdentityMatches(
+    expectedThreadID,
+    currentThreadID,
+    sameComposerRoot,
+    hasOpenTrigger,
+    expectedInteractionEpoch,
+    currentInteractionEpoch,
+  ) {
+    return Boolean(hasOpenTrigger) &&
+      Boolean(sameComposerRoot) &&
+      (expectedThreadID || null) === (currentThreadID || null) &&
+      expectedInteractionEpoch === currentInteractionEpoch;
+  }
+
+  function shouldCommitUnchangedPointerSelection(
+    supersededKeyboardCommit,
+    hasCurrentThread,
+  ) {
+    return Boolean(supersededKeyboardCommit) || !hasCurrentThread;
+  }
+
+  function shouldVerifyUnchangedNoTaskSelection(
+    sameAsConfirmed,
+    force,
+    fastMode,
+  ) {
+    return Boolean(sameAsConfirmed && !force && fastMode);
+  }
+
+  function shouldReuseThreadSelectionConfirmation(
+    sameAsConfirmed,
+    force,
+    daybreakProgramPresent,
+    daybreakProgramChecked,
+  ) {
+    return Boolean(
+      sameAsConfirmed &&
+      !force &&
+      daybreakProgramPresent &&
+      daybreakProgramChecked === false
+    );
+  }
+
+  function daybreakProgramAllowsBaseConfirmation(
+    present,
+    checked,
+    legacyModelProven,
+  ) {
+    return (present && checked === false) ||
+      (!present && Boolean(legacyModelProven));
   }
   /* COPICKER_BEHAVIOR_CONTRACT_END */
 
@@ -1271,19 +1486,42 @@
     recognizedEffort: null,
     fastMode: false,
     selectionRevision: 0,
+    railSelectionGeneration: 0,
     confirmedSelection: null,
+    confirmedThreadID: null,
+    officialInteractionEpoch: 0,
+    officialSelectionMutationGeneration: 0,
+    officialStructureMutationGeneration: 0,
+    officialDaybreakProgramMutationGeneration: 0,
+    officialProxyReadDepth: 0,
+    officialSelectionDirty: false,
     commitTimer: null,
+    pendingKeyboardBaseline: null,
     commitQueue: Promise.resolve(),
     commitInFlight: false,
+    commitThreadID: null,
     pendingRequests: new Map(),
     settingsWaiters: new Set(),
+    settingsNotificationGeneration: 0,
+    latestThreadSettings: new Map(),
+    daybreakClassification: null,
+    officialModelCatalog: null,
     modelCatalog: null,
     modelCatalogPromise: null,
+    selectorRefreshPromise: null,
+    selectorRefreshComposerRoot: null,
+    selectorRefreshRetryComposerRoot: null,
+    threadClassificationPromise: null,
+    threadClassificationKey: null,
+    threadClassificationRetryKey: null,
+    trustedSelectionAction: null,
+    trustedSelectionActionTimer: null,
     currentThreadID: null,
     pendingOfficialSelection: null,
     switchState: "idle",
     lastSwitchError: null,
     handleBridgeMessage: null,
+    handleOfficialInteraction: null,
     appearanceObserver: null,
     appearanceMedia: null,
     disposed: false,
@@ -1335,11 +1573,23 @@
   }
 
   function isSecondarySurface(surface) {
+    const hasReasoningSlider = Boolean(
+      surface.querySelector(REASONING_SLIDER_SELECTOR),
+    );
     return (
       surface.matches(SECONDARY_SURFACE_SELECTOR) ||
       Boolean(surface.closest(SECONDARY_SURFACE_SELECTOR)) ||
-      Boolean(surface.querySelector(SECONDARY_ITEM_SELECTOR)) ||
-      Boolean(surface.querySelector(MODEL_ROW_SELECTOR))
+      (!hasReasoningSlider && (
+        Boolean(surface.querySelector(SECONDARY_ITEM_SELECTOR)) ||
+        Boolean(surface.querySelector(MODEL_ROW_SELECTOR))
+      ))
+    );
+  }
+
+  function surfaceOwnsSelector(surface, selector) {
+    if (!surface) return false;
+    return [...surface.querySelectorAll(selector)].some(
+      (element) => element.closest(PRIMARY_SURFACE_SELECTOR) === surface,
     );
   }
 
@@ -1371,11 +1621,21 @@
   }
 
   function isPrimarySurface(surface) {
+    const ownsReasoningSlider = [...surface.querySelectorAll(
+      REASONING_SLIDER_SELECTOR,
+    )].some(
+      (slider) => slider.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+    );
     return (
       isVisible(surface) &&
+      !surface.closest("[aria-hidden='true'], [inert]") &&
       !isSecondarySurface(surface) &&
-      Boolean(surface.querySelector(REASONING_SLIDER_SELECTOR)) &&
-      Boolean(surface.querySelector(PRIMARY_CONTROL_SELECTOR))
+      ownsReasoningSlider &&
+      (
+        surfaceOwnsSelector(surface, PRIMARY_CONTROL_SELECTOR) ||
+        surfaceOwnsSelector(surface, MODEL_ROW_SELECTOR) ||
+        surfaceOwnsSelector(surface, OFFICIAL_MENU_ITEM_SELECTOR)
+      )
     );
   }
 
@@ -1395,29 +1655,19 @@
     const controlledID = trigger.getAttribute("aria-controls");
     if (controlledID) {
       const controlled = document.getElementById(controlledID);
-      if (controlled && isPrimarySurface(controlled)) return controlled;
+      return controlled && (
+        isPrimarySurface(controlled) ||
+        isOfficialPrimarySurfaceForProxy(controlled)
+      )
+        ? controlled
+        : null;
     }
 
     const candidates = [...document.querySelectorAll(PRIMARY_SURFACE_SELECTOR)]
-      .filter(isPrimarySurface);
-    if (candidates.length === 0) return null;
-
-    const triggerRect = trigger.getBoundingClientRect();
-    const triggerCenterX = triggerRect.left + triggerRect.width / 2;
-    const triggerCenterY = triggerRect.top + triggerRect.height / 2;
-    return candidates.sort((left, right) => {
-      const leftRect = left.getBoundingClientRect();
-      const rightRect = right.getBoundingClientRect();
-      const leftDistance = Math.hypot(
-        leftRect.left + leftRect.width / 2 - triggerCenterX,
-        leftRect.top + leftRect.height / 2 - triggerCenterY,
+      .filter((surface) =>
+        isPrimarySurface(surface) || isOfficialPrimarySurfaceForProxy(surface),
       );
-      const rightDistance = Math.hypot(
-        rightRect.left + rightRect.width / 2 - triggerCenterX,
-        rightRect.top + rightRect.height / 2 - triggerCenterY,
-      );
-      return leftDistance - rightDistance;
-    })[0];
+    return candidates.length === 1 ? candidates[0] : null;
   }
 
   function currentPrimaryTarget() {
@@ -1625,12 +1875,6 @@
     return null;
   }
 
-  function normalizedDisplayName(value) {
-    return String(value || "")
-      .toLocaleLowerCase()
-      .replace(/[^a-z0-9]+/g, "");
-  }
-
   function rowMatchesDisplayName(row, value) {
     const normalizedValue = normalizedDisplayName(value);
     return row.catalogDisplayNames.some(
@@ -1638,11 +1882,153 @@
     );
   }
 
-  function rowMatchesTriggerText(row, text) {
-    const normalizedText = normalizedDisplayName(text);
-    return [row.name, ...row.catalogDisplayNames].some((name) =>
-      normalizedText.includes(normalizedDisplayName(name)),
+  function officialModelLabelCandidates(values) {
+    const candidates = new Set();
+    for (const value of Array.isArray(values) ? values : []) {
+      const label = String(value || "").replace(/\s+/g, " ").trim();
+      if (!label) continue;
+      candidates.add(label);
+      candidates.add(label.replace(/^GPT[-\s]*/i, ""));
+    }
+    return [...candidates].filter(Boolean);
+  }
+
+  function officialElementTextValues(element) {
+    if (!(element instanceof Element)) return [];
+    let candidates = [...element.querySelectorAll("span")];
+    if (element.matches("span")) candidates.unshift(element);
+    candidates = candidates.filter(
+      (candidate) => !candidate.closest("[aria-hidden='true'], [inert]"),
     );
+    if (candidates.length === 0 && !element.closest("[aria-hidden='true'], [inert]")) {
+      candidates.push(element);
+    }
+    return candidates.map((candidate) =>
+      String(candidate.textContent || "").replace(/\s+/g, " ").trim(),
+    );
+  }
+
+  function officialElementMatchesModelLabels(element, displayNames) {
+    return officialExactLabelMatch(
+      officialElementTextValues(element),
+      officialModelLabelCandidates(displayNames),
+    );
+  }
+
+  function officialDaybreakProgramControl(surface) {
+    if (!surface) return { present: false, control: null };
+    const controls = [...surface.querySelectorAll(DAYBREAK_PROGRAM_CONTROL_SELECTOR)]
+      .filter((control) => control.closest(PRIMARY_SURFACE_SELECTOR) === surface);
+    if (controls.length === 0) return { present: false, control: null };
+    const exactLabel = normalizedDisplayName("Daybreak");
+    const labeledControls = controls.filter((control) =>
+      [control, ...control.querySelectorAll("*")].some(
+        (candidate) =>
+          normalizedDisplayName(candidate.textContent) === exactLabel,
+      )
+    );
+    return {
+      present: true,
+      control: labeledControls.length === 1 ? labeledControls[0] : null,
+    };
+  }
+
+  function officialDaybreakProgramState(surface) {
+    const resolved = officialDaybreakProgramControl(surface);
+    if (!resolved.present) return { present: false, checked: null };
+    const candidate = resolved.control;
+    if (!candidate) return { present: true, checked: null };
+    const checkedValue = candidate.getAttribute("aria-checked");
+    const busyValue = candidate.getAttribute("aria-busy");
+    const disabledValue = candidate.getAttribute("aria-disabled");
+    const busyOrDisabled =
+      busyValue === "true" ||
+      (busyValue !== null && busyValue !== "false") ||
+      disabledValue === "true" ||
+      (disabledValue !== null && disabledValue !== "false") ||
+      candidate.matches(":disabled, [data-disabled]");
+    return {
+      present: true,
+      checked: busyOrDisabled
+        ? null
+        : checkedValue === "true"
+        ? true
+        : checkedValue === "false"
+          ? false
+          : null,
+    };
+  }
+
+  function officialItemsExcludingDaybreakProgram(surface, items) {
+    const program = officialDaybreakProgramControl(surface);
+    if (program.present && !program.control) return null;
+    if (!program.control) return items;
+    const programRows = items.filter(
+      (item) =>
+        item === program.control ||
+        item.contains(program.control) ||
+        program.control.contains(item),
+    );
+    if (programRows.length > 1) return null;
+    return programRows.length === 1
+      ? items.filter((item) => item !== programRows[0])
+      : items;
+  }
+
+  function assertOfficialDaybreakSelectionPolicy(selection, surface) {
+    if (!surface) {
+      throw new Error("The current official model picker surface is unavailable.");
+    }
+    const program = officialDaybreakProgramState(surface);
+    const selectedRow = ROWS[selection?.rowIndex] || ALL_ROWS.find((row) =>
+      rowMatchesDisplayName(row, selection?.modelName) ||
+      row.name.toLocaleLowerCase() ===
+        String(selection?.modelName || "").toLocaleLowerCase()
+    );
+    if (
+      program.present &&
+      (selectedRow?.id === "daybreak-blue" || program.checked !== false)
+    ) {
+      throw new Error(
+        "The current Codex Daybreak program requires an explicit base-model policy.",
+      );
+    }
+  }
+
+  function officialRowForElement(element, rows = ALL_ROWS) {
+    const matches = rows.filter((row) =>
+      officialElementMatchesModelLabels(element, row.catalogDisplayNames),
+    );
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  function currentOfficialCatalogEntryFromModelRow(surface) {
+    if (!surface || !state.officialModelCatalog) return null;
+    const modelRows = [...surface.querySelectorAll(MODEL_ROW_SELECTOR)]
+      .map((marker) => marker.closest(OFFICIAL_MENU_ITEM_SELECTOR) || marker);
+    const uniqueRows = [...new Set(modelRows)];
+    const matches = state.officialModelCatalog.filter((entry) =>
+      uniqueRows.some((row) => {
+        const textValues = [row, ...row.querySelectorAll("span")].map(
+          (candidate) =>
+            String(candidate.textContent || "").replace(/\s+/g, " ").trim(),
+        );
+        return officialExactLabelMatch(
+          textValues,
+          officialModelLabelCandidates([entry.displayName]),
+        );
+      })
+    );
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  function officialRowFromCurrentModelControls(surface) {
+    const catalogEntry = currentOfficialCatalogEntryFromModelRow(surface);
+    if (!catalogEntry) return null;
+    const matches = ALL_ROWS.filter((row) =>
+      rowMatchesDisplayName(row, catalogEntry.displayName)
+    );
+    return matches.length === 1 ? matches[0] : null;
   }
 
   function initializeSelectorFromTrigger(trigger) {
@@ -1652,10 +2038,9 @@
       return;
     }
 
-    const triggerText = String(trigger?.textContent || "")
-      .replace(/\s+/g, " ")
-      .trim();
-    const recognizedRow = ALL_ROWS.find((row) => rowMatchesTriggerText(row, triggerText)) || null;
+    const recognizedRow =
+      officialRowForElement(trigger) ||
+      officialRowFromCurrentModelControls(state.primarySurface);
     const rowIndex = recognizedRow
       ? ROWS.findIndex((row) => row.id === recognizedRow.id)
       : -1;
@@ -1665,22 +2050,54 @@
       Boolean(recognizedRow) &&
       effortIndex >= 0 &&
       recognizedRow.dots.includes(effortIndex + 1);
-    const isVisibleSelection = isRecognized && rowIndex >= 0;
+    const hasCurrentThread = Boolean(state.currentThreadID);
+    const isVisibleSelection =
+      isRecognized && rowIndex >= 0 && hasCurrentThread;
+    const canPresentRecognizedSelection = isRecognized && hasCurrentThread;
 
     state.currentRow = isVisibleSelection ? rowIndex : null;
     state.currentIndex = isVisibleSelection ? effortIndex : null;
-    state.recognizedRow = isRecognized ? recognizedRow : null;
-    state.recognizedEffort = isRecognized ? effort : null;
+    state.recognizedRow = canPresentRecognizedSelection ? recognizedRow : null;
+    state.recognizedEffort = canPresentRecognizedSelection ? effort : null;
+    const officialFastMode = readOfficialFastMode(state.primarySurface);
     state.fastMode = Boolean(
-      isRecognized &&
-      recognizedRow.supportsFast &&
-      readOfficialFastMode(state.primarySurface),
+      isRecognized && recognizedRow.supportsFast && officialFastMode === true,
     );
     state.selectionRevision += 1;
-    state.confirmedSelection = snapshotSelection();
+    state.confirmedSelection = hasCurrentThread && isRecognized &&
+        recognizedRow.supportsFast &&
+        officialFastMode === true
+        ? snapshotSelection()
+        : null;
+    state.confirmedThreadID = state.confirmedSelection
+      ? state.currentThreadID
+      : null;
     state.lastSwitchError = null;
     setSwitchState(state.currentThreadID ? "loading" : "no-thread");
-    void ensureModelCatalog().catch(() => {});
+    void ensureModelCatalog()
+      .then(() => {
+        if (state.currentThreadID) {
+          const latest = state.latestThreadSettings.get(state.currentThreadID);
+          if (latest?.settings) {
+            reconcileSettingsNotification(
+              state.currentThreadID,
+              latest.generation,
+            );
+            if (latest.reconciled !== true) {
+              return refreshThreadDaybreakClassification(
+                state.currentThreadID,
+                latest.generation,
+              );
+            }
+          }
+          return false;
+        }
+        if (!state.currentThreadID) {
+          return refreshNoTaskSelectorFromOfficialControls();
+        }
+        return false;
+      })
+      .catch(() => {});
   }
 
   function hasSelectorSelection() {
@@ -1692,12 +2109,20 @@
   }
 
   function readOfficialFastMode(surface) {
-    const scopedControl = surface?.querySelector(FAST_MODE_SELECTOR) || null;
-    const control = scopedControl || [...document.querySelectorAll(FAST_MODE_SELECTOR)].find(isVisible);
-    return (
-      control?.getAttribute("data-fast-mode-enabled") === "true" ||
-      control?.getAttribute("aria-checked") === "true"
-    );
+    const controls = surface
+      ? [...surface.querySelectorAll(FAST_MODE_SELECTOR)].filter(
+        (control) => control.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+      )
+      : [];
+    if (controls.length !== 1) return null;
+
+    const control = controls[0];
+    const values = [
+      control.getAttribute("data-fast-mode-enabled"),
+      control.getAttribute("aria-checked"),
+    ].filter((value) => value === "true" || value === "false");
+    if (values.length === 0 || new Set(values).size !== 1) return null;
+    return values[0] === "true";
   }
 
   function snapshotSelection() {
@@ -1742,13 +2167,16 @@
   }
 
   function applySelection(selection, { render = true } = {}) {
+    const explicitlyUnselectable = selection?.rowIndex === null;
     const rowIndex = Number.isInteger(selection?.rowIndex)
       ? selection.rowIndex
-      : ROWS.findIndex((row) =>
-          rowMatchesDisplayName(row, selection?.modelName) ||
-          row.name.toLocaleLowerCase() ===
-            String(selection?.modelName || "").toLocaleLowerCase(),
-        );
+      : explicitlyUnselectable
+        ? -1
+        : ROWS.findIndex((row) =>
+            rowMatchesDisplayName(row, selection?.modelName) ||
+            row.name.toLocaleLowerCase() ===
+              String(selection?.modelName || "").toLocaleLowerCase(),
+          );
     const effortIndex = EFFORTS.indexOf(String(selection?.effort || ""));
     const valid =
       rowIndex >= 0 &&
@@ -1785,6 +2213,7 @@
       if (!row.supportsFast) state.fastMode = false;
     }
     state.selectionRevision += 1;
+    state.railSelectionGeneration += 1;
     state.lastSwitchError = null;
     updateSelectorUI(host);
   }
@@ -1807,6 +2236,44 @@
         element.getAttribute("data-above-composer-conversation-id")
       ),
     );
+  }
+
+  function captureSelectionIntent() {
+    const trigger = findOpenTrigger();
+    const composerRoot = trigger?.closest("[data-codex-composer-root]") || null;
+    if (!trigger || !composerRoot) {
+      throw new Error("The official composer closed before selection was queued.");
+    }
+    return Object.freeze({
+      composerRoot,
+      threadID: resolveCurrentThreadID(trigger),
+      interactionEpoch: state.officialInteractionEpoch,
+    });
+  }
+
+  function assertSelectionIntent(intent) {
+    const trigger = findOpenTrigger();
+    const composerRoot = trigger?.closest("[data-codex-composer-root]") || null;
+    const threadID = resolveCurrentThreadID(trigger);
+    if (!selectionIntentIdentityMatches(
+      intent?.threadID,
+      threadID,
+      Boolean(intent?.composerRoot && composerRoot === intent.composerRoot),
+      Boolean(trigger),
+      intent?.interactionEpoch,
+      state.officialInteractionEpoch,
+    )) {
+      throw new Error("The composer or task changed after selection was queued.");
+    }
+    return trigger;
+  }
+
+  function selectionIntentIsCurrent(intent) {
+    try {
+      return Boolean(assertSelectionIntent(intent));
+    } catch (_) {
+      return false;
+    }
   }
 
   function makeRequestID() {
@@ -1853,53 +2320,97 @@
     });
   }
 
-  function normalizedModelCatalog(result) {
+  function normalizedOfficialModelCatalog(result) {
     const models = Array.isArray(result?.data)
       ? result.data
       : Array.isArray(result?.models)
         ? result.models
         : [];
-    return ROWS.map((row, rowIndex) => {
-      const model = models.find((candidate) =>
-        rowMatchesDisplayName(row, candidate?.displayName),
-      );
-      if (!model || typeof model.model !== "string" || model.model.length === 0) {
-        return null;
+    return models.flatMap((model) => {
+      if (
+        typeof model?.model !== "string" ||
+        model.model.length === 0 ||
+        typeof model.displayName !== "string" ||
+        model.displayName.trim().length === 0
+      ) {
+        return [];
       }
-
       const supportedEffortOrder = (model.supportedReasoningEfforts || [])
         .map((entry) =>
           typeof entry === "string"
             ? entry
             : entry?.reasoningEffort || entry?.effort || null,
         )
-        .filter((effort) => EFFORTS.includes(effort));
+        .filter((effort) => typeof effort === "string" && effort.length > 0);
       const supportedEfforts = new Set(supportedEffortOrder);
-      const requiredEfforts = row.dots.map((dotNumber) => EFFORTS[dotNumber - 1]);
-      if (requiredEfforts.some((effort) => !supportedEfforts.has(effort))) {
-        return null;
-      }
-
       const serviceTiers = Array.isArray(model.serviceTiers)
         ? model.serviceTiers
         : [];
       const fastTierIndex = serviceTiers.findIndex(
-        (tier) => String(tier?.name || "").toLocaleLowerCase() === "fast",
+        (tier) =>
+          ["priority", "fast"].includes(
+            String(tier?.id || tier?.serviceTier || "").toLocaleLowerCase(),
+          ) ||
+          String(tier?.name || "").trim().toLocaleLowerCase() === "fast",
       );
       const fastTier = fastTierIndex >= 0 ? serviceTiers[fastTierIndex] : null;
-      return {
-        rowIndex,
+      return [{
         model: model.model,
         displayName: model.displayName,
+        hidden: model.hidden === true,
         supportedEfforts,
         supportedEffortOrder,
         serviceTierOptionCount: serviceTiers.length + 1,
         fastTierOptionIndex: fastTierIndex >= 0 ? fastTierIndex + 1 : null,
-        fastTierID: row.supportsFast
-          ? fastTier?.id || fastTier?.serviceTier || null
-          : null,
+        fastTierID: fastTier?.id || fastTier?.serviceTier || null,
+      }];
+    });
+  }
+
+  function normalizedSelectableModelCatalog(officialCatalog) {
+    return ROWS.map((row, rowIndex) => {
+      const matches = officialCatalog.filter((candidate) =>
+        candidate?.hidden !== true &&
+        rowMatchesDisplayName(row, candidate?.displayName),
+      );
+      if (matches.length !== 1) return null;
+      const model = matches[0];
+      const requiredEfforts = row.dots.map((dotNumber) => EFFORTS[dotNumber - 1]);
+      if (requiredEfforts.some((effort) => !model.supportedEfforts.has(effort))) {
+        return null;
+      }
+      return {
+        ...model,
+        rowIndex,
+        fastTierID: row.supportsFast ? model.fastTierID : null,
       };
     });
+  }
+
+  async function loadOfficialModelCatalog() {
+    const catalog = [];
+    const seenCursors = new Set();
+    let cursor = null;
+    do {
+      const result = await sendAppServerRequest("model/list", {
+        cursor,
+        includeHidden: true,
+        limit: 100,
+      });
+      catalog.push(...normalizedOfficialModelCatalog(result));
+      const nextCursor = result?.nextCursor ?? result?.next_cursor ?? null;
+      if (nextCursor === null) return catalog;
+      if (
+        typeof nextCursor !== "string" ||
+        nextCursor.length === 0 ||
+        seenCursors.has(nextCursor)
+      ) {
+        throw new Error("Codex returned an invalid model catalog cursor.");
+      }
+      seenCursors.add(nextCursor);
+      cursor = nextCursor;
+    } while (cursor !== null);
+    return catalog;
   }
 
   function ensureModelCatalog() {
@@ -1907,14 +2418,24 @@
     if (state.modelCatalogPromise) return state.modelCatalogPromise;
 
     setSwitchState("loading");
-    state.modelCatalogPromise = sendAppServerRequest("model/list", {
-      cursor: null,
-      includeHidden: false,
-      limit: 100,
-    })
-      .then((result) => {
-        state.modelCatalog = normalizedModelCatalog(result);
+    state.modelCatalogPromise = loadOfficialModelCatalog()
+      .then((officialCatalog) => {
+        state.officialModelCatalog = officialCatalog;
+        state.modelCatalog = normalizedSelectableModelCatalog(
+          state.officialModelCatalog,
+        );
         setSwitchState(state.currentThreadID ? "ready" : "no-thread");
+        const latest = state.currentThreadID
+          ? state.latestThreadSettings.get(state.currentThreadID)
+          : null;
+        if (latest?.settings) {
+          reconcileSettingsNotification(
+            state.currentThreadID,
+            latest.generation,
+          );
+        }
+        state.officialSelectionDirty = true;
+        scheduleSync();
         return state.modelCatalog;
       })
       .catch((error) => {
@@ -1928,12 +2449,228 @@
     return state.modelCatalogPromise;
   }
 
+  function refreshNoTaskSelectorFromOfficialControls() {
+    const trigger = findOpenTrigger();
+    const composerRoot = trigger?.closest("[data-codex-composer-root]") || null;
+    if (!trigger || !composerRoot || resolveCurrentThreadID(trigger)) {
+      return Promise.resolve(false);
+    }
+    if (state.selectorRefreshPromise) {
+      if (state.selectorRefreshComposerRoot === composerRoot) {
+        state.selectorRefreshRetryComposerRoot = composerRoot;
+        return state.selectorRefreshPromise;
+      }
+      return state.selectorRefreshPromise
+        .catch(() => false)
+        .then(() => refreshNoTaskSelectorFromOfficialControls());
+    }
+    const startingRevision = state.selectionRevision;
+    const startingInteractionEpoch = state.officialInteractionEpoch;
+    const context = {
+      composerRoot,
+      expandedAdvanced: false,
+      interruptedByUserInput: false,
+      allowLegacyDaybreakReadOnly: true,
+    };
+    let removeInputGuard = null;
+    const refreshTask = state.commitQueue.catch(() => {}).then(async () => {
+      state.officialProxyReadDepth += 1;
+      try {
+        removeInputGuard = installOfficialProxyInputGuard(context);
+        const baseline = await captureOfficialSelectionBaseline(context, {
+          requireRestorableStandard: false,
+        });
+        if (baseline.serviceTierOptionIndex === 0) return false;
+        const selection = coPickerSelectionFromOfficialBaseline(baseline);
+        if (!selection) return false;
+        await assertOfficialDaybreakSelectionPolicyReady(selection, context);
+        assertOfficialDaybreakStateUnchanged(context);
+        const verifiedBaseline = await captureOfficialSelectionBaseline(context, {
+          requireRestorableStandard: false,
+        });
+        if (
+          verifiedBaseline.catalogEntry.model !== baseline.catalogEntry.model ||
+          verifiedBaseline.effort !== baseline.effort ||
+          verifiedBaseline.serviceTierOptionIndex !==
+            baseline.serviceTierOptionIndex ||
+          verifiedBaseline.serviceTierOptionCount !==
+            baseline.serviceTierOptionCount ||
+          verifiedBaseline.serviceTierLeafSignature !==
+            baseline.serviceTierLeafSignature
+        ) {
+          return false;
+        }
+        assertOfficialDaybreakStateUnchanged(context);
+        const currentTrigger = assertOfficialProxyContext(context);
+        if (
+          state.commitInFlight ||
+          state.pendingOfficialSelection ||
+          state.selectionRevision !== startingRevision ||
+          state.officialInteractionEpoch !== startingInteractionEpoch ||
+          currentTrigger.closest("[data-codex-composer-root]") !== composerRoot ||
+          resolveCurrentThreadID(currentTrigger)
+        ) {
+          return false;
+        }
+        applySelection(selection);
+        state.selectionRevision += 1;
+        state.officialSelectionDirty = false;
+        setSwitchState("no-thread");
+        return true;
+      } catch (_) {
+        return false;
+      } finally {
+        try {
+          await restoreOfficialPickerView(context);
+        } catch (_) {}
+        removeInputGuard?.();
+        state.officialProxyReadDepth = Math.max(
+          0,
+          state.officialProxyReadDepth - 1,
+        );
+      }
+    });
+    state.selectorRefreshPromise = refreshTask.finally(() => {
+      const retryComposerRoot = state.selectorRefreshRetryComposerRoot;
+      state.selectorRefreshPromise = null;
+      state.selectorRefreshComposerRoot = null;
+      state.selectorRefreshRetryComposerRoot = null;
+      const retryTrigger = findOpenTrigger();
+      if (
+        retryComposerRoot &&
+        retryTrigger?.closest("[data-codex-composer-root]") ===
+          retryComposerRoot &&
+        !resolveCurrentThreadID(retryTrigger)
+      ) {
+        window.queueMicrotask(() => {
+          void refreshNoTaskSelectorFromOfficialControls().catch(() => {});
+        });
+      }
+    });
+    state.selectorRefreshComposerRoot = composerRoot;
+    state.commitQueue = state.selectorRefreshPromise.catch(() => {});
+    return state.selectorRefreshPromise;
+  }
+
+  function refreshThreadDaybreakClassification(threadID, generation) {
+    const key = `${threadID}:${generation}`;
+    if (state.threadClassificationPromise) {
+      if (state.threadClassificationKey === key) {
+        state.threadClassificationRetryKey = key;
+        return state.threadClassificationPromise;
+      }
+      return state.threadClassificationPromise
+        .catch(() => false)
+        .then(() => refreshThreadDaybreakClassification(threadID, generation));
+    }
+
+    const task = state.commitQueue.catch(() => {}).then(async () => {
+      const trigger = findOpenTrigger();
+      const composerRoot =
+        trigger?.closest("[data-codex-composer-root]") || null;
+      const latest = state.latestThreadSettings.get(threadID);
+      if (
+        !trigger ||
+        !composerRoot ||
+        resolveCurrentThreadID(trigger) !== threadID ||
+        latest?.generation !== generation ||
+        latest.reconciled === true
+      ) {
+        return false;
+      }
+      state.officialProxyReadDepth += 1;
+
+      const parsedSelection = selectionFromThreadSettings(latest.settings);
+      const officialEntries = state.officialModelCatalog?.filter(
+        (entry) => entry?.model === latest.settings?.model,
+      ) || [];
+      const policySelection = parsedSelection || {
+        rowIndex: null,
+        indexInRow: null,
+        modelName: officialEntries.length === 1
+          ? officialEntries[0].displayName
+          : "Other",
+        effort: latest.settings?.effort ||
+          latest.settings?.reasoningEffort || null,
+        fastMode: false,
+      };
+      const context = {
+        composerRoot,
+        threadID,
+        expandedAdvanced: false,
+        interruptedByUserInput: false,
+        allowLegacyDaybreakReadOnly: true,
+      };
+      let removeInputGuard = null;
+      try {
+        removeInputGuard = installOfficialProxyInputGuard(context);
+        await assertOfficialDaybreakSelectionPolicyReady(
+          policySelection,
+          context,
+        );
+        assertOfficialProxyContext(context);
+        assertOfficialDaybreakStateUnchanged(context);
+        const currentLatest = state.latestThreadSettings.get(threadID);
+        if (currentLatest?.generation !== generation) return false;
+        reconcileSettingsNotification(threadID, generation);
+        return currentLatest.reconciled === true;
+      } catch (_) {
+        return false;
+      } finally {
+        try {
+          await restoreOfficialPickerView(context);
+        } catch (_) {}
+        removeInputGuard?.();
+        state.officialProxyReadDepth = Math.max(
+          0,
+          state.officialProxyReadDepth - 1,
+        );
+      }
+    });
+    state.threadClassificationPromise = task.finally(() => {
+      const retryKey = state.threadClassificationRetryKey;
+      state.threadClassificationPromise = null;
+      state.threadClassificationKey = null;
+      state.threadClassificationRetryKey = null;
+      const retryTrigger = findOpenTrigger();
+      const retryLatest = state.latestThreadSettings.get(threadID);
+      if (
+        retryKey === key &&
+        resolveCurrentThreadID(retryTrigger) === threadID &&
+        retryLatest?.generation === generation &&
+        retryLatest.reconciled !== true
+      ) {
+        window.queueMicrotask(() => {
+          void refreshThreadDaybreakClassification(
+            threadID,
+            generation,
+          ).catch(() => {});
+        });
+      }
+    });
+    state.threadClassificationKey = key;
+    state.commitQueue = state.threadClassificationPromise.catch(() => {});
+    return state.threadClassificationPromise;
+  }
+
   function selectionFromThreadSettings(settings) {
-    if (!settings || !state.modelCatalog) return null;
-    const catalogEntry = state.modelCatalog.find(
+    if (!settings || !state.modelCatalog || !state.officialModelCatalog) {
+      return null;
+    }
+    const selectableCatalogEntry = state.modelCatalog.find(
       (entry) => entry?.model === settings.model,
     );
-    if (!catalogEntry) {
+    const officialEntries = selectableCatalogEntry
+      ? [selectableCatalogEntry]
+      : state.officialModelCatalog.filter(
+          (entry) => entry?.model === settings.model,
+        );
+    const recognizedRows = officialEntries.length === 1
+      ? ALL_ROWS.filter((row) =>
+          rowMatchesDisplayName(row, officialEntries[0].displayName)
+        )
+      : [];
+    if (recognizedRows.length !== 1) {
       return {
         rowIndex: null,
         indexInRow: null,
@@ -1943,28 +2680,30 @@
       };
     }
 
+    const catalogEntry = officialEntries[0];
     const effort = settings.effort || settings.reasoningEffort || null;
     const effortIndex = EFFORTS.indexOf(effort);
-    const row = ROWS[catalogEntry.rowIndex];
+    const row = recognizedRows[0];
     if (effortIndex < 0 || !row.dots.includes(effortIndex + 1)) return null;
+    const fastMode = officialServiceTierFastState(
+      settings.serviceTier,
+      row.supportsFast ? catalogEntry.fastTierID : null,
+    );
+    if (fastMode === null) return null;
     return {
-      rowIndex: catalogEntry.rowIndex,
-      indexInRow: effortIndex,
+      rowIndex: selectableCatalogEntry ? selectableCatalogEntry.rowIndex : null,
+      indexInRow: selectableCatalogEntry ? effortIndex : null,
       modelName: row.name,
       effort,
-      fastMode: Boolean(
-        row.supportsFast &&
-        catalogEntry.fastTierID &&
-        settings.serviceTier === catalogEntry.fastTierID,
-      ),
+      fastMode,
     };
   }
 
-  function createSettingsWaiter(threadID, target) {
+  function createSettingsWaiter(threadID, target, afterGeneration) {
     let timeoutID = null;
     let waiter = null;
     const promise = new Promise((resolve, reject) => {
-      waiter = { threadID, target, resolve, reject };
+      waiter = { threadID, target, afterGeneration, resolve, reject };
       timeoutID = window.setTimeout(() => {
         state.settingsWaiters.delete(waiter);
         reject(new Error("Codex did not confirm the thread settings update."));
@@ -1983,22 +2722,178 @@
     };
   }
 
-  function confirmSettingsNotification(threadID, settings) {
-    if (threadID !== state.currentThreadID) return;
-    const confirmed = selectionFromThreadSettings(settings);
-    if (!confirmed) return;
+  function reconcileSettingsNotification(threadID, generation) {
+    const latest = state.latestThreadSettings.get(threadID);
+    if (
+      !latest ||
+      latest.generation !== generation ||
+      !state.modelCatalog ||
+      threadID !== state.currentThreadID
+    ) {
+      return;
+    }
+    const replayIsOlderThanActiveWaiter =
+      state.commitInFlight &&
+      state.commitThreadID === threadID &&
+      [...state.settingsWaiters].some(
+        (waiter) =>
+          waiter.threadID === threadID &&
+          generation <= waiter.afterGeneration,
+      );
+    if (replayIsOlderThanActiveWaiter) return;
+    const settings = latest.settings;
+    const trigger = findOfficialComposerTrigger();
+    const surface = trigger ? findPrimarySurface(trigger) : state.primarySurface;
+    const daybreakProgram = officialDaybreakProgramState(surface);
+    const composerRoot =
+      trigger?.closest("[data-codex-composer-root]") || null;
+    const liveLegacyModelProven =
+      state.daybreakClassification?.composerRoot === composerRoot &&
+      state.daybreakClassification?.kind === "legacy-model" &&
+      state.daybreakClassification?.structureGeneration ===
+        state.officialStructureMutationGeneration &&
+      state.daybreakClassification?.programGeneration ===
+        state.officialDaybreakProgramMutationGeneration;
+    const cachedLegacyModelProven =
+      latest.legacyModelProven === true &&
+      latest.legacyStructureGeneration ===
+        state.officialStructureMutationGeneration &&
+      latest.legacyProgramGeneration ===
+        state.officialDaybreakProgramMutationGeneration;
+    const legacyModelProven =
+      cachedLegacyModelProven || liveLegacyModelProven;
+    const daybreakStateAllowsConfirmation =
+      daybreakProgramAllowsBaseConfirmation(
+        daybreakProgram.present,
+        daybreakProgram.checked,
+        legacyModelProven,
+      );
+    if (!daybreakProgram.present && !legacyModelProven) {
+      if (!latest.intentInvalidated) {
+        cancelPendingKeyboardCommit();
+        state.officialInteractionEpoch += 1;
+        state.selectionRevision += 1;
+        latest.intentInvalidated = true;
+      }
+      latest.selection = null;
+      latest.reconciled = false;
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      applySelection({
+        rowIndex: null,
+        indexInRow: null,
+        modelName: "Other",
+        effort: null,
+        fastMode: false,
+      });
+      setSwitchState("loading");
+      return;
+    }
+    const daybreakBlocksConfirmation = !daybreakStateAllowsConfirmation;
+    const confirmed = daybreakBlocksConfirmation
+      ? null
+      : selectionFromThreadSettings(settings);
+    const firstReconciliation = latest.reconciled !== true;
+    latest.reconciled = true;
+    latest.selection = confirmed;
+    if (!daybreakProgram.present && confirmed && liveLegacyModelProven) {
+      latest.legacyModelProven = true;
+      latest.legacyStructureGeneration =
+        state.officialStructureMutationGeneration;
+      latest.legacyProgramGeneration =
+        state.officialDaybreakProgramMutationGeneration;
+    }
+    const matchingWaiters = confirmed
+      ? [...state.settingsWaiters].filter(
+          (waiter) =>
+            waiter.threadID === threadID &&
+            generation > waiter.afterGeneration &&
+            selectionsEqual(waiter.target, confirmed),
+        )
+      : [];
+    const expectedCurrentCommitNotification =
+      state.commitInFlight &&
+      state.commitThreadID === threadID &&
+      matchingWaiters.length > 0;
+    if (
+      firstReconciliation &&
+      !expectedCurrentCommitNotification &&
+      !latest.intentInvalidated
+    ) {
+      cancelPendingKeyboardCommit();
+      state.officialInteractionEpoch += 1;
+      state.selectionRevision += 1;
+      latest.intentInvalidated = true;
+    }
+    if (!confirmed) {
+      const error = new Error(daybreakBlocksConfirmation
+        ? "The current Codex Daybreak program state cannot confirm one base model."
+        : "Codex reported an unsupported effort or service tier for the current model.");
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      state.lastSwitchError = error;
+      applySelection({
+        rowIndex: null,
+        indexInRow: null,
+        modelName: "Other",
+        effort: null,
+        fastMode: false,
+      });
+      setSwitchState("error");
+      return;
+    }
 
     state.confirmedSelection = confirmed;
-    for (const waiter of [...state.settingsWaiters]) {
-      if (waiter.threadID !== threadID || !selectionsEqual(waiter.target, confirmed)) continue;
+    state.confirmedThreadID = threadID;
+    for (const waiter of matchingWaiters) {
       window.clearTimeout(waiter.timeoutID);
       state.settingsWaiters.delete(waiter);
-      waiter.resolve(confirmed);
+      waiter.resolve({ selection: confirmed, generation });
     }
-    if (!state.commitInFlight) {
+    if (!expectedCurrentCommitNotification) {
       applySelection(confirmed);
       setSwitchState("confirmed");
     }
+  }
+
+  function confirmSettingsNotification(threadID, settings) {
+    if (!isValidThreadID(threadID)) return;
+    const trigger = findOfficialComposerTrigger();
+    const liveThreadID = trigger
+      ? resolveCurrentThreadID(trigger)
+      : state.currentThreadID;
+    if (threadID === liveThreadID && state.currentThreadID !== liveThreadID) {
+      cancelPendingKeyboardCommit();
+      state.officialInteractionEpoch += 1;
+      state.selectionRevision += 1;
+      state.currentThreadID = liveThreadID;
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      state.daybreakClassification = null;
+      state.lastSwitchError = null;
+      state.officialSelectionDirty = true;
+    }
+    const generation = state.settingsNotificationGeneration + 1;
+    state.settingsNotificationGeneration = generation;
+    state.latestThreadSettings.set(threadID, {
+      generation,
+      legacyModelProven: false,
+      legacyStructureGeneration: null,
+      legacyProgramGeneration: null,
+      intentInvalidated: false,
+      selection: null,
+      settings: settings ? { ...settings } : null,
+      reconciled: false,
+    });
+    if (threadID !== liveThreadID) return;
+    reconcileSettingsNotification(threadID, generation);
+    const latest = state.latestThreadSettings.get(threadID);
+    if (latest?.generation === generation && latest.reconciled !== true) {
+      void ensureModelCatalog()
+        .then(() => refreshThreadDaybreakClassification(threadID, generation))
+        .catch(() => false);
+    }
+    if (state.officialSelectionDirty) scheduleSync();
   }
 
   function handleBridgeMessage(event) {
@@ -2034,31 +2929,6 @@
     }
   }
 
-  function officialSelectionFromDOM() {
-    const trigger = state.trigger?.isConnected ? state.trigger : findOpenTrigger();
-    if (!trigger) return null;
-    const text = String(trigger.textContent || "").replace(/\s+/g, " ").trim();
-    const rowIndex = ROWS.findIndex((row) => rowMatchesTriggerText(row, text));
-    const effort = trigger.getAttribute("data-selected-reasoning-effort") || "";
-    const effortIndex = EFFORTS.indexOf(effort);
-    if (
-      rowIndex < 0 ||
-      effortIndex < 0 ||
-      !ROWS[rowIndex].dots.includes(effortIndex + 1)
-    ) {
-      return null;
-    }
-    return {
-      rowIndex,
-      indexInRow: effortIndex,
-      modelName: ROWS[rowIndex].name,
-      effort,
-      fastMode: Boolean(
-        ROWS[rowIndex].supportsFast && readOfficialFastMode(state.primarySurface),
-      ),
-    };
-  }
-
   function officialControlIsUsable(element) {
     return Boolean(
       element instanceof HTMLElement &&
@@ -2070,7 +2940,16 @@
 
   function officialItemsInSurface(surface) {
     if (!surface) return [];
-    return [...surface.querySelectorAll(SECONDARY_ITEM_SELECTOR)].filter(
+    return [...surface.querySelectorAll(OFFICIAL_MENU_ITEM_SELECTOR)].filter(
+      (item) =>
+        officialControlIsUsable(item) &&
+        item.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+    );
+  }
+
+  function officialLeafItemsInSurface(surface) {
+    if (!surface) return [];
+    return [...surface.querySelectorAll(OFFICIAL_LEAF_ITEM_SELECTOR)].filter(
       (item) =>
         officialControlIsUsable(item) &&
         item.closest(PRIMARY_SURFACE_SELECTOR) === surface,
@@ -2078,7 +2957,6 @@
   }
 
   function findOfficialComposerTrigger() {
-    if (officialControlIsUsable(state.trigger)) return state.trigger;
     const candidates = [...document.querySelectorAll(TRIGGER_SELECTOR)].filter(
       officialControlIsUsable,
     );
@@ -2087,11 +2965,63 @@
         trigger.getAttribute("aria-expanded") === "true" ||
         trigger.getAttribute("data-state") === "open",
     );
-    if (openCandidates.length === 1) return openCandidates[0];
+    if (openCandidates.length > 0) {
+      return openCandidates.length === 1 ? openCandidates[0] : null;
+    }
     return candidates.length === 1 ? candidates[0] : null;
   }
 
-  function waitForOfficialState(predicate, failureMessage) {
+  function officialProxyContextTrigger(context) {
+    if (context?.interruptedByUserInput) return null;
+    const trigger = findOfficialComposerTrigger();
+    if (!trigger || !context?.composerRoot) return null;
+    const composerRoot = trigger.closest("[data-codex-composer-root]");
+    const expectedThreadID = context.threadID || null;
+    if (
+      composerRoot !== context.composerRoot ||
+      resolveCurrentThreadID(trigger) !== expectedThreadID
+    ) {
+      return null;
+    }
+    return trigger;
+  }
+
+  function installOfficialProxyInputGuard(context) {
+    const markInterrupted = (event) => {
+      if (!event.isTrusted) return;
+      const path = typeof event.composedPath === "function"
+        ? event.composedPath()
+        : [];
+      if (event.type === "click" && path.includes(state.popoverHost)) return;
+      if (!eventTargetsOfficialPicker(event)) return;
+      context.interruptedByUserInput = true;
+    };
+    const eventNames = ["pointerdown", "wheel", "keydown", "click"];
+    for (const eventName of eventNames) {
+      document.addEventListener(eventName, markInterrupted, true);
+    }
+    return () => {
+      for (const eventName of eventNames) {
+        document.removeEventListener(eventName, markInterrupted, true);
+      }
+    };
+  }
+
+  function assertOfficialProxyContext(context) {
+    const trigger = officialProxyContextTrigger(context);
+    if (!trigger) {
+      throw new Error(
+        "The original no-task composer changed during official selection.",
+      );
+    }
+    return trigger;
+  }
+
+  function waitForOfficialState(
+    predicate,
+    failureMessage,
+    timeoutMs = OFFICIAL_CONTROL_TIMEOUT_MS,
+  ) {
     return new Promise((resolve, reject) => {
       const startedAt = performance.now();
       let lastError = null;
@@ -2109,7 +3039,7 @@
         } catch (error) {
           lastError = error;
         }
-        if (performance.now() - startedAt >= OFFICIAL_CONTROL_TIMEOUT_MS) {
+        if (performance.now() - startedAt >= timeoutMs) {
           const suffix = lastError instanceof Error ? ` ${lastError.message}` : "";
           reject(new Error(`${failureMessage}${suffix}`));
           return;
@@ -2137,154 +3067,361 @@
     control.click();
   }
 
+  function pressOfficialComposerTrigger(control) {
+    if (!officialControlIsUsable(control)) {
+      throw new Error("The required official Codex trigger is unavailable.");
+    }
+    const rect = control.getBoundingClientRect();
+    const eventInit = {
+      bubbles: true,
+      cancelable: true,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2,
+      pointerId: 1,
+      pointerType: "mouse",
+      isPrimary: true,
+    };
+    control.focus({ preventScroll: true });
+    if (typeof PointerEvent === "function") {
+      control.dispatchEvent(new PointerEvent("pointerdown", {
+        ...eventInit,
+        button: 0,
+        buttons: 1,
+      }));
+      control.dispatchEvent(new PointerEvent("pointerup", {
+        ...eventInit,
+        button: 0,
+        buttons: 0,
+      }));
+      return true;
+    }
+    control.click();
+    return false;
+  }
+
   function isOfficialPrimarySurfaceForProxy(surface) {
+    const ownedSliders = surface
+      ? [...surface.querySelectorAll(REASONING_SLIDER_SELECTOR)].filter(
+        (slider) => slider.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+      )
+      : [];
+    const hasPowerLayout = ownedSliders.length > 0 && (
+      surfaceOwnsSelector(surface, PRIMARY_CONTROL_SELECTOR) ||
+      surfaceOwnsSelector(surface, MODEL_ROW_SELECTOR) ||
+      officialItemsInSurface(surface).length > 0
+    );
+    const hasMarkedFlatLayout =
+      surfaceOwnsSelector(surface, MODEL_ROW_SELECTOR) &&
+      surfaceOwnsSelector(surface, OFFICIAL_SELECTED_EFFORT_SELECTOR) &&
+      officialItemsInSurface(surface).length > 0;
+    const ownedItems = officialItemsInSurface(surface);
+    const structuralItems = officialItemsExcludingDaybreakProgram(
+      surface,
+      ownedItems,
+    );
+    const hasExactThreeFlyoutLayout =
+      surfaceOwnsSelector(surface, MODEL_ROW_SELECTOR) &&
+      Array.isArray(structuralItems) &&
+      structuralItems.length === 3 &&
+      structuralItems.every((item) =>
+        item.matches(OFFICIAL_SUBMENU_TRIGGER_SELECTOR)
+      );
     return Boolean(
       surface &&
       isVisible(surface) &&
+      !surface.closest("[aria-hidden='true'], [inert]") &&
       !surface.matches(SECONDARY_SURFACE_SELECTOR) &&
       !surface.closest(SECONDARY_SURFACE_SELECTOR) &&
-      surface.querySelector(REASONING_SLIDER_SELECTOR) &&
-      surface.querySelector(PRIMARY_CONTROL_SELECTOR),
+      (hasPowerLayout || hasMarkedFlatLayout || hasExactThreeFlyoutLayout),
     );
   }
 
   function findOfficialPrimarySurfaceForProxy(trigger) {
-    if (isOfficialPrimarySurfaceForProxy(state.primarySurface)) {
-      return state.primarySurface;
-    }
     const controlledID = trigger?.getAttribute("aria-controls");
     if (controlledID) {
       const controlled = document.getElementById(controlledID);
-      if (isOfficialPrimarySurfaceForProxy(controlled)) return controlled;
+      return isOfficialPrimarySurfaceForProxy(controlled) ? controlled : null;
     }
 
     const candidates = [...document.querySelectorAll(PRIMARY_SURFACE_SELECTOR)]
       .filter(isOfficialPrimarySurfaceForProxy);
-    if (candidates.length === 0) return null;
-    const triggerRect = trigger.getBoundingClientRect();
-    return candidates.sort((left, right) => {
-      const score = (surface) => {
-        const rect = surface.getBoundingClientRect();
-        return Math.hypot(
-          rect.left + rect.width / 2 - (triggerRect.left + triggerRect.width / 2),
-          rect.top + rect.height / 2 - (triggerRect.top + triggerRect.height / 2),
-        );
-      };
-      return score(left) - score(right);
-    })[0];
+    return candidates.length === 1 ? candidates[0] : null;
   }
 
-  async function ensureOfficialPrimaryOpen() {
+  function currentOpenOfficialPrimaryTarget() {
     const trigger = findOfficialComposerTrigger();
+    if (!trigger) return null;
+    if (
+      trigger.getAttribute("aria-expanded") !== "true" &&
+      trigger.getAttribute("data-state") !== "open"
+    ) {
+      return null;
+    }
+    const surface = findOfficialPrimarySurfaceForProxy(trigger);
+    return surface ? { trigger, surface } : null;
+  }
+
+  async function ensureOfficialPrimaryOpen(context) {
+    const trigger = context?.composerRoot
+      ? assertOfficialProxyContext(context)
+      : findOfficialComposerTrigger();
     if (!trigger) {
       throw new Error("Copicker could not resolve one exact official model trigger.");
     }
 
-    const existingSurface = findOfficialPrimarySurfaceForProxy(trigger);
-    if (
-      existingSurface &&
-      (trigger.getAttribute("aria-expanded") === "true" ||
-        trigger.getAttribute("data-state") === "open")
-    ) {
-      state.trigger = trigger;
-      state.primarySurface = existingSurface;
-      return { trigger, surface: existingSurface };
+    const existing = currentOpenOfficialPrimaryTarget();
+    if (existing) {
+      state.trigger = existing.trigger;
+      state.primarySurface = existing.surface;
+      return existing;
     }
 
-    clickOfficialControl(trigger);
-    const target = await waitForOfficialState(() => {
-      const currentTrigger = findOfficialComposerTrigger();
-      if (!currentTrigger) return null;
-      if (
-        currentTrigger.getAttribute("aria-expanded") !== "true" &&
-        currentTrigger.getAttribute("data-state") !== "open"
-      ) {
-        return null;
+    if (context?.composerRoot) assertOfficialProxyContext(context);
+    const usedPointerEvents = pressOfficialComposerTrigger(trigger);
+    let target = null;
+    if (usedPointerEvents) {
+      try {
+        target = await waitForOfficialState(
+          currentOpenOfficialPrimaryTarget,
+          "The pointer-down model picker activation did not open.",
+          OFFICIAL_POINTER_OPEN_GRACE_MS,
+        );
+      } catch (error) {
+        if (state.disposed) throw error;
       }
-      const surface = findOfficialPrimarySurfaceForProxy(currentTrigger);
-      return surface ? { trigger: currentTrigger, surface } : null;
-    }, "The official model picker did not open.");
+      if (!target) {
+        const fallbackTrigger = context?.composerRoot
+          ? assertOfficialProxyContext(context)
+          : findOfficialComposerTrigger();
+        if (!fallbackTrigger) {
+          throw new Error("Copicker could not re-resolve the official model trigger.");
+        }
+        const reportsOpen =
+          fallbackTrigger.getAttribute("aria-expanded") === "true" ||
+          fallbackTrigger.getAttribute("data-state") === "open";
+        if (!reportsOpen) {
+          if (context?.composerRoot) assertOfficialProxyContext(context);
+          clickOfficialControl(fallbackTrigger);
+        }
+      }
+    }
+    target ||= await waitForOfficialState(
+      currentOpenOfficialPrimaryTarget,
+      "The official model picker did not open.",
+    );
+    if (context?.composerRoot) assertOfficialProxyContext(context);
     state.trigger = target.trigger;
     state.primarySurface = target.surface;
     return target;
   }
 
+  function currentOfficialCatalogEntry(
+    trigger = findOfficialComposerTrigger(),
+  ) {
+    if (!trigger || !state.officialModelCatalog) return null;
+    const matches = state.officialModelCatalog.filter((entry) =>
+      officialElementMatchesModelLabels(trigger, [entry.displayName]),
+    );
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  function currentOfficialEffortExpectation(surface) {
+    const trigger = findOfficialComposerTrigger();
+    const catalogEntry =
+      currentOfficialCatalogEntry(trigger) ||
+      currentOfficialCatalogEntryFromModelRow(surface);
+    if (!trigger || !catalogEntry) return null;
+    const effort = trigger.getAttribute("data-selected-reasoning-effort") || "";
+    const selectedIndex = catalogEntry?.supportedEffortOrder.indexOf(effort) ?? -1;
+    if (selectedIndex < 0) return null;
+    return {
+      count: catalogEntry.supportedEffortOrder.length,
+      selectedIndex,
+    };
+  }
+
   function officialAdvancedRows(surface) {
     const modelTriggers = [...surface.querySelectorAll(MODEL_ROW_SELECTOR)]
-      .map((label) => label.closest(SECONDARY_ITEM_SELECTOR))
+      .map((label) => label.closest(OFFICIAL_MENU_ITEM_SELECTOR))
       .filter(
         (item) =>
           officialControlIsUsable(item) &&
           item.closest(PRIMARY_SURFACE_SELECTOR) === surface,
       );
     const uniqueModelTriggers = [...new Set(modelTriggers)];
-    if (uniqueModelTriggers.length !== 1) return null;
+    if (uniqueModelTriggers.length > 1) return null;
 
-    const modelTrigger = uniqueModelTriggers[0];
-    const activePanel = modelTrigger.closest("[data-active='true']");
-    const rowItems = officialItemsInSurface(surface).filter(
-      (item) => !activePanel || activePanel.contains(item),
+    const activePanels = [...surface.querySelectorAll("[data-active='true']")]
+      .filter(
+        (panel) =>
+          officialControlIsUsable(panel) &&
+          panel.closest(PRIMARY_SURFACE_SELECTOR) === surface,
+      );
+    let modelTrigger = uniqueModelTriggers[0] || null;
+    let rowScope = surface;
+    if (modelTrigger) {
+      const activePanel = modelTrigger.closest("[data-active='true']");
+      if (
+        activePanel &&
+        officialControlIsUsable(activePanel) &&
+        activePanel.closest(PRIMARY_SURFACE_SELECTOR) === surface
+      ) {
+        if (activePanels.length !== 1 || activePanels[0] !== activePanel) {
+          return null;
+        }
+        rowScope = activePanel;
+      } else if (activePanels.length > 0) {
+        return null;
+      }
+    } else {
+      if (activePanels.length !== 1) return null;
+      rowScope = activePanels[0];
+    }
+    let rowItems = officialItemsInSurface(surface).filter(
+      (item) => rowScope === surface || rowScope.contains(item),
     );
-    const modelIndex = rowItems.indexOf(modelTrigger);
-    if (modelIndex < 0) return null;
+    rowItems = officialItemsExcludingDaybreakProgram(surface, rowItems);
+    if (!rowItems) return null;
+    const modelIndex = modelTrigger ? rowItems.indexOf(modelTrigger) : -1;
+    if (modelTrigger && modelIndex < 0) return null;
+    const selectedEffortIndices = rowItems.flatMap((item, index) =>
+      item.matches(OFFICIAL_SELECTED_EFFORT_SELECTOR) ||
+          item.querySelector(OFFICIAL_SELECTED_EFFORT_SELECTOR)
+        ? [index]
+        : [],
+    );
+    const submenuIndices = rowItems.flatMap((item, index) =>
+      item.matches(OFFICIAL_SUBMENU_TRIGGER_SELECTOR) ? [index] : [],
+    );
+    const effortExpectation = currentOfficialEffortExpectation(surface);
+    const layout = officialAdvancedLayout(
+      rowItems.length,
+      modelIndex,
+      selectedEffortIndices,
+      submenuIndices,
+      effortExpectation?.count ?? null,
+      effortExpectation?.selectedIndex ?? null,
+    );
+    if (!layout) return null;
+    modelTrigger = rowItems[layout.modelIndex] || null;
+    if (!modelTrigger) return null;
     return {
       modelTrigger,
-      effortTrigger: rowItems[modelIndex + 1] || null,
-      speedTrigger: rowItems[modelIndex + 2] || null,
+      effortTrigger: Number.isInteger(layout.effortIndex)
+        ? rowItems[layout.effortIndex] || null
+        : null,
+      effortItems: Array.isArray(layout.effortIndices)
+        ? layout.effortIndices.map((index) => rowItems[index]).filter(Boolean)
+        : null,
+      speedTrigger: rowItems[layout.speedIndex] || null,
+      layoutKind: layout.kind,
     };
   }
 
-  async function ensureOfficialAdvancedRows(context) {
-    const primary = await ensureOfficialPrimaryOpen();
-    const existingRows = officialAdvancedRows(primary.surface);
-    if (existingRows) return { surface: primary.surface, rows: existingRows };
-
-    const toggles = [...primary.surface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)]
+  function officialAdvancedToggleTarget() {
+    const trigger = findOfficialComposerTrigger();
+    const surface = trigger ? findOfficialPrimarySurfaceForProxy(trigger) : null;
+    if (!surface) return null;
+    const rows = officialAdvancedRows(surface);
+    if (rows) return { rows, surface };
+    const toggles = [...surface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)]
       .filter(
         (control) =>
           control.matches("[data-model-picker-view-toggle]") &&
+          control.getAttribute("aria-expanded") !== "true" &&
           officialControlIsUsable(control) &&
-          control.closest(PRIMARY_SURFACE_SELECTOR) === primary.surface,
+          control.closest(PRIMARY_SURFACE_SELECTOR) === surface,
       );
-    if (toggles.length !== 1) {
-      throw new Error("The official Advanced control is unavailable or ambiguous.");
+    return toggles.length === 1
+      ? { control: toggles[0], surface }
+      : null;
+  }
+
+  async function ensureOfficialAdvancedRows(context) {
+    if (context?.composerRoot) assertOfficialProxyContext(context);
+    const primary = await ensureOfficialPrimaryOpen(context);
+    const existingRows = officialAdvancedRows(primary.surface);
+    if (existingRows) return { surface: primary.surface, rows: existingRows };
+
+    const toggleTarget = await waitForOfficialState(
+      officialAdvancedToggleTarget,
+      "The official Advanced control stayed unavailable or ambiguous.",
+      OFFICIAL_TRANSIENT_CONTROL_TIMEOUT_MS,
+    );
+    if (toggleTarget.rows) {
+      state.primarySurface = toggleTarget.surface;
+      return { surface: toggleTarget.surface, rows: toggleTarget.rows };
     }
-    clickOfficialControl(toggles[0]);
+    state.primarySurface = toggleTarget.surface;
+    assertOfficialProxyContext(context);
+    context.expandedAdvanced = true;
+    context.advancedSourceSurface = toggleTarget.surface;
+    clickOfficialControl(toggleTarget.control);
     const advanced = await waitForOfficialState(() => {
       const trigger = findOfficialComposerTrigger();
       const surface = trigger ? findOfficialPrimarySurfaceForProxy(trigger) : null;
       const rows = surface ? officialAdvancedRows(surface) : null;
       return surface && rows ? { surface, rows } : null;
     }, "The official Advanced model controls did not open.");
-    context.expandedAdvanced = true;
+    assertOfficialProxyContext(context);
     state.primarySurface = advanced.surface;
     return advanced;
   }
 
   async function restoreOfficialPickerView(context) {
     if (!context.expandedAdvanced) return;
-    const primary = await ensureOfficialPrimaryOpen();
-    if (!officialAdvancedRows(primary.surface)) {
+    if (context?.composerRoot && !officialProxyContextTrigger(context)) {
       context.expandedAdvanced = false;
       return;
     }
-    const toggles = [...primary.surface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)]
+    const fallbackPrimary = context.advancedSourceSurface?.isConnected &&
+        isVisible(context.advancedSourceSurface)
+      ? { surface: context.advancedSourceSurface }
+      : await ensureOfficialPrimaryOpen(context);
+    const surface = fallbackPrimary.surface;
+    const toggles = [...surface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)]
       .filter(
         (control) =>
           control.matches("[data-model-picker-view-toggle]") &&
           officialControlIsUsable(control) &&
-          control.closest(PRIMARY_SURFACE_SELECTOR) === primary.surface,
+          control.closest(PRIMARY_SURFACE_SELECTOR) === surface,
       );
-    if (toggles.length !== 1) {
+    if (toggles.length > 1) {
       throw new Error("Copicker could not restore the official compact picker view.");
     }
+    if (toggles.length === 0) {
+      context.expandedAdvanced = false;
+      return;
+    }
+    if (toggles[0].getAttribute("aria-expanded") !== "true") {
+      context.expandedAdvanced = false;
+      return;
+    }
+    assertOfficialProxyContext(context);
     clickOfficialControl(toggles[0]);
     const compact = await waitForOfficialState(() => {
       const trigger = findOfficialComposerTrigger();
-      const surface = trigger ? findOfficialPrimarySurfaceForProxy(trigger) : null;
-      return surface && !officialAdvancedRows(surface) ? { trigger, surface } : null;
+      const currentSurface = context.advancedSourceSurface?.isConnected
+        ? context.advancedSourceSurface
+        : trigger
+          ? findOfficialPrimarySurfaceForProxy(trigger)
+          : null;
+      const currentToggle = currentSurface
+        ? [...currentSurface.querySelectorAll(PRIMARY_CONTROL_SELECTOR)].find(
+            (control) =>
+              control.matches("[data-model-picker-view-toggle]") &&
+              officialControlIsUsable(control) &&
+              control.closest(PRIMARY_SURFACE_SELECTOR) === currentSurface,
+          )
+        : null;
+      return trigger && currentSurface && currentToggle &&
+          currentToggle.getAttribute("aria-expanded") !== "true"
+        ? { trigger, surface: currentSurface }
+        : null;
     }, "The official picker did not return to its original compact view.");
+    assertOfficialProxyContext(context);
     context.expandedAdvanced = false;
+    context.advancedSourceSurface = null;
     state.trigger = compact.trigger;
     state.primarySurface = compact.surface;
   }
@@ -2297,13 +3434,15 @@
         controlled &&
         controlled !== primarySurface &&
         isVisible(controlled) &&
+        !primarySurface.contains(controlled) &&
+        !controlled.contains(primarySurface) &&
         predicate(controlled)
       ) {
         return controlled;
       }
+      return null;
     }
 
-    const triggerRect = trigger.getBoundingClientRect();
     const candidates = [...document.querySelectorAll(PRIMARY_SURFACE_SELECTOR)]
       .filter(
         (surface) =>
@@ -2313,56 +3452,64 @@
           !surface.contains(primarySurface) &&
           predicate(surface),
       );
-    return candidates.sort((left, right) => {
-      const score = (surface) => {
-        const rect = surface.getBoundingClientRect();
-        return Math.hypot(
-          rect.left + rect.width / 2 - (triggerRect.left + triggerRect.width / 2),
-          rect.top + rect.height / 2 - (triggerRect.top + triggerRect.height / 2),
-        );
-      };
-      return score(left) - score(right);
-    })[0] || null;
+    return candidates.length === 1 ? candidates[0] : null;
   }
 
-  async function openOfficialSubmenu(trigger, primarySurface, predicate, failureMessage) {
+  async function openOfficialSubmenu(
+    trigger,
+    primarySurface,
+    predicate,
+    failureMessage,
+    context,
+  ) {
     const existing = findOfficialSubmenuSurface(trigger, primarySurface, predicate);
     if (existing) return existing;
+    if (context?.composerRoot) assertOfficialProxyContext(context);
     clickOfficialControl(trigger);
-    return waitForOfficialState(
+    const submenu = await waitForOfficialState(
       () => findOfficialSubmenuSurface(trigger, primarySurface, predicate),
       failureMessage,
     );
+    if (context?.composerRoot) assertOfficialProxyContext(context);
+    return submenu;
   }
 
-  function officialModelTextCandidates(row, catalogEntry) {
-    const values = new Set([
-      catalogEntry?.displayName,
-      ...row.catalogDisplayNames,
-    ].filter(Boolean));
-    for (const value of [...values]) {
-      values.add(String(value).replace(/^GPT[-\s]*/i, ""));
-    }
-    return [...values]
-      .map(normalizedDisplayName)
-      .filter((value) => value.length >= 3)
-      .sort((left, right) => right.length - left.length);
+  function officialModelItems(surface, catalogEntry) {
+    if (!catalogEntry?.displayName) return [];
+    return officialLeafItemsInSurface(surface).filter((item) =>
+      officialElementMatchesModelLabels(item, [catalogEntry.displayName]),
+    );
   }
 
-  function officialModelItems(surface, row, catalogEntry) {
-    const candidates = officialModelTextCandidates(row, catalogEntry);
-    return officialItemsInSurface(surface).filter((item) => {
-      const itemText = normalizedDisplayName(item.textContent);
-      return candidates.some(
-        (candidate) => itemText === candidate || itemText.startsWith(candidate),
-      );
-    });
+  function officialSelectedLeafIndex(items) {
+    const selectedIndices = items.flatMap((item, index) =>
+      item.querySelector(OFFICIAL_CHECK_ICON_SELECTOR) ? [index] : [],
+    );
+    return selectedIndices.length === 1 ? selectedIndices[0] : null;
   }
 
-  async function selectOfficialModel(row, catalogEntry, context) {
-    const currentTrigger = findOfficialComposerTrigger();
-    if (currentTrigger && rowMatchesTriggerText(row, currentTrigger.textContent)) return;
+  function officialLeafSemanticSignature(item) {
+    if (!(item instanceof Element)) return "";
+    const ariaLabel = String(item.getAttribute("aria-label") || "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (ariaLabel) return `aria:${ariaLabel}`;
+    const textValues = officialElementTextValues(item).filter(Boolean);
+    return textValues.length > 0 ? `text:${textValues.join("\u001f")}` : "";
+  }
 
+  function officialSelectedModelCatalogEntry(surface) {
+    if (!state.officialModelCatalog) return null;
+    const items = officialLeafItemsInSurface(surface);
+    const selectedIndex = officialSelectedLeafIndex(items);
+    if (!Number.isInteger(selectedIndex) || !items[selectedIndex]) return null;
+    const matches = state.officialModelCatalog.filter((entry) =>
+      officialElementMatchesModelLabels(items[selectedIndex], [entry.displayName]),
+    );
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  async function currentOfficialCatalogEntryFromControls(context) {
     const { surface, rows } = await ensureOfficialAdvancedRows(context);
     if (!rows?.modelTrigger) {
       throw new Error("The official Model row is unavailable or ambiguous.");
@@ -2370,39 +3517,199 @@
     const submenu = await openOfficialSubmenu(
       rows.modelTrigger,
       surface,
-      (candidate) => officialModelItems(candidate, row, catalogEntry).length === 1,
-      "The official Model submenu did not expose one exact target model.",
+      (candidate) => Boolean(officialSelectedModelCatalogEntry(candidate)),
+      "The official Model submenu did not expose one exact current model.",
+      context,
     );
-    const matches = officialModelItems(submenu, row, catalogEntry);
+    const catalogEntry = officialSelectedModelCatalogEntry(submenu);
+    if (!catalogEntry) {
+      throw new Error("The current official model selection is ambiguous.");
+    }
+    return catalogEntry;
+  }
+
+  async function confirmOfficialModelSelection(catalogEntry, context) {
+    const { surface, rows } = await ensureOfficialAdvancedRows(context);
+    if (!rows?.modelTrigger) {
+      throw new Error("The official Model row is unavailable for confirmation.");
+    }
+    const submenu = await openOfficialSubmenu(
+      rows.modelTrigger,
+      surface,
+      (candidate) => officialModelItems(candidate, catalogEntry).length === 1,
+      "The official Model submenu did not reopen for confirmation.",
+      context,
+    );
+    await waitForOfficialState(() => {
+      const items = officialLeafItemsInSurface(submenu);
+      const matches = officialModelItems(submenu, catalogEntry);
+      const selectedIndex = officialSelectedLeafIndex(items);
+      return matches.length === 1 &&
+          Number.isInteger(selectedIndex) &&
+          items[selectedIndex] === matches[0]
+        ? matches[0]
+        : null;
+    }, "Codex did not mark the selected model through its official control.");
+    return {
+      kind: "selected-model-leaf",
+      model: catalogEntry.model,
+      rowIndex: catalogEntry.rowIndex,
+    };
+  }
+
+  async function resolveOfficialModelTarget(catalogEntry, context) {
+    const { surface, rows } = await ensureOfficialAdvancedRows(context);
+    if (!rows?.modelTrigger) {
+      throw new Error("The official Model row is unavailable or ambiguous.");
+    }
+    const submenu = await openOfficialSubmenu(
+      rows.modelTrigger,
+      surface,
+      (candidate) => officialModelItems(candidate, catalogEntry).length === 1,
+      "The official Model submenu did not expose one exact target model.",
+      context,
+    );
+    const matches = officialModelItems(submenu, catalogEntry);
     if (matches.length !== 1) {
       throw new Error("The official target model control is unavailable or ambiguous.");
     }
-    clickOfficialControl(matches[0]);
-    const trigger = await waitForOfficialState(() => {
-      const candidate = findOfficialComposerTrigger();
-      return candidate && rowMatchesTriggerText(row, candidate.textContent)
-        ? candidate
-        : null;
-    }, "Codex did not confirm the model selected through its official control.");
-    state.trigger = trigger;
+    return matches[0];
   }
 
-  async function selectOfficialEffort(effort, catalogEntry, context) {
-    const currentTrigger = findOfficialComposerTrigger();
-    if (currentTrigger?.getAttribute("data-selected-reasoning-effort") === effort) return;
-
-    const { surface, rows } = await ensureOfficialAdvancedRows(context);
-    if (!rows?.effortTrigger) {
-      throw new Error("The official Effort row is unavailable or ambiguous.");
+  async function assertOfficialDaybreakSelectionPolicyReady(
+    selection,
+    context,
+  ) {
+    const advanced = await ensureOfficialAdvancedRows(context);
+    const initialProgram = officialDaybreakProgramState(advanced.surface);
+    if (initialProgram.present) {
+      assertOfficialDaybreakSelectionPolicy(selection, advanced.surface);
+      context.expectedDaybreakState = { kind: "program-off" };
+      state.daybreakClassification = {
+        composerRoot: context.composerRoot,
+        kind: "program-off",
+        structureGeneration: state.officialStructureMutationGeneration,
+        programGeneration: state.officialDaybreakProgramMutationGeneration,
+      };
+      return;
     }
+
+    const daybreakRow = ALL_ROWS.find((row) => row.id === "daybreak-blue");
+    const rawEntries = state.officialModelCatalog?.filter((entry) =>
+      rowMatchesDisplayName(daybreakRow, entry?.displayName)
+    ) || [];
+    if (rawEntries.length !== 1 || !advanced.rows?.modelTrigger) {
+      throw new Error("The Codex Daybreak program state is ambiguous.");
+    }
+
     const submenu = await openOfficialSubmenu(
-      rows.effortTrigger,
-      surface,
-      (candidate) => Boolean(candidate.querySelector("[data-reasoning-selected='true']")),
-      "The official Effort submenu did not open.",
+      advanced.rows.modelTrigger,
+      advanced.surface,
+      (candidate) => officialLeafItemsInSurface(candidate).length > 0,
+      "The official Model submenu did not open for Daybreak classification.",
+      context,
     );
-    const items = officialItemsInSurface(submenu);
+    const currentProgram = officialDaybreakProgramState(advanced.surface);
+    if (currentProgram.present) {
+      assertOfficialDaybreakSelectionPolicy(selection, advanced.surface);
+      context.expectedDaybreakState = { kind: "program-off" };
+      state.daybreakClassification = {
+        composerRoot: context.composerRoot,
+        kind: "program-off",
+        structureGeneration: state.officialStructureMutationGeneration,
+        programGeneration: state.officialDaybreakProgramMutationGeneration,
+      };
+      return;
+    }
+    if (officialModelItems(submenu, rawEntries[0]).length !== 1) {
+      throw new Error(
+        "The Codex Daybreak program is loading or lacks an explicit base-model policy.",
+      );
+    }
+    if (!context?.allowLegacyDaybreakReadOnly) {
+      throw new Error(
+        "Legacy Daybreak availability cannot be held atomically across a settings mutation.",
+      );
+    }
+    context.expectedDaybreakState = {
+      kind: "legacy-model",
+      structureGeneration: state.officialStructureMutationGeneration,
+      programGeneration: state.officialDaybreakProgramMutationGeneration,
+    };
+    state.daybreakClassification = {
+      composerRoot: context.composerRoot,
+      kind: "legacy-model",
+      structureGeneration: state.officialStructureMutationGeneration,
+      programGeneration: state.officialDaybreakProgramMutationGeneration,
+    };
+  }
+
+  function assertOfficialDaybreakStateUnchanged(context) {
+    const expected = context?.expectedDaybreakState;
+    if (!expected) return;
+    const trigger = assertOfficialProxyContext(context);
+    const surface = findOfficialPrimarySurfaceForProxy(trigger);
+    const current = officialDaybreakProgramState(surface);
+    const unchanged = expected.kind === "program-off"
+      ? current.present && current.checked === false
+      : expected.kind === "legacy-model"
+        ? !current.present &&
+          expected.structureGeneration ===
+            state.officialStructureMutationGeneration &&
+          expected.programGeneration ===
+            state.officialDaybreakProgramMutationGeneration
+        : false;
+    if (!unchanged) {
+      const error = new Error(
+        "The Codex Daybreak program state changed during selection.",
+      );
+      error.externalOfficialStateChanged = true;
+      throw error;
+    }
+  }
+
+  async function selectOfficialModel(catalogEntry, context, options) {
+    const currentTrigger = findOfficialComposerTrigger();
+    if (
+      currentTrigger &&
+      officialElementMatchesModelLabels(currentTrigger, [catalogEntry.displayName])
+    ) {
+      return;
+    }
+
+    const target = await resolveOfficialModelTarget(catalogEntry, context);
+    assertOfficialProxyContext(context);
+    beforeOfficialSettingMutation(context, options, {
+      modelSurface: target.closest(PRIMARY_SURFACE_SELECTOR),
+    });
+    clickOfficialControl(target);
+    const confirmation = await confirmOfficialModelSelection(catalogEntry, context);
+    state.trigger = findOfficialComposerTrigger();
+    return confirmation;
+  }
+
+  async function resolveOfficialEffortTarget(effort, catalogEntry, context) {
+    const { surface, rows } = await ensureOfficialAdvancedRows(context);
     const effortOrder = catalogEntry.supportedEffortOrder;
+    let items = rows?.effortItems;
+    if (!items) {
+      if (!rows?.effortTrigger) {
+        throw new Error("The official Effort row is unavailable or ambiguous.");
+      }
+      const submenu = await openOfficialSubmenu(
+        rows.effortTrigger,
+        surface,
+        (candidate) =>
+          officialLeafItemsInSurface(candidate).length === effortOrder.length &&
+          (
+            rows.layoutKind === "power-submenus" ||
+            Boolean(candidate.querySelector(OFFICIAL_SELECTED_EFFORT_SELECTOR))
+        ),
+        "The official Effort submenu did not open.",
+        context,
+      );
+      items = officialLeafItemsInSurface(submenu);
+    }
     if (items.length !== effortOrder.length) {
       throw new Error("The official Effort menu no longer matches the model catalog.");
     }
@@ -2410,7 +3717,21 @@
     if (targetIndex < 0 || !items[targetIndex]) {
       throw new Error("The selected effort has no exact official control.");
     }
-    clickOfficialControl(items[targetIndex]);
+    return items[targetIndex];
+  }
+
+  async function selectOfficialEffort(effort, catalogEntry, context, options) {
+    const currentTrigger = findOfficialComposerTrigger();
+    if (currentTrigger?.getAttribute("data-selected-reasoning-effort") === effort) return;
+
+    const target = await resolveOfficialEffortTarget(
+      effort,
+      catalogEntry,
+      context,
+    );
+    assertOfficialProxyContext(context);
+    beforeOfficialSettingMutation(context, options);
+    clickOfficialControl(target);
     const trigger = await waitForOfficialState(() => {
       const candidate = findOfficialComposerTrigger();
       return candidate?.getAttribute("data-selected-reasoning-effort") === effort
@@ -2420,71 +3741,568 @@
     state.trigger = trigger;
   }
 
-  async function selectOfficialFastMode(enabled, catalogEntry, context) {
-    const primary = await ensureOfficialPrimaryOpen();
-    const surface = primary.surface;
-    if (readOfficialFastMode(surface) === enabled) return;
-
+  async function officialServiceTierItems(
+    catalogEntry,
+    context,
+    failureMessage,
+  ) {
     const advanced = await ensureOfficialAdvancedRows(context);
-    const rows = advanced.rows;
-    if (!rows?.speedTrigger) {
+    if (!advanced.rows?.speedTrigger) {
       throw new Error("The official Speed row is unavailable or ambiguous.");
     }
-    const expectedCount = catalogEntry?.serviceTierOptionCount || null;
+    const expectedCount = catalogEntry?.serviceTierOptionCount;
+    if (!Number.isInteger(expectedCount) || expectedCount < 1) {
+      throw new Error("The official Speed catalog is unavailable or ambiguous.");
+    }
     const submenu = await openOfficialSubmenu(
-      rows.speedTrigger,
+      advanced.rows.speedTrigger,
       advanced.surface,
       (candidate) => {
-        if (candidate.querySelector("[data-reasoning-selected='true']")) return false;
-        const itemCount = officialItemsInSurface(candidate).length;
-        return expectedCount
-          ? itemCount === expectedCount
-          : itemCount >= 2 && itemCount <= 4;
+        if (candidate.querySelector(OFFICIAL_SELECTED_EFFORT_SELECTOR)) return false;
+        return officialLeafItemsInSurface(candidate).length === expectedCount;
       },
-      "The official Speed submenu did not open.",
+      failureMessage,
+      context,
     );
-    const items = officialItemsInSurface(submenu);
-    const targetIndex = enabled ? catalogEntry?.fastTierOptionIndex : 0;
-    if (!Number.isInteger(targetIndex) || !items[targetIndex]) {
-      throw new Error("The selected speed tier has no exact official control.");
+    const items = officialLeafItemsInSurface(submenu);
+    if (items.length !== expectedCount) {
+      throw new Error("The official Speed menu no longer matches the model catalog.");
     }
-    clickOfficialControl(items[targetIndex]);
-    const reopened = await ensureOfficialPrimaryOpen();
-    await waitForOfficialState(
-      () => readOfficialFastMode(reopened.surface) === enabled,
-      "Codex did not confirm the speed selected through its official control.",
-    );
+    const selectedIndex = officialSelectedLeafIndex(items);
+    const selectedLeafSignature = Number.isInteger(selectedIndex)
+      ? officialLeafSemanticSignature(items[selectedIndex])
+      : "";
+    if (!selectedLeafSignature) {
+      throw new Error("The official Speed selection lacks an exact semantic signature.");
+    }
+    return { items, submenu, selectedIndex, selectedLeafSignature };
   }
 
-  async function performOfficialControlProxy(selection, catalogEntry) {
-    const row = ROWS[selection.rowIndex];
-    const context = { expandedAdvanced: false };
+  async function readOfficialSelectionBaselineSnapshot(context) {
+    const catalogEntry = await currentOfficialCatalogEntryFromControls(context);
+    if (!catalogEntry || catalogEntry.hidden) {
+      throw new Error(
+        "The current official model cannot be restored through one selectable Model leaf.",
+      );
+    }
+    const trigger = findOfficialComposerTrigger();
+    const effort = trigger?.getAttribute("data-selected-reasoning-effort") || "";
+    if (!catalogEntry.supportedEffortOrder.includes(effort)) {
+      throw new Error("The current official effort cannot be restored exactly.");
+    }
+    await resolveOfficialModelTarget(catalogEntry, context);
+    await resolveOfficialEffortTarget(effort, catalogEntry, context);
+    const speed = await officialServiceTierItems(
+      catalogEntry,
+      context,
+      "The current official Speed submenu did not open for rollback capture.",
+    );
+    const serviceTierOptionIndex = speed.selectedIndex;
+    if (!Number.isInteger(serviceTierOptionIndex)) {
+      throw new Error("The current official Speed tier cannot be restored exactly.");
+    }
+    const verifiedCatalogEntry = await currentOfficialCatalogEntryFromControls(context);
+    const verifiedTrigger = assertOfficialProxyContext(context);
+    const verifiedEffort =
+      verifiedTrigger.getAttribute("data-selected-reasoning-effort") || "";
+    const verifiedSpeed = await officialServiceTierItems(
+      catalogEntry,
+      context,
+      "The current official Speed submenu did not reopen for rollback verification.",
+    );
+    if (
+      verifiedCatalogEntry.model !== catalogEntry.model ||
+      verifiedEffort !== effort ||
+      verifiedSpeed.items.length !== speed.items.length ||
+      verifiedSpeed.selectedIndex !== serviceTierOptionIndex ||
+      verifiedSpeed.selectedLeafSignature !== speed.selectedLeafSignature
+    ) {
+      throw new Error("The current official selection changed during capture.");
+    }
+    return {
+      catalogEntry,
+      effort,
+      serviceTierOptionIndex,
+      serviceTierOptionCount: speed.items.length,
+      serviceTierLeafSignature: speed.selectedLeafSignature,
+    };
+  }
+
+  async function captureOfficialSelectionBaseline(
+    context,
+    { requireRestorableStandard = true } = {},
+  ) {
+    const first = await readOfficialSelectionBaselineSnapshot(context);
+    const second = await readOfficialSelectionBaselineSnapshot(context);
+    if (
+      second.catalogEntry.model !== first.catalogEntry.model ||
+      second.effort !== first.effort ||
+      second.serviceTierOptionIndex !== first.serviceTierOptionIndex ||
+      second.serviceTierOptionCount !== first.serviceTierOptionCount ||
+      second.serviceTierLeafSignature !== first.serviceTierLeafSignature
+    ) {
+      throw new Error("The current official selection changed during capture.");
+    }
+    if (
+      requireRestorableStandard &&
+      second.serviceTierOptionIndex === 0 &&
+      !officialServiceTierTransitionPlan(
+        0,
+        0,
+        second.serviceTierOptionCount,
+        second.catalogEntry.fastTierOptionIndex,
+      )
+    ) {
+      throw new Error(
+        "The current Standard tier cannot be normalized through a Fast transition.",
+      );
+    }
+    return {
+      ...second,
+      requiresStandardNormalization: second.serviceTierOptionIndex === 0,
+    };
+  }
+
+  function coPickerSelectionFromOfficialBaseline(baseline) {
+    const catalogEntry = state.modelCatalog?.find(
+      (entry) => entry?.model === baseline?.catalogEntry?.model,
+    );
+    if (!catalogEntry) return null;
+    const row = ROWS[catalogEntry.rowIndex];
+    const effortIndex = EFFORTS.indexOf(baseline.effort);
+    if (!row?.dots.includes(effortIndex + 1)) return null;
+    const fastMode = baseline.serviceTierOptionIndex === 0
+      ? false
+      : row.supportsFast &&
+          baseline.serviceTierOptionIndex === catalogEntry.fastTierOptionIndex
+        ? true
+        : null;
+    if (fastMode === null) return null;
+    return {
+      rowIndex: catalogEntry.rowIndex,
+      indexInRow: effortIndex,
+      modelName: row.name,
+      effort: baseline.effort,
+      fastMode,
+    };
+  }
+
+  function assertOfficialFirstMutationBaseline(context, evidence = {}) {
+    const expected = context?.expectedSelectionBeforeFirstMutation;
+    if (!expected || context.firstForwardMutationValidated) return;
+
+    const trigger = assertOfficialProxyContext(context);
+    const primarySurface = findOfficialPrimarySurfaceForProxy(trigger);
+    const rows = primarySurface ? officialAdvancedRows(primarySurface) : null;
+    const modelSurface = evidence.modelSurface;
+    const selectedModel = modelSurface
+      ? officialSelectedModelCatalogEntry(modelSurface)
+      : null;
+    const modelMatches = selectedModel
+      ? selectedModel.model === expected.catalogEntry.model
+      : Boolean(
+          rows?.modelTrigger &&
+          officialElementMatchesModelLabels(
+            rows.modelTrigger,
+            [expected.catalogEntry.displayName],
+          )
+        );
+    const effort = trigger.getAttribute("data-selected-reasoning-effort") || "";
+    if (
+      !modelMatches ||
+      effort !== expected.effort
+    ) {
+      throw new Error(
+        "The current official model, effort, or Speed state changed before the first setting mutation.",
+      );
+    }
+
+    if (Array.isArray(evidence.serviceTierItems)) {
+      const connectedItems = evidence.serviceTierItems.filter(
+        (item) => item?.isConnected,
+      );
+      if (
+        connectedItems.length !== expected.serviceTierOptionCount ||
+        officialSelectedLeafIndex(connectedItems) !==
+          expected.serviceTierOptionIndex ||
+        officialLeafSemanticSignature(
+          connectedItems[expected.serviceTierOptionIndex],
+        ) !== expected.serviceTierLeafSignature
+      ) {
+        throw new Error(
+          "The current official Speed tier changed before the first setting mutation.",
+        );
+      }
+    } else if (
+      expected.serviceTierOptionIndex !==
+        expected.catalogEntry.fastTierOptionIndex ||
+      readOfficialFastMode(primarySurface) !== true
+    ) {
+      throw new Error(
+        "The complete official Speed tier could not be revalidated before the first setting mutation.",
+      );
+    }
+    context.firstForwardMutationValidated = true;
+  }
+
+  function beforeOfficialSettingMutation(context, options, evidence) {
+    if (context?.intent) assertSelectionIntent(context.intent);
+    assertOfficialDaybreakStateUnchanged(context);
+    assertOfficialFirstMutationBaseline(context, evidence);
+    options?.onBeforeMutation?.();
+  }
+
+  async function selectOfficialServiceTierIndex(
+    targetIndex,
+    catalogEntry,
+    context,
+    options,
+  ) {
+    const initial = await officialServiceTierItems(
+      catalogEntry,
+      context,
+      "The official Speed submenu did not open.",
+    );
+    const selectedIndex = initial.selectedIndex;
+    if (
+      options?.expectedTargetLeafSignature &&
+      (
+        initial.items.length !== options.expectedOptionCount ||
+        officialLeafSemanticSignature(initial.items[targetIndex]) !==
+          options.expectedTargetLeafSignature
+      )
+    ) {
+      throw new Error(
+        "The saved Speed tier no longer maps to the same official control.",
+      );
+    }
+    const transitionPlan = officialServiceTierTransitionPlan(
+      targetIndex,
+      selectedIndex,
+      initial.items.length,
+      catalogEntry?.fastTierOptionIndex,
+    );
+    if (!transitionPlan) {
+      throw new Error("The selected speed tier has no exact official control.");
+    }
+    let kind = "selected-leaf";
+    for (const [position, stepIndex] of transitionPlan.entries()) {
+      const current = position === 0
+        ? initial
+        : await officialServiceTierItems(
+            catalogEntry,
+            context,
+            "The official Speed submenu did not reopen between tier transitions.",
+          );
+      if (!current.items[stepIndex]) {
+        throw new Error("The selected speed tier transition became unavailable.");
+      }
+      if (
+        options?.expectedTargetLeafSignature &&
+        stepIndex === targetIndex &&
+        (
+          current.items.length !== options.expectedOptionCount ||
+          officialLeafSemanticSignature(current.items[stepIndex]) !==
+            options.expectedTargetLeafSignature
+        )
+      ) {
+        throw new Error(
+          "The saved Speed tier no longer maps to the same official control.",
+        );
+      }
+      const targetLeafSignature = officialLeafSemanticSignature(
+        current.items[stepIndex],
+      );
+      if (!targetLeafSignature) {
+        throw new Error("The selected speed tier lacks an exact semantic signature.");
+      }
+      assertOfficialProxyContext(context);
+      beforeOfficialSettingMutation(context, options, {
+        serviceTierItems: current.items,
+      });
+      clickOfficialControl(current.items[stepIndex]);
+
+      const reopened = await ensureOfficialPrimaryOpen(context);
+      if (
+        stepIndex === catalogEntry?.fastTierOptionIndex &&
+        readOfficialFastMode(reopened.surface) === true
+      ) {
+        kind = "checkbox";
+        continue;
+      }
+
+      const confirmation = await officialServiceTierItems(
+        catalogEntry,
+        context,
+        "The official Speed submenu did not reopen for confirmation.",
+      );
+      await waitForOfficialState(
+        () => {
+          const currentItems = officialLeafItemsInSurface(confirmation.submenu);
+          return currentItems.length === catalogEntry.serviceTierOptionCount &&
+            officialSelectedLeafIndex(currentItems) === stepIndex &&
+            officialLeafSemanticSignature(currentItems[stepIndex]) ===
+              targetLeafSignature;
+        },
+        "Codex did not mark the selected speed through its official control.",
+      );
+      kind = "selected-leaf";
+    }
+    return kind;
+  }
+
+  async function selectOfficialFastMode(enabled, catalogEntry, context, options) {
+    assertOfficialProxyContext(context);
+    const primary = await ensureOfficialPrimaryOpen(context);
+    const surface = primary.surface;
+    if (officialSpeedConfirmationSource(
+      enabled,
+      readOfficialFastMode(surface),
+      null,
+      null,
+    ) === "checkbox") {
+      return { kind: "checkbox", enabled };
+    }
+    const targetIndex = enabled ? catalogEntry?.fastTierOptionIndex : 0;
+    const kind = await selectOfficialServiceTierIndex(
+      targetIndex,
+      catalogEntry,
+      context,
+      options,
+    );
+    return { kind, enabled };
+  }
+
+  async function restoreOfficialSelectionBaseline(baseline, context) {
+    await selectOfficialModel(baseline.catalogEntry, context);
+    await selectOfficialEffort(
+      baseline.effort,
+      baseline.catalogEntry,
+      context,
+    );
+    await selectOfficialServiceTierIndex(
+      baseline.serviceTierOptionIndex,
+      baseline.catalogEntry,
+      context,
+      {
+        expectedOptionCount: baseline.serviceTierOptionCount,
+        expectedTargetLeafSignature: baseline.serviceTierLeafSignature,
+      },
+    );
+    await confirmOfficialModelSelection(baseline.catalogEntry, context);
+    const restored = await captureOfficialSelectionBaseline(context);
+    if (
+      restored.catalogEntry.model !== baseline.catalogEntry.model ||
+      restored.effort !== baseline.effort ||
+      restored.serviceTierOptionIndex !== baseline.serviceTierOptionIndex ||
+      restored.serviceTierOptionCount !== baseline.serviceTierOptionCount ||
+      restored.serviceTierLeafSignature !== baseline.serviceTierLeafSignature
+    ) {
+      throw new Error("Codex did not restore the complete official selection.");
+    }
+  }
+
+  async function verifyCurrentOfficialSelection(
+    selection,
+    intent,
+  ) {
+    const context = {
+      composerRoot: intent?.composerRoot || null,
+      expandedAdvanced: false,
+      interruptedByUserInput: false,
+      intent,
+      allowLegacyDaybreakReadOnly: true,
+    };
+    let removeInputGuard = null;
+    let confirmed = false;
+    let confirmedEpoch = null;
     try {
-      const initial = await ensureOfficialPrimaryOpen();
-      if (!row.supportsFast && readOfficialFastMode(initial.surface)) {
-        await selectOfficialFastMode(false, null, context);
+      assertSelectionIntent(intent);
+      removeInputGuard = installOfficialProxyInputGuard(context);
+      await ensureOfficialPrimaryOpen(context);
+      assertSelectionIntent(intent);
+      assertOfficialProxyContext(context);
+      await assertOfficialDaybreakSelectionPolicyReady(selection, context);
+      const baseline = await captureOfficialSelectionBaseline(context, {
+        requireRestorableStandard: false,
+      });
+      assertOfficialDaybreakStateUnchanged(context);
+      const current = coPickerSelectionFromOfficialBaseline(baseline);
+      assertOfficialProxyContext(context);
+      confirmed = Boolean(selection.fastMode && selectionsEqual(current, selection));
+      confirmedEpoch = state.officialInteractionEpoch;
+    } finally {
+      try {
+        await restoreOfficialPickerView(context);
+      } finally {
+        removeInputGuard?.();
+      }
+    }
+    assertSelectionIntent(intent);
+    assertOfficialProxyContext(context);
+    assertOfficialDaybreakStateUnchanged(context);
+    if (confirmedEpoch !== state.officialInteractionEpoch) {
+      throw new Error("The official selection changed during verification.");
+    }
+    return confirmed;
+  }
+
+  async function performOfficialControlProxy(selection, catalogEntry, intent) {
+    const row = ROWS[selection.rowIndex];
+    const context = {
+      composerRoot: intent?.composerRoot || null,
+      expandedAdvanced: false,
+      interruptedByUserInput: false,
+      intent,
+    };
+    let rollbackBaseline = null;
+    let normalizedBaselineStandard = false;
+    let mutationStarted = false;
+    let removeInputGuard = null;
+    try {
+      assertSelectionIntent(intent);
+      removeInputGuard = installOfficialProxyInputGuard(context);
+      const initial = await ensureOfficialPrimaryOpen(context);
+      assertSelectionIntent(intent);
+      assertOfficialProxyContext(context);
+      assertOfficialDaybreakSelectionPolicy(selection, initial.surface);
+      await assertOfficialDaybreakSelectionPolicyReady(selection, context);
+      await resolveOfficialModelTarget(catalogEntry, context);
+      rollbackBaseline = await captureOfficialSelectionBaseline(context);
+      context.expectedSelectionBeforeFirstMutation = rollbackBaseline;
+      const forwardMutationOptions = {
+        onBeforeMutation: () => {
+          mutationStarted = true;
+        },
+      };
+      if (rollbackBaseline.requiresStandardNormalization) {
+        const kind = await selectOfficialServiceTierIndex(
+          0,
+          rollbackBaseline.catalogEntry,
+          context,
+          forwardMutationOptions,
+        );
+        normalizedBaselineStandard = Boolean(kind);
+      }
+      if (!row.supportsFast) {
+        const currentCatalogEntry = rollbackBaseline.catalogEntry;
+        if (!currentCatalogEntry) {
+          throw new Error(
+            "The current official model is unavailable for exact Speed clearing.",
+          );
+        }
+        if (!normalizedBaselineStandard) {
+          await selectOfficialFastMode(
+            false,
+            currentCatalogEntry,
+            context,
+            forwardMutationOptions,
+          );
+        }
       }
 
-      await selectOfficialModel(row, catalogEntry, context);
-      await selectOfficialEffort(selection.effort, catalogEntry, context);
+      if (row.supportsFast && !normalizedBaselineStandard) {
+        await selectOfficialFastMode(
+          Boolean(selection.fastMode),
+          rollbackBaseline.catalogEntry,
+          context,
+          forwardMutationOptions,
+        );
+      }
+
+      await selectOfficialModel(
+        catalogEntry,
+        context,
+        forwardMutationOptions,
+      );
+      await selectOfficialEffort(
+        selection.effort,
+        catalogEntry,
+        context,
+        forwardMutationOptions,
+      );
       if (row.supportsFast) {
-        await selectOfficialFastMode(Boolean(selection.fastMode), catalogEntry, context);
+        await selectOfficialFastMode(
+          Boolean(selection.fastMode),
+          catalogEntry,
+          context,
+          forwardMutationOptions,
+        );
       }
 
+      await confirmOfficialModelSelection(
+        catalogEntry,
+        context,
+      );
+
+      assertOfficialDaybreakStateUnchanged(context);
+      const finalBaseline = await captureOfficialSelectionBaseline(context, {
+        requireRestorableStandard: false,
+      });
+      assertOfficialDaybreakStateUnchanged(context);
+      const confirmed = coPickerSelectionFromOfficialBaseline(finalBaseline);
+      const finalMutationGeneration =
+        state.officialSelectionMutationGeneration;
       await restoreOfficialPickerView(context);
-      await ensureOfficialPrimaryOpen();
-      const confirmed = officialSelectionFromDOM();
+      await ensureOfficialPrimaryOpen(context);
+      assertSelectionIntent(intent);
+      assertOfficialProxyContext(context);
+      if (
+        finalMutationGeneration !==
+          state.officialSelectionMutationGeneration
+      ) {
+        const error = new Error(
+          "The official selection changed after final confirmation.",
+        );
+        error.externalOfficialStateChanged = true;
+        throw error;
+      }
+      assertOfficialDaybreakStateUnchanged(context);
       if (!selectionsEqual(confirmed, selection)) {
         throw new Error("The official controls did not confirm the complete CoPicker selection.");
       }
       return confirmed;
     } catch (error) {
+      let rollbackError = null;
+      const officialMutationStarted = mutationStarted;
+      if (
+        officialMutationStarted &&
+        rollbackBaseline &&
+        !(error instanceof Error && error.externalOfficialStateChanged)
+      ) {
+        try {
+          await restoreOfficialSelectionBaseline(rollbackBaseline, context);
+        } catch (failure) {
+          rollbackError = failure;
+        }
+      } else if (officialMutationStarted) {
+        rollbackError = new Error(
+          error instanceof Error && error.externalOfficialStateChanged
+            ? "Rollback was suppressed after an external Daybreak state change."
+            : "The official tier normalization failed before a rollback baseline was complete.",
+        );
+      }
       try {
         await restoreOfficialPickerView(context);
       } catch (restoreError) {
         if (error instanceof Error) error.restoreError = restoreError;
       }
+      if (rollbackError && error instanceof Error) {
+        error.rollbackError = rollbackError;
+      }
+      if (error instanceof Error && officialMutationStarted) {
+        error.officialRollbackStatus = rollbackError
+          ? "failed"
+          : rollbackBaseline?.requiresStandardNormalization
+            ? "restored-normalized"
+            : "restored";
+        error.rollbackSelection = rollbackError
+          ? null
+          : coPickerSelectionFromOfficialBaseline(rollbackBaseline);
+      }
       throw error;
+    } finally {
+      removeInputGuard?.();
     }
   }
 
@@ -2492,21 +4310,41 @@
     selection,
     revision,
     catalogEntry,
-    { force = false } = {},
+    intent,
+    { force = false, railBaseline = null } = {},
   ) {
     const previousConfirmed = state.confirmedSelection;
-    const sameAsConfirmed = selectionsEqual(previousConfirmed, selection);
-    if (sameAsConfirmed && !force) {
-      setSwitchState("confirmed");
-      return { confirmed: true, unchanged: true, mode: "official-control-proxy" };
+    const sameAsConfirmed = state.confirmedThreadID === null &&
+      selectionsEqual(previousConfirmed, selection);
+    if (shouldVerifyUnchangedNoTaskSelection(
+      sameAsConfirmed,
+      force,
+      selection.fastMode,
+    )) {
+      if (await verifyCurrentOfficialSelection(selection, intent)) {
+        setSwitchState("confirmed");
+        return {
+          confirmed: true,
+          unchanged: true,
+          mode: "official-control-proxy",
+        };
+      }
     }
 
     state.commitInFlight = true;
+    state.commitThreadID = null;
     state.pendingOfficialSelection = { ...selection };
     setSwitchState("pending");
     try {
-      const confirmed = await performOfficialControlProxy(selection, catalogEntry);
+      const confirmed = await performOfficialControlProxy(
+        selection,
+        catalogEntry,
+        intent,
+      );
+      assertSelectionIntent(intent);
       state.confirmedSelection = confirmed;
+      state.confirmedThreadID = null;
+      state.officialSelectionDirty = false;
       state.lastSwitchError = null;
       setSwitchState("confirmed");
       return {
@@ -2516,39 +4354,65 @@
         mode: "official-control-proxy",
       };
     } catch (error) {
-      let rollbackError = null;
-      const rollbackEntry = Number.isInteger(previousConfirmed?.rowIndex)
-        ? state.modelCatalog?.[previousConfirmed.rowIndex]
+      if (error instanceof Error) error.selectionUIHandled = true;
+      const intentCurrent = selectionIntentIsCurrent(intent);
+      if (intentCurrent) state.lastSwitchError = error;
+      const rollbackSelection = error instanceof Error
+        ? error.rollbackSelection
         : null;
-      if (
-        revision === state.selectionRevision &&
-        rollbackEntry &&
-        !selectionsEqual(officialSelectionFromDOM(), previousConfirmed)
-      ) {
-        try {
-          await performOfficialControlProxy(previousConfirmed, rollbackEntry);
-        } catch (failure) {
-          rollbackError = failure;
+      const rollbackStatus = error instanceof Error
+        ? error.officialRollbackStatus
+        : null;
+      if (rollbackStatus) {
+        if (intentCurrent) {
+          state.confirmedSelection = rollbackSelection || null;
+          state.confirmedThreadID = null;
         }
+        if (
+          revision === state.selectionRevision &&
+          intentCurrent
+        ) {
+          applySelection(rollbackSelection || {
+            rowIndex: null,
+            indexInRow: null,
+            modelName: "Other",
+            effort: null,
+            fastMode: false,
+          });
+        }
+      } else if (
+        revision === state.selectionRevision &&
+        intentCurrent
+      ) {
+        applySelection(railBaseline || previousConfirmed || {
+          rowIndex: null,
+          indexInRow: null,
+          modelName: "Other",
+          effort: null,
+          fastMode: false,
+        });
       }
-      if (rollbackError && error instanceof Error) error.rollbackError = rollbackError;
-      state.lastSwitchError = error;
-      if (revision === state.selectionRevision && previousConfirmed) {
-        applySelection(previousConfirmed);
-      }
-      setSwitchState("error");
+      if (intentCurrent) setSwitchState("error");
       throw error;
     } finally {
       state.pendingOfficialSelection = null;
       state.commitInFlight = false;
+      state.commitThreadID = null;
+      scheduleSync();
     }
   }
 
-  async function performSelectionCommit(selection, revision, { force = false } = {}) {
+  async function performSelectionCommitBound(
+    selection,
+    revision,
+    { force = false, railBaseline = null } = {},
+    intent,
+  ) {
     if (!Number.isInteger(selection?.rowIndex) || !selection.effort) {
       throw new Error("A supported model and effort must be selected.");
     }
     if (revision < state.selectionRevision) return { skipped: "superseded" };
+    assertSelectionIntent(intent);
 
     const catalog = await ensureModelCatalog();
     const catalogEntry = catalog[selection.rowIndex];
@@ -2559,32 +4423,80 @@
       throw new Error("Fast is unavailable for the selected model.");
     }
     if (revision < state.selectionRevision) return { skipped: "superseded" };
+    const commitTrigger = assertSelectionIntent(intent);
 
-    const commitTrigger = findOpenTrigger();
     const threadID = resolveCurrentThreadID(commitTrigger);
     state.trigger = commitTrigger;
     state.currentThreadID = threadID;
+    const commitSurface = findPrimarySurface(commitTrigger);
+    assertOfficialDaybreakSelectionPolicy(selection, commitSurface);
     if (!threadID) {
       return performNoThreadSelectionCommit(
         selection,
         revision,
         catalogEntry,
-        { force },
+        intent,
+        { force, railBaseline },
       );
     }
     const previousConfirmed = state.confirmedSelection;
-    const sameAsConfirmed = selectionsEqual(previousConfirmed, selection);
-    if (sameAsConfirmed && !force) {
+    const sameAsConfirmed = state.confirmedThreadID === threadID &&
+      selectionsEqual(previousConfirmed, selection);
+    const currentDaybreakProgram = officialDaybreakProgramState(commitSurface);
+    if (shouldReuseThreadSelectionConfirmation(
+      sameAsConfirmed,
+      force,
+      currentDaybreakProgram.present,
+      currentDaybreakProgram.checked,
+    )) {
       setSwitchState("confirmed");
       return { confirmed: true, unchanged: true };
     }
 
-    const confirmation = sameAsConfirmed
-      ? null
-      : createSettingsWaiter(threadID, selection);
+    const notificationGenerationAtStart =
+      state.latestThreadSettings.get(threadID)?.generation || 0;
+    const railSelectionGenerationAtStart = state.railSelectionGeneration;
+    let confirmation = null;
+    let requestDispatched = false;
+    let suppressFinalNotificationReplay = false;
     state.commitInFlight = true;
+    state.commitThreadID = threadID;
     setSwitchState("pending");
+    const directContext = {
+      composerRoot: intent.composerRoot,
+      threadID,
+      expandedAdvanced: false,
+      interruptedByUserInput: false,
+    };
+    let removeInputGuard = null;
     try {
+      const currentTrigger = assertSelectionIntent(intent);
+      assertOfficialDaybreakSelectionPolicy(
+        selection,
+        findPrimarySurface(currentTrigger),
+      );
+      removeInputGuard = installOfficialProxyInputGuard(directContext);
+      await assertOfficialDaybreakSelectionPolicyReady(
+        selection,
+        directContext,
+      );
+      assertSelectionIntent(intent);
+      assertOfficialDaybreakStateUnchanged(directContext);
+      assertOfficialProxyContext(directContext);
+      if (
+        (state.latestThreadSettings.get(threadID)?.generation || 0) !==
+          notificationGenerationAtStart
+      ) {
+        throw new Error(
+          "A newer official thread-settings notification superseded this update before it was sent.",
+        );
+      }
+      confirmation = createSettingsWaiter(
+        threadID,
+        selection,
+        notificationGenerationAtStart,
+      );
+      requestDispatched = true;
       await sendAppServerRequest("thread/settings/update", {
         threadId: threadID,
         model: catalogEntry.model,
@@ -2592,30 +4504,166 @@
         serviceTier: selection.fastMode ? catalogEntry.fastTierID : null,
       });
 
-      if (confirmation) {
-        try {
-          await confirmation.promise;
-        } catch (confirmationError) {
-          const officialSelection = officialSelectionFromDOM();
-          if (!selectionsEqual(officialSelection, selection)) throw confirmationError;
-        }
+      const confirmationResult = await confirmation.promise;
+      const latestNotification = state.latestThreadSettings.get(threadID);
+      if (
+        !latestNotification ||
+        confirmationResult.generation <= notificationGenerationAtStart ||
+        latestNotification.generation !== confirmationResult.generation ||
+        !selectionsEqual(latestNotification.selection, selection)
+      ) {
+        throw new Error(
+          "A newer official thread-settings notification superseded this update.",
+        );
       }
 
+      assertSelectionIntent(intent);
+      assertOfficialProxyContext(directContext);
+      assertOfficialDaybreakStateUnchanged(directContext);
+      await restoreOfficialPickerView(directContext);
+      const finalNotification = state.latestThreadSettings.get(threadID);
+      if (
+        !finalNotification ||
+        finalNotification.generation !== confirmationResult.generation ||
+        !selectionsEqual(finalNotification.selection, selection)
+      ) {
+        throw new Error(
+          "A newer official thread-settings notification superseded this update.",
+        );
+      }
+      assertSelectionIntent(intent);
+      assertOfficialProxyContext(directContext);
+      assertOfficialDaybreakStateUnchanged(directContext);
       state.confirmedSelection = { ...selection };
+      state.confirmedThreadID = threadID;
       state.lastSwitchError = null;
       setSwitchState("confirmed");
       return { confirmed: true, unchanged: sameAsConfirmed };
     } catch (error) {
+      if (error instanceof Error) error.selectionUIHandled = true;
+      suppressFinalNotificationReplay =
+        directContext.interruptedByUserInput ||
+        Boolean(error instanceof Error && error.externalOfficialStateChanged);
       confirmation?.cancel();
-      state.lastSwitchError = error;
-      if (revision === state.selectionRevision && previousConfirmed) {
-        applySelection(previousConfirmed);
+      const intentCurrent = selectionIntentIsCurrent(intent);
+      if (intentCurrent) state.lastSwitchError = error;
+      const latestNotification = state.latestThreadSettings.get(threadID);
+      const hasNewerAuthoritativeNotification =
+        latestNotification?.generation > notificationGenerationAtStart;
+      const hasUnconfirmedDispatchedUpdate =
+        requestDispatched && !hasNewerAuthoritativeNotification;
+      if (hasUnconfirmedDispatchedUpdate) {
+        state.latestThreadSettings.delete(threadID);
       }
-      setSwitchState("error");
+      const canAdoptAuthoritativeSelection =
+        !(error instanceof Error && error.externalOfficialStateChanged);
+      const authoritativeSelection =
+        hasNewerAuthoritativeNotification && canAdoptAuthoritativeSelection
+        ? latestNotification.selection
+        : null;
+      const fallbackSelection = hasNewerAuthoritativeNotification
+        ? authoritativeSelection || {
+            rowIndex: null,
+            indexInRow: null,
+            modelName: "Other",
+            effort: null,
+            fastMode: false,
+          }
+        : hasUnconfirmedDispatchedUpdate
+          ? {
+              rowIndex: null,
+              indexInRow: null,
+              modelName: "Other",
+              effort: null,
+              fastMode: false,
+            }
+          : railBaseline || previousConfirmed || {
+            rowIndex: null,
+            indexInRow: null,
+            modelName: "Other",
+            effort: null,
+            fastMode: false,
+          };
+      if (
+        revision === state.selectionRevision &&
+        intentCurrent
+      ) {
+        applySelection(fallbackSelection);
+      }
+      if (intentCurrent) {
+        if (authoritativeSelection) {
+          state.confirmedSelection = authoritativeSelection;
+          state.confirmedThreadID = threadID;
+          setSwitchState("confirmed");
+        } else {
+          if (
+            hasNewerAuthoritativeNotification ||
+            hasUnconfirmedDispatchedUpdate
+          ) {
+            state.confirmedSelection = null;
+            state.confirmedThreadID = null;
+          }
+          setSwitchState("error");
+        }
+      }
       throw error;
     } finally {
       confirmation?.cancel();
+      try {
+        await restoreOfficialPickerView(directContext);
+      } catch (_) {}
+      removeInputGuard?.();
       state.commitInFlight = false;
+      state.commitThreadID = null;
+      const latestNotification = state.latestThreadSettings.get(threadID);
+      const liveTrigger = findOfficialComposerTrigger();
+      const liveComposerRoot =
+        liveTrigger?.closest("[data-codex-composer-root]") || null;
+      if (
+        !suppressFinalNotificationReplay &&
+        !directContext.interruptedByUserInput &&
+        selectionIntentIsCurrent(intent) &&
+        latestNotification?.generation > notificationGenerationAtStart &&
+        latestNotification.reconciled !== true &&
+        state.railSelectionGeneration === railSelectionGenerationAtStart &&
+        liveComposerRoot === intent.composerRoot &&
+        resolveCurrentThreadID(liveTrigger) === threadID
+      ) {
+        reconcileSettingsNotification(
+          threadID,
+          latestNotification.generation,
+        );
+      }
+      scheduleSync();
+    }
+  }
+
+  async function performSelectionCommit(selection, revision, options, intent) {
+    try {
+      return await performSelectionCommitBound(
+        selection,
+        revision,
+        options,
+        intent,
+      );
+    } catch (error) {
+      if (!(error instanceof Error && error.selectionUIHandled)) {
+        state.lastSwitchError = error;
+        if (
+          revision === state.selectionRevision &&
+          selectionIntentIsCurrent(intent)
+        ) {
+          applySelection(options?.railBaseline || state.confirmedSelection || {
+            rowIndex: null,
+            indexInRow: null,
+            modelName: "Other",
+            effort: null,
+            fastMode: false,
+          });
+          setSwitchState("error");
+        }
+      }
+      throw error;
     }
   }
 
@@ -2629,18 +4677,53 @@
 
   function enqueueSelectionSnapshot(selection, revision, options = {}) {
     const committedSelection = Object.freeze({ ...selection });
+    const committedOptions = Object.freeze({
+      ...options,
+      railBaseline: options.railBaseline
+        ? Object.freeze({ ...options.railBaseline })
+        : null,
+    });
+    let intent;
+    try {
+      intent = captureSelectionIntent();
+    } catch (error) {
+      return Promise.reject(error);
+    }
     const task = state.commitQueue
       .catch(() => {})
-      .then(() => performSelectionCommit(committedSelection, revision, options));
+      .then(() =>
+        performSelectionCommit(
+          committedSelection,
+          revision,
+          committedOptions,
+          intent,
+        )
+      );
     state.commitQueue = task.catch(() => {});
     return task;
   }
 
-  function scheduleSelectionCommit() {
+  function cancelPendingKeyboardCommit({ restore = false } = {}) {
+    const hadPendingCommit = state.commitTimer !== null;
+    const baseline = state.pendingKeyboardBaseline;
+    window.clearTimeout(state.commitTimer);
+    state.commitTimer = null;
+    state.pendingKeyboardBaseline = null;
+    if (restore && baseline) applySelection(baseline);
+    if (hadPendingCommit) state.selectionRevision += 1;
+    return baseline;
+  }
+
+  function scheduleSelectionCommit(baseline) {
+    if (!state.pendingKeyboardBaseline && baseline) {
+      state.pendingKeyboardBaseline = Object.freeze({ ...baseline });
+    }
     window.clearTimeout(state.commitTimer);
     state.commitTimer = window.setTimeout(() => {
+      const railBaseline = state.pendingKeyboardBaseline;
       state.commitTimer = null;
-      void enqueueSelectionCommit().catch(() => {});
+      state.pendingKeyboardBaseline = null;
+      void enqueueSelectionCommit({ railBaseline }).catch(() => {});
     }, KEYBOARD_COMMIT_DELAY_MS);
   }
 
@@ -2913,6 +4996,7 @@
 
     event.preventDefault();
     event.stopImmediatePropagation();
+    const keyStartSelection = snapshotSelection();
 
     if (isSpace) {
       if (
@@ -2922,11 +5006,12 @@
       ) {
         return true;
       }
+      const pendingBaseline = cancelPendingKeyboardCommit();
       state.fastMode = !state.fastMode;
       markSelectionChanged(host);
-      window.clearTimeout(state.commitTimer);
-      state.commitTimer = null;
-      void enqueueSelectionCommit().catch(() => {});
+      void enqueueSelectionCommit({
+        railBaseline: pendingBaseline || keyStartSelection,
+      }).catch(() => {});
       return true;
     }
 
@@ -2935,7 +5020,7 @@
       state.currentIndex = 0;
       state.fastMode = false;
       markSelectionChanged(host);
-      scheduleSelectionCommit();
+      scheduleSelectionCommit(keyStartSelection);
       return true;
     }
 
@@ -2964,7 +5049,7 @@
     }
     if (state.currentRow !== previousRow || state.currentIndex !== previousIndex) {
       markSelectionChanged(host);
-      scheduleSelectionCommit();
+      scheduleSelectionCommit(keyStartSelection);
     }
     return true;
   }
@@ -3438,6 +5523,8 @@
     let pointerMoved = false;
     let activePointerID = null;
     let gestureStartSelection = null;
+    let gestureRollbackSelection = null;
+    let gestureSupersededKeyboardCommit = false;
     const clickMoveThreshold = 5;
 
     const resetPointerGesture = () => {
@@ -3446,6 +5533,8 @@
       pointerMoved = false;
       activePointerID = null;
       gestureStartSelection = null;
+      gestureRollbackSelection = null;
+      gestureSupersededKeyboardCommit = false;
     };
 
     stage?.addEventListener("pointerdown", (event) => {
@@ -3456,8 +5545,9 @@
       pointerStartY = event.clientY;
       pointerMoved = false;
       gestureStartSelection = snapshotSelection();
-      window.clearTimeout(state.commitTimer);
-      state.commitTimer = null;
+      const pendingKeyboardBaseline = cancelPendingKeyboardCommit();
+      gestureRollbackSelection = pendingKeyboardBaseline || gestureStartSelection;
+      gestureSupersededKeyboardCommit = Boolean(pendingKeyboardBaseline);
       stage.setPointerCapture(event.pointerId);
       stage.classList.add("dragging");
       if (!pointerDownOnThumb) {
@@ -3517,9 +5607,13 @@
           gestureStartSelection.fastMode,
         );
         if (selectionsEqual(gestureStartSelection, snapshotSelection())) {
-          shouldCommit = false;
+          shouldCommit = shouldCommitUnchangedPointerSelection(
+            gestureSupersededKeyboardCommit,
+            Boolean(state.currentThreadID),
+          );
         } else {
           state.selectionRevision += 1;
+          state.railSelectionGeneration += 1;
         }
       }
       if (stage.hasPointerCapture(event.pointerId)) {
@@ -3530,14 +5624,16 @@
       if (shouldCommit) {
         const selection = snapshotSelection();
         const revision = state.selectionRevision;
-        void enqueueSelectionSnapshot(selection, revision).catch(() => {});
+        void enqueueSelectionSnapshot(selection, revision, {
+          railBaseline: gestureRollbackSelection,
+        }).catch(() => {});
       }
       resetPointerGesture();
     });
 
     stage?.addEventListener("pointercancel", (event) => {
       if (event.pointerId !== activePointerID) return;
-      if (gestureStartSelection) applySelection(gestureStartSelection);
+      if (gestureRollbackSelection) applySelection(gestureRollbackSelection);
       if (stage.hasPointerCapture(event.pointerId)) {
         stage.releasePointerCapture(event.pointerId);
       }
@@ -3815,6 +5911,306 @@
     revealDetachedPopover(host);
   }
 
+  function markOfficialSelectionDirty() {
+    state.officialInteractionEpoch += 1;
+    state.officialSelectionDirty = true;
+    state.confirmedSelection = null;
+    state.confirmedThreadID = null;
+    state.daybreakClassification = null;
+    scheduleSync();
+  }
+
+  function eventTargetsOfficialPicker(event) {
+    const path = typeof event.composedPath === "function"
+      ? event.composedPath()
+      : [];
+    if (path.includes(state.popoverHost)) return false;
+    if (
+      path.some(
+        (candidate) =>
+          candidate instanceof Element &&
+          (
+            candidate.matches(TRIGGER_SELECTOR) ||
+            candidate.matches(PRIMARY_SURFACE_SELECTOR) ||
+            Boolean(candidate.closest(PRIMARY_SURFACE_SELECTOR))
+          ),
+      )
+    ) {
+      return true;
+    }
+    return event.type === "keydown" &&
+      Boolean(findOpenTrigger()) &&
+      (
+        event.key?.startsWith("Arrow") ||
+        event.key === "Enter" ||
+        event.key === " " ||
+        event.key === "Spacebar" ||
+        event.code === "Space" ||
+        event.key === "Escape"
+      );
+  }
+
+  function eventTargetsOfficialSelectionControl(event) {
+    const primarySurface = state.primarySurface;
+    if (!primarySurface) return false;
+    const ownedSurfaces = new Set([primarySurface]);
+    const rows = officialAdvancedRows(primarySurface);
+    for (const trigger of [
+      rows?.modelTrigger,
+      rows?.effortTrigger,
+      rows?.speedTrigger,
+    ]) {
+      const controlledID = trigger?.getAttribute("aria-controls");
+      const controlled = controlledID
+        ? document.getElementById(controlledID)
+        : null;
+      if (
+        controlled &&
+        controlled.matches(PRIMARY_SURFACE_SELECTOR) &&
+        isVisible(controlled)
+      ) {
+        ownedSurfaces.add(controlled);
+      }
+    }
+
+    const keyActivatesLeaf = event.type !== "keydown" ||
+      event.key === "Enter" ||
+      event.key === " " ||
+      event.key === "Spacebar" ||
+      event.code === "Space";
+    const path = typeof event.composedPath === "function"
+      ? event.composedPath()
+      : [];
+    return path.some((candidate) => {
+      if (!(candidate instanceof Element)) return false;
+      const surface = candidate.closest(PRIMARY_SURFACE_SELECTOR);
+      if (!surface || !ownedSurfaces.has(surface)) return false;
+      if (candidate.matches("[data-model-picker-view-toggle]")) return false;
+      if (
+        candidate.matches(FAST_MODE_SELECTOR) ||
+        candidate.matches(DAYBREAK_PROGRAM_CONTROL_SELECTOR) ||
+        candidate.matches("[data-model-picker-power-slider]") ||
+        candidate.matches(REASONING_SLIDER_SELECTOR)
+      ) {
+        return true;
+      }
+      return keyActivatesLeaf && candidate.matches(OFFICIAL_LEAF_ITEM_SELECTOR);
+    });
+  }
+
+  function rememberTrustedOfficialSelectionAction(threadID) {
+    window.clearTimeout(state.trustedSelectionActionTimer);
+    state.trustedSelectionAction = {
+      threadID,
+      afterGeneration:
+        state.latestThreadSettings.get(threadID)?.generation || 0,
+      interactionEpoch: state.officialInteractionEpoch + 1,
+    };
+    state.trustedSelectionActionTimer = window.setTimeout(() => {
+      state.trustedSelectionAction = null;
+      state.trustedSelectionActionTimer = null;
+    }, 1000);
+  }
+
+  function clearTrustedOfficialSelectionAction() {
+    window.clearTimeout(state.trustedSelectionActionTimer);
+    state.trustedSelectionActionTimer = null;
+    state.trustedSelectionAction = null;
+  }
+
+  function handleOfficialInteraction(event) {
+    const railHandlesKey = event.type === "keydown" &&
+      state.popoverHost?.isConnected &&
+      state.popoverHost.getAttribute("aria-hidden") !== "true" &&
+      (
+        event.key?.startsWith("Arrow") ||
+        event.key === " " ||
+        event.key === "Spacebar" ||
+        event.code === "Space" ||
+        event.key === "Escape"
+    );
+    if (railHandlesKey) return;
+    if (!event.isTrusted || !eventTargetsOfficialPicker(event)) return;
+    if (
+      eventTargetsOfficialSelectionControl(event) &&
+      state.currentThreadID &&
+      (
+        (event.type !== "pointerdown" && event.type !== "click") ||
+        event.button === 0
+      )
+    ) {
+      rememberTrustedOfficialSelectionAction(state.currentThreadID);
+    }
+    markOfficialSelectionDirty();
+  }
+
+  function handleOfficialMutations(records) {
+    const selectionAttributes = new Set([
+      "data-selected-reasoning-effort",
+      "data-selected",
+      "data-fast-mode-enabled",
+      "aria-checked",
+      "aria-busy",
+      "aria-disabled",
+    ]);
+    const trigger = state.trigger;
+    const primarySurface = state.primarySurface;
+    const primaryStructureChanged = records.some((record) => {
+      if (record.type !== "childList") return false;
+      const target = record.target instanceof Element
+        ? record.target
+        : record.target?.parentElement;
+      return Boolean(
+        target &&
+        primarySurface &&
+        (target === primarySurface || primarySurface.contains(target)),
+      );
+    });
+    const advancedRows = primarySurface
+      ? officialAdvancedRows(primarySurface)
+      : null;
+    const ownedModelSubmenu = advancedRows?.modelTrigger
+      ? findOfficialSubmenuSurface(
+          advancedRows.modelTrigger,
+          primarySurface,
+          (surface) => officialLeafItemsInSurface(surface).length > 0,
+        )
+      : null;
+    const daybreakRow = ALL_ROWS.find((row) => row.id === "daybreak-blue");
+    const daybreakProgramChanged = records.some((record) => {
+      const mutationTarget = record.target instanceof Element
+        ? record.target
+        : record.target?.parentElement;
+      if (
+        !mutationTarget ||
+        !primarySurface ||
+        (
+          mutationTarget !== primarySurface &&
+          !primarySurface.contains(mutationTarget)
+        )
+      ) {
+        return false;
+      }
+      if (record.type === "attributes") {
+        const target = record.target instanceof Element ? record.target : null;
+        return Boolean(target?.matches(DAYBREAK_PROGRAM_CONTROL_SELECTOR));
+      }
+      if (record.type !== "childList") return false;
+      return [...record.addedNodes, ...record.removedNodes].some((node) => {
+        if (!(node instanceof Element)) return false;
+        const candidates = [node, ...node.querySelectorAll("*")];
+        return candidates.some((candidate) =>
+          candidate.matches(DAYBREAK_PROGRAM_CONTROL_SELECTOR)
+        );
+      });
+    });
+    const daybreakModelStructureChanged = records.some((record) => {
+      if (record.type !== "childList" || !daybreakRow) return false;
+      const mutationTarget = record.target instanceof Element
+        ? record.target
+        : record.target?.parentElement;
+      const inOwnedModelStructure = Boolean(
+        mutationTarget &&
+        (
+          mutationTarget === ownedModelSubmenu ||
+          ownedModelSubmenu?.contains(mutationTarget)
+        )
+      );
+      if (!inOwnedModelStructure) return false;
+      return [...record.addedNodes, ...record.removedNodes].some((node) => {
+        if (!(node instanceof Element)) return false;
+        const candidates = [node, ...node.querySelectorAll("*")];
+        return candidates.some((candidate) =>
+          officialElementMatchesModelLabels(
+            candidate,
+            daybreakRow.catalogDisplayNames,
+          )
+        );
+      });
+    });
+    const daybreakStructureChanged =
+      daybreakProgramChanged || daybreakModelStructureChanged;
+    const selectionChanged = records.some((record) => {
+      const target = record.target instanceof Element
+        ? record.target
+        : record.target?.parentElement;
+      if (!target) return false;
+      const inTrigger = Boolean(
+        trigger && (target === trigger || trigger.contains(target)),
+      );
+      const inPrimary = Boolean(
+        primarySurface &&
+        (target === primarySurface || primarySurface.contains(target)),
+      );
+      const inOwnedModelSubmenu = Boolean(
+        ownedModelSubmenu &&
+        (target === ownedModelSubmenu || ownedModelSubmenu.contains(target)),
+      );
+      if (
+        record.type === "attributes" &&
+        target.matches(DAYBREAK_PROGRAM_CONTROL_SELECTOR)
+      ) {
+        return false;
+      }
+      if (
+        record.type === "attributes" &&
+        record.attributeName === "data-model-selected"
+      ) {
+        return inOwnedModelSubmenu || inPrimary;
+      }
+      if (record.type === "characterData" || record.type === "childList") {
+        return inTrigger;
+      }
+      if (record.type !== "attributes" || (!inTrigger && !inPrimary)) {
+        return false;
+      }
+      if (selectionAttributes.has(record.attributeName)) return true;
+      if (record.attributeName !== "aria-label") return false;
+      const viewToggle = target.closest("[data-model-picker-view-toggle]");
+      return !viewToggle || !primarySurface?.contains(viewToggle);
+    });
+    if (selectionChanged || primaryStructureChanged) {
+      state.officialSelectionMutationGeneration += 1;
+    }
+    if (daybreakStructureChanged) {
+      state.officialStructureMutationGeneration += 1;
+      if (daybreakProgramChanged) {
+        state.officialDaybreakProgramMutationGeneration += 1;
+      }
+      if (!state.commitInFlight) {
+        state.confirmedSelection = null;
+        state.confirmedThreadID = null;
+        state.daybreakClassification = null;
+        state.officialSelectionDirty = true;
+        setSwitchState(state.currentThreadID ? "loading" : "no-thread");
+      }
+    }
+    const trustedSelection = state.trustedSelectionAction;
+    if (
+      selectionChanged &&
+      trustedSelection?.threadID === state.currentThreadID &&
+      trustedSelection.interactionEpoch === state.officialInteractionEpoch
+    ) {
+      const latest = state.latestThreadSettings.get(state.currentThreadID);
+      if (!latest || latest.generation <= trustedSelection.afterGeneration) {
+        state.latestThreadSettings.delete(state.currentThreadID);
+      }
+      clearTrustedOfficialSelectionAction();
+    } else if (
+      selectionChanged &&
+      trustedSelection &&
+      trustedSelection.interactionEpoch !== state.officialInteractionEpoch
+    ) {
+      clearTrustedOfficialSelectionAction();
+    }
+    const changed =
+      !state.commitInFlight &&
+      state.officialProxyReadDepth === 0 &&
+      selectionChanged;
+    if (changed) markOfficialSelectionDirty();
+    else scheduleSync();
+  }
+
   function syncNow() {
     state.scheduled = false;
     removePreviousVisual();
@@ -3825,17 +6221,43 @@
     state.primarySurface = target?.surface ?? null;
 
     if (!target) {
+      cancelPendingKeyboardCommit();
       state.currentThreadID = null;
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      state.daybreakClassification = null;
       removeDetachedPopover();
       return;
     }
 
     const triggerChanged = previousTrigger !== target.trigger;
+    const previousComposerRoot =
+      previousTrigger?.closest("[data-codex-composer-root]") || null;
+    const nextComposerRoot =
+      target.trigger.closest("[data-codex-composer-root]") || null;
+    const resolvedThreadID = resolveCurrentThreadID(target.trigger);
+    const threadIdentityChanged =
+      (state.currentThreadID || null) !== (resolvedThreadID || null);
+    if (triggerChanged || threadIdentityChanged) {
+      cancelPendingKeyboardCommit();
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      if (
+        threadIdentityChanged ||
+        previousComposerRoot !== nextComposerRoot
+      ) {
+        state.daybreakClassification = null;
+      }
+    }
     const shouldInitialize =
-      triggerChanged || state.observedSurface !== target.surface;
+      triggerChanged ||
+      threadIdentityChanged ||
+      state.observedSurface !== target.surface ||
+      (state.officialSelectionDirty && !state.commitInFlight);
     if (shouldInitialize) {
       resetPlacementSession();
       initializeSelectorFromTrigger(target.trigger);
+      if (!state.commitInFlight) state.officialSelectionDirty = false;
     }
     const host = ensureDetachedPopover();
     if (shouldInitialize) updateSelectorUI(host);
@@ -3862,12 +6284,27 @@
     scheduleSync();
   }
 
-  state.observer = new MutationObserver(scheduleSync);
+  state.observer = new MutationObserver(handleOfficialMutations);
   state.observer.observe(document.documentElement, {
     subtree: true,
     childList: true,
+    characterData: true,
     attributes: true,
-    attributeFilter: ["aria-expanded", "aria-controls", "data-state", "hidden"],
+    attributeFilter: [
+      "aria-expanded",
+      "aria-controls",
+      "data-state",
+      "hidden",
+      "data-selected-reasoning-effort",
+      "data-selected",
+      "data-model-selected",
+      "data-fast-mode-enabled",
+      "aria-checked",
+      "aria-busy",
+      "aria-disabled",
+      "aria-label",
+      "data-above-composer-conversation-id",
+    ],
   });
 
   state.sync = scheduleSync;
@@ -3887,15 +6324,19 @@
     };
   };
   state.setSelection = (modelName, effort, fastMode = false) => {
+    const railBaseline = snapshotSelection();
     const accepted = applySelection({ modelName, effort, fastMode }, { render: false });
     if (!accepted) return Promise.reject(new Error("Unsupported Copicker selection."));
     state.selectionRevision += 1;
+    state.railSelectionGeneration += 1;
     if (state.popoverHost) updateSelectorUI(state.popoverHost);
-    window.clearTimeout(state.commitTimer);
-    state.commitTimer = null;
-    return enqueueSelectionCommit();
+    cancelPendingKeyboardCommit();
+    return enqueueSelectionCommit({ railBaseline });
   };
-  state.commitCurrentSelection = (options = {}) => enqueueSelectionCommit(options);
+  state.commitCurrentSelection = (options = {}) => enqueueSelectionCommit({
+    railBaseline: snapshotSelection(),
+    ...options,
+  });
   state.previewPlacement = (
     width,
     height,
@@ -3913,6 +6354,7 @@
     );
   };
   state.dismissForCurrentOpen = () => {
+    cancelPendingKeyboardCommit({ restore: true });
     state.dismissedForCurrentOpen = true;
     removeDetachedPopover();
   };
@@ -3942,15 +6384,19 @@
     state.observer?.disconnect();
     state.appearanceObserver?.disconnect();
     state.appearanceMedia?.removeEventListener?.("change", updatePopoverAppearance);
-    window.clearTimeout(state.commitTimer);
-    state.commitTimer = null;
+    cancelPendingKeyboardCommit();
     cancelPlacementReturn();
+    clearTrustedOfficialSelectionAction();
     window.removeEventListener("message", state.handleBridgeMessage, true);
     window.removeEventListener("resize", handleWindowResize);
     window.removeEventListener("scroll", scheduleSync, true);
     window.removeEventListener("blur", state.handleWindowBlur);
     document.removeEventListener("visibilitychange", state.handleVisibilityChange);
     document.removeEventListener("keydown", state.handleKeyDown, true);
+    document.removeEventListener("pointerdown", state.handleOfficialInteraction, true);
+    document.removeEventListener("wheel", state.handleOfficialInteraction, true);
+    document.removeEventListener("keydown", state.handleOfficialInteraction, true);
+    document.removeEventListener("click", state.handleOfficialInteraction, true);
     for (const pending of state.pendingRequests.values()) {
       window.clearTimeout(pending.timeoutID);
       pending.reject(new Error("Copicker was disposed."));
@@ -3979,6 +6425,11 @@
   window.addEventListener("scroll", scheduleSync, true);
   window.addEventListener("blur", state.handleWindowBlur);
   document.addEventListener("visibilitychange", state.handleVisibilityChange);
+  state.handleOfficialInteraction = handleOfficialInteraction;
+  document.addEventListener("pointerdown", state.handleOfficialInteraction, true);
+  document.addEventListener("wheel", state.handleOfficialInteraction, true);
+  document.addEventListener("keydown", state.handleOfficialInteraction, true);
+  document.addEventListener("click", state.handleOfficialInteraction, true);
   document.addEventListener("keydown", state.handleKeyDown, true);
   state.handleBridgeMessage = handleBridgeMessage;
   window.addEventListener("message", state.handleBridgeMessage, true);

@@ -171,24 +171,30 @@ When the currently open trigger's own `[data-codex-composer-root]` contains exac
 1. CoPicker serializes the requested selection;
 2. resolves current catalog IDs and availability;
 3. calls `thread/settings/update` for that task;
-4. waits for `thread/settings/updated` confirmation;
+4. records the current notification generation and waits for a strictly newer `thread/settings/updated` confirmation;
 5. commits the rail state only after confirmation;
-6. restores the last confirmed state on error or timeout.
+6. restores the last confirmed state only for a pre-dispatch failure; after dispatch, a timeout or missing fresh confirmation invalidates confirmation and displays `Other` because the server outcome is uncertain.
 
-The renderer never scans the full document for a convenient task identifier and never prefers a task ID cached from a previous composer. Every commit re-resolves the identifier from the unique currently open trigger. A trigger or primary-surface change invalidates the previous value, preventing retained background task DOM from capturing a new-composer selection.
+The renderer never scans the full document for a convenient task identifier and never prefers a task ID cached from a previous composer. Every commit re-resolves the identifier from the unique currently open trigger. A trigger or primary-surface change invalidates the previous value, preventing retained background task DOM from capturing a new-composer selection. Notifications that arrive before catalog readiness are replayed, but their generation cannot confirm a later request. Trusted official picker actions invalidate cached confirmation across either DOM-before-notification or notification-before-DOM ordering.
 
 ### New unsent task
 
 Before Codex creates an identifier for that exact current composer, CoPicker does not fabricate one, adopt another composer's identifier, or write raw config keys. It instead:
 
-1. validates the official first-level picker structure;
-2. opens the exact Model row and chooses a catalog-backed option;
-3. opens the exact Effort row and chooses by official ordered position;
-4. chooses the official Speed option when Fast is supported;
-5. restores Codex's compact/advanced picker state;
-6. requires the official trigger to display the complete expected selection.
+1. validates the trigger-owned, innermost first-level menu and either the markerless power layout's unique visible, non-inert active panel or the exact marked non-Power Work layout while tolerating inactive mounted panels;
+2. opens Advanced through the official view control when needed;
+3. classifies the exact three-flyout power layout, the exact marked three-flyout non-Power Work layout, or the exact catalog-sized marker-backed flat-effort layout; exactly one leading row is excluded only when explicitly labeled as the Daybreak program, while every other extra row remains ambiguous and fails closed;
+4. loads every hidden-inclusive model-catalog page, excludes hidden entries from selectable rows, matches visible model labels exactly against the complete catalog, and preflights one exact usable target Model leaf; when responsive layout hides the compact trigger label, flat-effort validation resolves the current catalog entry only through one exact Model row owned by the same primary surface; hidden current entries remain detectable but abort the transaction because their leaf may disappear after switching;
+5. captures two matching current snapshots from the exact checked Model leaf, trigger effort, and checked Speed leaf—including the Speed index, option count, and semantic signature—preflights the current Model/Effort rollback controls, and binds the transaction to the same composer while it remains unsent; only then does it choose catalog-backed semantic leaves in official order;
+6. activates the composer trigger through the build-`7377` pointer-down contract when a remount closes the picker, with a guarded click fallback for earlier click-driven builds;
+7. restores Codex's compact view when the selected combination remains representable there, but leaves Advanced intact when Codex replaces the view toggle with Reset;
+8. establishes the requested tier on the current model before Model/Effort mutation, reapplies it on the target, and confirms the selected model through exact trigger text or, in the responsive icon-only layout, the exact checked target leaf. It confirms Fast through the checked compact control or checked Fast leaf. A prechecked Standard leaf remains ambiguous because an unsupported raw tier may be carried, so passive initialization displays `Other` and a Standard commit requires an observed catalog-resolved Fast-to-Standard transition. That transition intentionally makes normalized Standard—not the unknowable raw tier—the rollback baseline. A current model without a usable Speed submenu and Fast leaf fails closed. A partial failure restores the captured Model/Effort/tier tuple—including exact non-CoPicker tiers such as `Ultrafast`—and recaptures it; an initially ambiguous Standard is reported as normalized restoration, while rollback failure invalidates confirmation authority.
 
-If an option, order, or confirmation is absent or ambiguous, the no-task path fails closed. After task creation, the renderer immediately returns to the direct task settings path.
+If an option, order, or confirmation is absent or ambiguous, the no-task path fails closed. Passive no-task refresh is serialized with mutation commits and retried only while the same composer remains current. After task creation, the renderer immediately returns to the direct task settings path.
+
+Build `7377` deliberately removes `gpt-daybreak-blue-latest` from the official Model submenu when its separate Daybreak program is available. That program is exposed as a generic checkbox and its official transition may remap both the current and configured default normal model before persisting the program flag. CoPicker does not treat the checkbox as a Model leaf or click it implicitly. When the program control is present, CoPicker rejects the Daybreak row on both task paths; an ordinary model commit is allowed only while the exact control is explicitly off and is rejected while Daybreak is enabled, busy, disabled, or otherwise unreadable. When neither that checkbox nor one exact legacy Daybreak Model leaf is observable, all mutation-bearing selection fails closed because no bounded state distinguishes no entitlement from unresolved verified access. An exact legacy leaf is classified only for passive read-only display; mutation through it is deliberately refused on both task paths because its availability cannot be held atomically while mutually exclusive Model/Effort/Speed flyouts cycle. Supporting the current program requires a product decision for base model and effort.
+
+The public `config/batchWrite` method is intentionally not used as a no-task shortcut. Read-only source inspection of Codex `26.825.51511` build `7377` shows its official picker callback updating renderer-local draft state, writing profile-aware defaults, handling managed overrides, and invalidating prewarmed tasks. A raw config write does not expose the renderer-local and prewarm steps for the already-open composer.
 
 ## Settings architecture
 
@@ -272,7 +278,7 @@ Scoped probes inspect only versioned control attributes and bounded selection me
 
 - Missing app, fuse, executable, selector, model, effort, tier, task confirmation, or settings bridge: abort/fail closed.
 - Unknown Inspector listener: do not signal or attach.
-- Renderer selection failure: restore last confirmed rail state.
+- Renderer selection failure before dispatch: restore the last confirmed rail state. A dispatched existing-task request without fresh confirmation invalidates the rail to `Other` because its outcome is uncertain.
 - Stale settings save: show authoritative current values rather than overwriting them.
 - Apply-now failure: retain saved preferences for the next normal injection.
 - Current-process rollback: run guarded `remove` or quit Codex.

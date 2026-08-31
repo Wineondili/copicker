@@ -59,7 +59,7 @@ The Swift Testing suite is intentionally offline. Its assertions cover:
 - bounded watcher retry/backoff behavior;
 - user-scoped installed paths, LaunchAgent plist, structured state, and managed artifact replacement;
 - safe JavaScript literal embedding, removal, Inspector shutdown, and frame targeting;
-- renderer privacy exclusions, exact trigger/menu selectors, first-level/full-list separation, Shadow DOM ownership, obstacle latching, animation, keyboard behavior, model matrix, Fast restrictions, catalog lookup, task/no-task switch paths, and settings integration;
+- renderer privacy exclusions, exact trigger/menu selectors, first-level/full-list separation, Shadow DOM ownership, obstacle latching, animation, keyboard behavior, model matrix, Fast restrictions, hidden/paginated catalog handling, exact task routing, executable no-task layout classification, service-tier rejection, no-task source integration, and settings integration;
 - settings schema validation, normalized model order, at-least-one-model enforcement, atomic `0600` persistence, idempotency, and revision conflicts;
 - app-only MCP metadata, versioned settings resource, empty network/frame allowlists, read/save/apply behavior, and fail-closed Apply handler;
 - plugin marketplace, manifest, launcher, icons, installer registration, and resource bundle contracts;
@@ -118,14 +118,19 @@ Record the exact CoPicker commit/tag and Codex version/build, then test:
 7. open/close animation has no stale-coordinate fly-in;
 8. pointer click and active drag preserve the 240-millisecond fill/thumb positional easing, click commits once, rapid drag commits its final release cell without pausing, cancellation restores without writing, and four arrow keys plus Space work;
 9. all enabled model rows have the correct effort count;
-10. Daybreak and Codex Spark cannot enter Fast;
+10. Codex Spark cannot enter Fast, and an exact legacy model-backed Daybreak leaf is recognized passively but refused for mutation on both task paths;
 11. a hidden adapted model is recognized without an active selectable row;
 12. GPT-5.4/GPT-5.4 Mini and another unsupported model show empty `Other` state;
-13. existing-task changes confirm and failures restore state;
-14. a new-unsent-task composer with retained background task markers still uses and confirms through official controls;
-15. normal Codex compaction is not misreported as a CoPicker-specific failure;
-16. Escape, outside click, window blur, document hide, and official close dismiss both surfaces correctly;
-17. Inspector port closes after the live action.
+13. an existing-task change accepts only a strictly newer matching settings notification; a pre-dispatch failure restores state, while a post-dispatch unconfirmed outcome invalidates confirmation and displays `Other`;
+14. a new-unsent-task composer with retained background task markers still uses and confirms model-backed rows through official controls, including an icon-only responsive trigger;
+15. on build `7377`, the Daybreak row fails on both task paths when the separate program checkbox is present; ordinary rows work only while that exact control is explicitly off, fail while it is enabled/busy/disabled/ambiguous, and every mutation fails when neither that checkbox nor one exact legacy leaf is observable;
+16. an initially prechecked no-task Standard remains provisional and displays `Other`; a Standard selection visibly transitions through catalog-resolved Fast before returning to Standard, and a current model without that path fails before target mutation;
+17. a forced target failure restores the captured Model/Effort/tier, including exact `Ultrafast`; an initially ambiguous Standard restores and reports normalized Standard rather than the unknowable raw tier, while forced rollback failure invalidates the rail state;
+18. task notifications received before catalog readiness replay without confirming a later request, hidden adapted notifications remain recognizable, and a trusted official picker change invalidates cache in both DOM-before-notification and notification-before-DOM order;
+19. passive no-task and Daybreak classification refreshes serialize behind commits and retry only while the same composer remains current;
+20. normal Codex compaction is not misreported as a CoPicker-specific failure;
+21. Escape, outside click, window blur, document hide, and official close dismiss both surfaces correctly;
+22. Inspector port closes after the live action.
 
 ## Live settings acceptance checklist
 
@@ -164,15 +169,16 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
-| Current `main` renderer candidate | `0.12.11`; restored click/drag positional easing plus the current-Codex tag-agnostic official-item selector, offline proof only |
-| Codex | `26.820.60940` build `7119` |
+| Current `main` renderer candidate | `0.12.12`; restored click/drag positional easing plus build-`7377` semantic no-task flyout/leaf compatibility, offline/static proof only |
+| Live-accepted Codex | `26.820.60940` build `7119` |
+| Statically inspected Codex | `26.825.51511` build `7377`; bundle-on-disk evidence only |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |
 | Settings geometry | live official DOM measured; final user response: completely identical |
 | Inspector | closed after bounded work; no idle listener |
 | Public runtime release | `v0.99.0` full-feature source pre-release; no prebuilt executable attached |
 
-The accepted UI evidence applies to that exact Codex build and runtime source. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
+The accepted watcher, UI, and Inspector evidence applies specifically to Codex `26.820.60940` build `7119` and runtime source `c0343d4`; none of those rows is live evidence for the statically inspected build `7377`. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
 
 ## New-machine acceptance record
 
