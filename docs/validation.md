@@ -127,7 +127,7 @@ Record the exact CoPicker commit/tag and Codex version/build, then test:
 16. an initially prechecked no-task Standard remains provisional and displays `Other`; a Standard selection visibly transitions through catalog-resolved Fast before returning to Standard, and a current model without that path fails before target mutation;
 17. a forced target failure restores the captured Model/Effort/tier, including exact `Ultrafast`; an initially ambiguous Standard restores and reports normalized Standard rather than the unknowable raw tier, while forced rollback failure invalidates the rail state;
 18. task notifications received before catalog readiness replay without confirming a later request, hidden adapted notifications remain recognizable, and a trusted official picker change invalidates cache in both DOM-before-notification and notification-before-DOM order;
-19. passive no-task and Daybreak classification refreshes serialize behind commits and retry only while the same composer remains current;
+19. an idle no-task composer never opens Model/Effort/Speed for synchronization; one explicit selection performs one bounded transaction, proxy-owned Daybreak churn never retriggers classification, and duplicate in-flight task classification coalesces without a queued retry;
 20. normal Codex compaction is not misreported as a CoPicker-specific failure;
 21. Escape, outside click, window blur, document hide, and official close dismiss both surfaces correctly;
 22. Inspector port closes after the live action.
@@ -170,7 +170,8 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Live-accepted/published renderer | `0.12.8` |
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
 | Renderer `0.12.12` live result | Injected and visible on build `7377`, but selection had no effect; probes observed `serviceTier: "default"`, exact `legacy-model`, `Other`, and `error` |
-| Current `main` renderer candidate | `0.12.13`; corrects those live-observed Standard-tier and legacy-Daybreak blockers while retaining the build-`7377` proxy and animation; uninstalled |
+| Renderer `0.12.13` live result | Idle no-task Model/Effort/Speed flyouts looped visibly; Daybreak and Codex Spark could leave the renderer unresponsive |
+| Current `main` renderer candidate | `0.12.14`; removes idle flyout probing and self-retrying classification while retaining explicit no-task selection and animation; uninstalled |
 | Live-accepted Codex | `26.820.60940` build `7119` |
 | Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |

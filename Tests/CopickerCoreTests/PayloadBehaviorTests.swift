@@ -207,7 +207,7 @@ func noTaskProxyUsesCurrentCodexSemanticMenuItemsAndTriggerActivation() throws {
     #expect(payload.contains("resolveOfficialEffortTarget"))
     #expect(payload.contains("officialDaybreakProgramState"))
     #expect(payload.contains("const hasCurrentThread = Boolean(state.currentThreadID)"))
-    #expect(payload.contains("if (baseline.serviceTierOptionIndex === 0) return false"))
+    #expect(!payload.contains("refreshNoTaskSelectorFromOfficialControls"))
     #expect(payload.contains("await assertOfficialDaybreakSelectionPolicyReady(selection, context)"))
     #expect(payload.contains("const explicitlyUnselectable = selection?.rowIndex === null"))
     #expect(payload.contains("record.attributeName === \"data-model-selected\""))
@@ -394,6 +394,12 @@ func noTaskSpeedConfirmationNeverTreatsUnknownAsStandard() throws {
     let allowBase = try #require(
         context.objectForKeyedSubscript("daybreakProgramAllowsBaseConfirmation")
     )
+    let recordDaybreakChange = try #require(
+        context.objectForKeyedSubscript("shouldRecordDaybreakStructureChange")
+    )
+    let preserveNoTask = try #require(
+        context.objectForKeyedSubscript("shouldPreserveConfirmedNoThreadSelection")
+    )
 
     #expect(confirm.call(withArguments: [true, true, NSNull(), 1])?.toString() == "checkbox")
     #expect(confirm.call(withArguments: [true, NSNull(), 1, 1])?.toString() == "selected-leaf")
@@ -428,6 +434,29 @@ func noTaskSpeedConfirmationNeverTreatsUnknownAsStandard() throws {
     #expect(allowBase.call(withArguments: [true, NSNull()])?.toBool() == false)
     #expect(allowBase.call(withArguments: [false, NSNull(), false])?.toBool() == false)
     #expect(allowBase.call(withArguments: [false, NSNull(), true])?.toBool() == true)
+    #expect(recordDaybreakChange.call(withArguments: [true, 0])?.toBool() == true)
+    #expect(recordDaybreakChange.call(withArguments: [true, 1])?.toBool() == false)
+    #expect(recordDaybreakChange.call(withArguments: [false, 0])?.toBool() == false)
+    #expect(
+        preserveNoTask.call(
+            withArguments: [NSNull(), NSNull(), true, NSNull(), true, false, false]
+        )?.toBool() == true
+    )
+    #expect(
+        preserveNoTask.call(
+            withArguments: [NSNull(), NSNull(), true, NSNull(), true, true, true]
+        )?.toBool() == true
+    )
+    #expect(
+        preserveNoTask.call(
+            withArguments: [NSNull(), NSNull(), false, NSNull(), true, false, false]
+        )?.toBool() == false
+    )
+    #expect(
+        preserveNoTask.call(
+            withArguments: ["task", NSNull(), true, NSNull(), true, false, false]
+        )?.toBool() == false
+    )
 }
 
 @Test
@@ -482,8 +511,13 @@ func threadSettingsAcceptsDefaultAndNeverConflatesOtherServiceTiersWithStandard(
     #expect(payload.contains(
         "document.addEventListener(\"wheel\", state.handleOfficialInteraction, true)"
     ))
-    #expect(payload.contains("state.selectorRefreshRetryComposerRoot = composerRoot"))
-    #expect(payload.contains("state.threadClassificationRetryKey = key"))
+    #expect(!payload.contains("refreshNoTaskSelectorFromOfficialControls"))
+    #expect(!payload.contains("selectorRefreshRetryComposerRoot"))
+    #expect(!payload.contains("threadClassificationRetryKey"))
+    #expect(payload.contains("shouldRecordDaybreakStructureChange("))
+    #expect(payload.contains(
+        "const shouldInitialize = state.officialProxyReadDepth === 0"
+    ))
     #expect(commitFunction.contains("let requestDispatched = false"))
     #expect(commitFunction.contains("const hasUnconfirmedDispatchedUpdate ="))
     #expect(commitFunction.contains("!directContext.interruptedByUserInput"))
@@ -578,8 +612,9 @@ func selectionCommitScopesThreadResolutionToTheOpenComposer() throws {
     #expect(payload.contains("state.confirmedThreadID === threadID"))
     #expect(payload.contains("reconcileSettingsNotification("))
     #expect(payload.contains("latest?.settings"))
-    #expect(payload.contains("state.selectorRefreshComposerRoot === composerRoot"))
-    #expect(payload.contains("state.commitQueue = state.selectorRefreshPromise.catch"))
+    #expect(payload.contains("const retainedNoThreadSelection = !hasCurrentThread"))
+    #expect(payload.contains("const preserveConfirmedNoThreadSelection ="))
+    #expect(!payload.contains("selectorRefreshPromise"))
     #expect(payload.contains(
         "cancelPendingKeyboardCommit();\n      state.currentThreadID = null;"
     ))

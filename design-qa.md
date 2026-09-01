@@ -1,6 +1,17 @@
 # Design QA
 
-## 2026-09-01 — Live failure diagnosis and renderer 0.12.13 correction
+## 2026-09-01 — Renderer 0.12.13 flyout loop and special-model freeze
+
+- Strict result: installed renderer `0.12.13` failed. The user observed that Daybreak Blue and GPT-5.3 Codex Spark could leave Codex unresponsive at every effort, and an idle no-task picker continuously flashed the official Model, Effort, and Speed flyouts.
+- Environment: Codex `26.825.51511` build `7377`, source-exact installed payload SHA `520be6970e07fd9116152bdb35a6116342e82f969e55740cfffb6a7e72d6dafb`, loaded watcher, and `injection-succeeded`. A bounded read-only probe found the currently active task on Sol/max with all official menus closed; it did not mutate a selector or attempt to reproduce the no-task freeze.
+- Source evidence: no-task passive synchronization explicitly opened Model/Effort/Speed to capture and verify official state. Opening the Model flyout added or removed the legacy Daybreak leaf, the global observer treated that proxy-owned DOM churn as a fresh external structure change, initialization requested the same passive read while it was still running, and the completion handler scheduled another microtask retry. Thread Daybreak classification had the same unbounded same-key retry shape on the shared commit queue. This mechanism directly explains the reported continuous flashing and is consistent with the special-model stall.
+- Candidate correction: renderer `0.12.14` removes idle no-task official-control reads; nested flyouts are touched only after an explicit CoPicker selection. It ignores bounded passive classification churn for external Daybreak generations, coalesces duplicate in-flight task classification without a queued retry, suppresses initialization during passive classification, and retains a successful no-task confirmation across a same-composer trigger remount.
+- Offline evidence: all 44 tests passed, including executable proxy-churn and no-task-confirmation contracts. JavaScript and shell syntax checks, whitespace validation, and the production release build also passed.
+- Boundary: the explicit no-task transaction still opens official controls because build `7377` exposes no equivalent inspected public method for renderer-local draft/default/prewarm state. The transaction is now bounded rather than idle or self-retrying. Renderer `0.12.14` is not installed and has not received a live interaction pass.
+
+candidate result: `0.12.13` live-failed; `0.12.14` offline-green and pending live validation
+
+## 2026-09-01 — Live failure diagnosis and renderer 0.12.13 correction (superseded by next live failure)
 
 - Strict result: renderer `0.12.12` failed. The user observed that selection had no effect after installation.
 - Environment: running Codex `26.825.51511` build `7377`, installed source-exact payload SHA `a49a67af32a074b369b1454a190c5501f47f2513b2d0be3a8359d9f8ad9152b7`, watcher `injection-succeeded`, and bounded Inspector probes that opened only the first-level picker and read privacy-limited metadata. No selector mutation, task creation, restart, or bundle modification was performed by the probes.

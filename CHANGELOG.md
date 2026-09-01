@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-01 21:28:44 +0800
+
+- Recorded renderer `0.12.13` as a strict installed failure on Codex `26.825.51511` build `7377`: the user observed continuous idle no-task flashing across the official Model, Effort, and Speed flyouts, while selecting Daybreak Blue or GPT-5.3 Codex Spark at any effort could leave the renderer unresponsive. The installed payload SHA matched source, the watcher reported `injection-succeeded`, and a bounded read-only probe made no selection mutation.
+- Traced the matching self-trigger mechanism. Passive no-task synchronization opened official flyouts, proxy-owned legacy-Daybreak DOM churn invalidated its own classification, duplicate same-composer initialization requested a retry, and the completion path queued another pass. Thread Daybreak classification used the same unbounded same-key retry shape on the shared commit queue.
+- Advanced the candidate to renderer `0.12.14`. Idle no-task synchronization no longer opens nested official controls; only an explicit selection starts one bounded proxy transaction. Passive classification churn no longer advances external Daybreak generations, duplicate in-flight task classification coalesces without a queued retry, selector initialization is suppressed during passive reads, and a confirmed no-task result survives same-composer trigger remounts. The Daybreak program boundary, strict explicit transaction, pointer animation, and release-coordinate commit semantics remain unchanged.
+- Renderer `0.12.14` remains uninstalled. No selection mutation, Codex restart, LaunchAgent change, push, tag, or release was performed for this correction.
+- Passed all 44 offline tests, including executable proxy-churn and no-task-confirmation contracts, plus JavaScript and shell syntax checks, whitespace validation, and the production release build.
+
 ## 2026-09-01 21:12:49 +0800
 
 - Diagnosed the installed renderer `0.12.12` against the running Codex `26.825.51511` build `7377` after the user reported that it had no effect. Verified that the installed payload exactly matched source and that the watcher injected successfully, then used bounded privacy-safe probes to observe the actual failure: CoPicker opened as `Other` with `switchState: error`, the account exposed the exact legacy model-backed Daybreak topology, and official Standard task settings arrived as `serviceTier: "default"`.

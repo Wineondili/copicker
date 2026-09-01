@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.13";
+  const VERSION = "0.12.14";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -405,6 +405,29 @@
   ) {
     return (present && checked === false) ||
       (!present && Boolean(legacyModelProven));
+  }
+
+  function shouldRecordDaybreakStructureChange(changed, proxyReadDepth) {
+    return Boolean(changed && proxyReadDepth === 0);
+  }
+
+  function shouldPreserveConfirmedNoThreadSelection(
+    resolvedThreadID,
+    currentThreadID,
+    sameComposerRoot,
+    confirmedThreadID,
+    hasConfirmedSelection,
+    officialSelectionDirty,
+    commitInFlight,
+  ) {
+    return Boolean(
+      !resolvedThreadID &&
+      !currentThreadID &&
+      sameComposerRoot &&
+      confirmedThreadID === null &&
+      hasConfirmedSelection &&
+      (!officialSelectionDirty || commitInFlight)
+    );
   }
   /* COPICKER_BEHAVIOR_CONTRACT_END */
 
@@ -1508,12 +1531,8 @@
     officialModelCatalog: null,
     modelCatalog: null,
     modelCatalogPromise: null,
-    selectorRefreshPromise: null,
-    selectorRefreshComposerRoot: null,
-    selectorRefreshRetryComposerRoot: null,
     threadClassificationPromise: null,
     threadClassificationKey: null,
-    threadClassificationRetryKey: null,
     trustedSelectionAction: null,
     trustedSelectionActionTimer: null,
     currentThreadID: null,
@@ -2051,24 +2070,45 @@
       effortIndex >= 0 &&
       recognizedRow.dots.includes(effortIndex + 1);
     const hasCurrentThread = Boolean(state.currentThreadID);
+    const retainedNoThreadSelection = !hasCurrentThread &&
+        state.confirmedThreadID === null &&
+        Number.isInteger(state.confirmedSelection?.rowIndex) &&
+        Number.isInteger(state.confirmedSelection?.indexInRow) &&
+        Boolean(
+          ROWS[state.confirmedSelection.rowIndex]?.dots[
+            state.confirmedSelection.indexInRow
+          ],
+        )
+      ? state.confirmedSelection
+      : null;
     const isVisibleSelection =
       isRecognized && rowIndex >= 0 && hasCurrentThread;
     const canPresentRecognizedSelection = isRecognized && hasCurrentThread;
 
-    state.currentRow = isVisibleSelection ? rowIndex : null;
-    state.currentIndex = isVisibleSelection ? effortIndex : null;
-    state.recognizedRow = canPresentRecognizedSelection ? recognizedRow : null;
-    state.recognizedEffort = canPresentRecognizedSelection ? effort : null;
+    state.currentRow = retainedNoThreadSelection?.rowIndex ??
+      (isVisibleSelection ? rowIndex : null);
+    state.currentIndex = retainedNoThreadSelection?.indexInRow ??
+      (isVisibleSelection ? effortIndex : null);
+    state.recognizedRow = retainedNoThreadSelection
+      ? ROWS[retainedNoThreadSelection.rowIndex]
+      : canPresentRecognizedSelection
+        ? recognizedRow
+        : null;
+    state.recognizedEffort = retainedNoThreadSelection?.effort ??
+      (canPresentRecognizedSelection ? effort : null);
     const officialFastMode = readOfficialFastMode(state.primarySurface);
-    state.fastMode = Boolean(
-      isRecognized && recognizedRow.supportsFast && officialFastMode === true,
-    );
+    state.fastMode = retainedNoThreadSelection
+      ? Boolean(retainedNoThreadSelection.fastMode)
+      : Boolean(
+          isRecognized && recognizedRow.supportsFast && officialFastMode === true,
+        );
     state.selectionRevision += 1;
-    state.confirmedSelection = hasCurrentThread && isRecognized &&
+    state.confirmedSelection = retainedNoThreadSelection ||
+      (hasCurrentThread && isRecognized &&
         recognizedRow.supportsFast &&
         officialFastMode === true
         ? snapshotSelection()
-        : null;
+        : null);
     state.confirmedThreadID = state.confirmedSelection
       ? state.currentThreadID
       : null;
@@ -2083,18 +2123,11 @@
               state.currentThreadID,
               latest.generation,
             );
-            if (latest.reconciled !== true) {
-              return refreshThreadDaybreakClassification(
-                state.currentThreadID,
-                latest.generation,
-              );
-            }
           }
           return false;
         }
-        if (!state.currentThreadID) {
-          return refreshNoTaskSelectorFromOfficialControls();
-        }
+        // An idle no-task composer must never open nested official controls.
+        // The proxy may touch them only inside an explicit selection commit.
         return false;
       })
       .catch(() => {});
@@ -2449,113 +2482,11 @@
     return state.modelCatalogPromise;
   }
 
-  function refreshNoTaskSelectorFromOfficialControls() {
-    const trigger = findOpenTrigger();
-    const composerRoot = trigger?.closest("[data-codex-composer-root]") || null;
-    if (!trigger || !composerRoot || resolveCurrentThreadID(trigger)) {
-      return Promise.resolve(false);
-    }
-    if (state.selectorRefreshPromise) {
-      if (state.selectorRefreshComposerRoot === composerRoot) {
-        state.selectorRefreshRetryComposerRoot = composerRoot;
-        return state.selectorRefreshPromise;
-      }
-      return state.selectorRefreshPromise
-        .catch(() => false)
-        .then(() => refreshNoTaskSelectorFromOfficialControls());
-    }
-    const startingRevision = state.selectionRevision;
-    const startingInteractionEpoch = state.officialInteractionEpoch;
-    const context = {
-      composerRoot,
-      expandedAdvanced: false,
-      interruptedByUserInput: false,
-    };
-    let removeInputGuard = null;
-    const refreshTask = state.commitQueue.catch(() => {}).then(async () => {
-      state.officialProxyReadDepth += 1;
-      try {
-        removeInputGuard = installOfficialProxyInputGuard(context);
-        const baseline = await captureOfficialSelectionBaseline(context, {
-          requireRestorableStandard: false,
-        });
-        if (baseline.serviceTierOptionIndex === 0) return false;
-        const selection = coPickerSelectionFromOfficialBaseline(baseline);
-        if (!selection) return false;
-        await assertOfficialDaybreakSelectionPolicyReady(selection, context);
-        assertOfficialDaybreakStateUnchanged(context);
-        const verifiedBaseline = await captureOfficialSelectionBaseline(context, {
-          requireRestorableStandard: false,
-        });
-        if (
-          verifiedBaseline.catalogEntry.model !== baseline.catalogEntry.model ||
-          verifiedBaseline.effort !== baseline.effort ||
-          verifiedBaseline.serviceTierOptionIndex !==
-            baseline.serviceTierOptionIndex ||
-          verifiedBaseline.serviceTierOptionCount !==
-            baseline.serviceTierOptionCount ||
-          verifiedBaseline.serviceTierLeafSignature !==
-            baseline.serviceTierLeafSignature
-        ) {
-          return false;
-        }
-        assertOfficialDaybreakStateUnchanged(context);
-        const currentTrigger = assertOfficialProxyContext(context);
-        if (
-          state.commitInFlight ||
-          state.pendingOfficialSelection ||
-          state.selectionRevision !== startingRevision ||
-          state.officialInteractionEpoch !== startingInteractionEpoch ||
-          currentTrigger.closest("[data-codex-composer-root]") !== composerRoot ||
-          resolveCurrentThreadID(currentTrigger)
-        ) {
-          return false;
-        }
-        applySelection(selection);
-        state.selectionRevision += 1;
-        state.officialSelectionDirty = false;
-        setSwitchState("no-thread");
-        return true;
-      } catch (_) {
-        return false;
-      } finally {
-        try {
-          await restoreOfficialPickerView(context);
-        } catch (_) {}
-        removeInputGuard?.();
-        state.officialProxyReadDepth = Math.max(
-          0,
-          state.officialProxyReadDepth - 1,
-        );
-      }
-    });
-    state.selectorRefreshPromise = refreshTask.finally(() => {
-      const retryComposerRoot = state.selectorRefreshRetryComposerRoot;
-      state.selectorRefreshPromise = null;
-      state.selectorRefreshComposerRoot = null;
-      state.selectorRefreshRetryComposerRoot = null;
-      const retryTrigger = findOpenTrigger();
-      if (
-        retryComposerRoot &&
-        retryTrigger?.closest("[data-codex-composer-root]") ===
-          retryComposerRoot &&
-        !resolveCurrentThreadID(retryTrigger)
-      ) {
-        window.queueMicrotask(() => {
-          void refreshNoTaskSelectorFromOfficialControls().catch(() => {});
-        });
-      }
-    });
-    state.selectorRefreshComposerRoot = composerRoot;
-    state.commitQueue = state.selectorRefreshPromise.catch(() => {});
-    return state.selectorRefreshPromise;
-  }
-
   function refreshThreadDaybreakClassification(threadID, generation) {
     const key = `${threadID}:${generation}`;
     if (state.threadClassificationPromise) {
       if (state.threadClassificationKey === key) {
-        state.threadClassificationRetryKey = key;
+        // Coalesce duplicate requests instead of creating a self-retry loop.
         return state.threadClassificationPromise;
       }
       return state.threadClassificationPromise
@@ -2626,25 +2557,8 @@
       }
     });
     state.threadClassificationPromise = task.finally(() => {
-      const retryKey = state.threadClassificationRetryKey;
       state.threadClassificationPromise = null;
       state.threadClassificationKey = null;
-      state.threadClassificationRetryKey = null;
-      const retryTrigger = findOpenTrigger();
-      const retryLatest = state.latestThreadSettings.get(threadID);
-      if (
-        retryKey === key &&
-        resolveCurrentThreadID(retryTrigger) === threadID &&
-        retryLatest?.generation === generation &&
-        retryLatest.reconciled !== true
-      ) {
-        window.queueMicrotask(() => {
-          void refreshThreadDaybreakClassification(
-            threadID,
-            generation,
-          ).catch(() => {});
-        });
-      }
     });
     state.threadClassificationKey = key;
     state.commitQueue = state.threadClassificationPromise.catch(() => {});
@@ -6162,7 +6076,12 @@
     if (selectionChanged || primaryStructureChanged) {
       state.officialSelectionMutationGeneration += 1;
     }
-    if (daybreakStructureChanged) {
+    // Opening a flyout for bounded classification changes its DOM structure.
+    // Do not reinterpret that proxy-owned churn as a new external state change.
+    if (shouldRecordDaybreakStructureChange(
+      daybreakStructureChanged,
+      state.officialProxyReadDepth,
+    )) {
       state.officialStructureMutationGeneration += 1;
       if (daybreakProgramChanged) {
         state.officialDaybreakProgramMutationGeneration += 1;
@@ -6228,10 +6147,23 @@
     const resolvedThreadID = resolveCurrentThreadID(target.trigger);
     const threadIdentityChanged =
       (state.currentThreadID || null) !== (resolvedThreadID || null);
+    const preserveConfirmedNoThreadSelection =
+      shouldPreserveConfirmedNoThreadSelection(
+        resolvedThreadID,
+        state.currentThreadID,
+        Boolean(previousComposerRoot) &&
+          previousComposerRoot === nextComposerRoot,
+        state.confirmedThreadID,
+        Boolean(state.confirmedSelection),
+        state.officialSelectionDirty,
+        state.commitInFlight,
+      );
     if (triggerChanged || threadIdentityChanged) {
       cancelPendingKeyboardCommit();
-      state.confirmedSelection = null;
-      state.confirmedThreadID = null;
+      if (!preserveConfirmedNoThreadSelection) {
+        state.confirmedSelection = null;
+        state.confirmedThreadID = null;
+      }
       if (
         threadIdentityChanged ||
         previousComposerRoot !== nextComposerRoot
@@ -6239,11 +6171,13 @@
         state.daybreakClassification = null;
       }
     }
-    const shouldInitialize =
-      triggerChanged ||
-      threadIdentityChanged ||
-      state.observedSurface !== target.surface ||
-      (state.officialSelectionDirty && !state.commitInFlight);
+    const shouldInitialize = state.officialProxyReadDepth === 0 &&
+      (
+        triggerChanged ||
+        threadIdentityChanged ||
+        state.observedSurface !== target.surface ||
+        (state.officialSelectionDirty && !state.commitInFlight)
+      );
     if (shouldInitialize) {
       resetPlacementSession();
       initializeSelectorFromTrigger(target.trigger);
