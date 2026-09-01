@@ -363,6 +363,13 @@ func noTaskProxyUsesCurrentCodexSemanticMenuItemsAndTriggerActivation() throws {
     #expect(payload.contains("program.checked !== false"))
     #expect(payload.contains("candidate.getAttribute(\"aria-busy\")"))
     #expect(payload.contains("The Codex Daybreak program is loading"))
+    #expect(!payload.contains("allowLegacyDaybreakReadOnly"))
+    #expect(!payload.contains(
+        "Legacy Daybreak availability cannot be held atomically across a settings mutation."
+    ))
+    #expect(payload.contains(
+        "expected.kind === \"legacy-model\"\n        ? !current.present &&\n          expected.programGeneration"
+    ))
     #expect(!payload.contains("function officialSelectionFromDOM("))
 }
 
@@ -424,13 +431,14 @@ func noTaskSpeedConfirmationNeverTreatsUnknownAsStandard() throws {
 }
 
 @Test
-func threadSettingsNeverConflateOtherServiceTiersWithStandard() throws {
+func threadSettingsAcceptsDefaultAndNeverConflatesOtherServiceTiersWithStandard() throws {
     let context = try behaviorContext()
     let fastState = try #require(
         context.objectForKeyedSubscript("officialServiceTierFastState")
     )
 
     #expect(fastState.call(withArguments: [NSNull(), "priority"])?.toBool() == false)
+    #expect(fastState.call(withArguments: ["default", "priority"])?.toBool() == false)
     #expect(fastState.call(withArguments: ["priority", "priority"])?.toBool() == true)
     #expect(fastState.call(withArguments: ["ultrafast", "priority"])?.isNull == true)
     #expect(fastState.call(withArguments: ["flex", NSNull()])?.isNull == true)

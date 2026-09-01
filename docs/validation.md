@@ -118,7 +118,7 @@ Record the exact CoPicker commit/tag and Codex version/build, then test:
 7. open/close animation has no stale-coordinate fly-in;
 8. pointer click and active drag preserve the 240-millisecond fill/thumb positional easing, click commits once, rapid drag commits its final release cell without pausing, cancellation restores without writing, and four arrow keys plus Space work;
 9. all enabled model rows have the correct effort count;
-10. Codex Spark cannot enter Fast, and an exact legacy model-backed Daybreak leaf is recognized passively but refused for mutation on both task paths;
+10. Codex Spark cannot enter Fast; an exact legacy model-backed Daybreak leaf follows the normal non-Fast model route, while the separate Daybreak program remains policy-gated;
 11. a hidden adapted model is recognized without an active selectable row;
 12. GPT-5.4/GPT-5.4 Mini and another unsupported model show empty `Other` state;
 13. an existing-task change accepts only a strictly newer matching settings notification; a pre-dispatch failure restores state, while a post-dispatch unconfirmed outcome invalidates confirmation and displays `Other`;
@@ -169,9 +169,10 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
-| Current `main` renderer candidate | `0.12.12`; restored click/drag positional easing plus build-`7377` semantic no-task flyout/leaf compatibility, offline/static proof only |
+| Renderer `0.12.12` live result | Injected and visible on build `7377`, but selection had no effect; probes observed `serviceTier: "default"`, exact `legacy-model`, `Other`, and `error` |
+| Current `main` renderer candidate | `0.12.13`; corrects those live-observed Standard-tier and legacy-Daybreak blockers while retaining the build-`7377` proxy and animation; uninstalled |
 | Live-accepted Codex | `26.820.60940` build `7119` |
-| Statically inspected Codex | `26.825.51511` build `7377`; bundle-on-disk evidence only |
+| Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |
 | Settings geometry | live official DOM measured; final user response: completely identical |

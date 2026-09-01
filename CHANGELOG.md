@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-01 21:12:49 +0800
+
+- Diagnosed the installed renderer `0.12.12` against the running Codex `26.825.51511` build `7377` after the user reported that it had no effect. Verified that the installed payload exactly matched source and that the watcher injected successfully, then used bounded privacy-safe probes to observe the actual failure: CoPicker opened as `Other` with `switchState: error`, the account exposed the exact legacy model-backed Daybreak topology, and official Standard task settings arrived as `serviceTier: "default"`.
+- Corrected both live-disproved assumptions. Renderer `0.12.13` recognizes both `null` and the observed official `"default"` value as Standard while continuing to reject unrelated non-null tiers, and restores mutation through an exact legacy Daybreak Model leaf. The separate current-build Daybreak program checkbox remains fail-closed unless it is explicitly off; an absent checkbox and absent exact legacy leaf remain ambiguous and block mutation.
+- Preserved the user-confirmed click/drag positional easing, release-coordinate selection, transaction baselines, official-control confirmation, and responsive flat-effort repair unchanged. Added regression contracts for the live-observed Standard value and legacy-model mutation policy. The `0.12.12` offline-green result is superseded by this live failure evidence; `0.12.13` remains uninstalled and requires a new focused no-task acceptance pass.
+- Passed all 44 offline tests, JavaScript and shell syntax checks, whitespace validation, and the production release build. No candidate installation, selection mutation, Codex restart, LaunchAgent change, push, tag, or release was performed.
+
 ## 2026-09-01 04:55:45 +0800
 
 - Read the installed Codex `26.825.51511` build `7377` bundle and current official OpenAI app-server/config sources without attaching to or mutating the app. Confirmed that no-task selection still has a native renderer draft path, while a raw `config/batchWrite` cannot replace its renderer-local state and prewarmed-task invalidation.

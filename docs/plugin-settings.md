@@ -9,12 +9,12 @@ Current versions:
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v2.html` |
-| Renderer fallback on current `main` | `0.12.12` development candidate |
+| Renderer fallback on current `main` | `0.12.13` development candidate |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
-| Statically inspected Codex | `26.825.51511` build `7377`; bundle-source evidence only, no live acceptance |
+| Currently diagnosed Codex | `26.825.51511` build `7377`; `0.12.12` installed failure plus bounded probe evidence, no successful selection acceptance |
 
 ## Package layout
 

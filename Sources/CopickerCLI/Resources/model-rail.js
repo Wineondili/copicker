@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.12";
+  const VERSION = "0.12.13";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -350,7 +350,7 @@
   }
 
   function officialServiceTierFastState(serviceTier, fastTierID) {
-    if (serviceTier === null) return false;
+    if (serviceTier === null || serviceTier === "default") return false;
     if (fastTierID && serviceTier === fastTierID) return true;
     return null;
   }
@@ -2470,7 +2470,6 @@
       composerRoot,
       expandedAdvanced: false,
       interruptedByUserInput: false,
-      allowLegacyDaybreakReadOnly: true,
     };
     let removeInputGuard = null;
     const refreshTask = state.commitQueue.catch(() => {}).then(async () => {
@@ -2599,7 +2598,6 @@
         threadID,
         expandedAdvanced: false,
         interruptedByUserInput: false,
-        allowLegacyDaybreakReadOnly: true,
       };
       let removeInputGuard = null;
       try {
@@ -3626,11 +3624,6 @@
         "The Codex Daybreak program is loading or lacks an explicit base-model policy.",
       );
     }
-    if (!context?.allowLegacyDaybreakReadOnly) {
-      throw new Error(
-        "Legacy Daybreak availability cannot be held atomically across a settings mutation.",
-      );
-    }
     context.expectedDaybreakState = {
       kind: "legacy-model",
       structureGeneration: state.officialStructureMutationGeneration,
@@ -3654,8 +3647,6 @@
       ? current.present && current.checked === false
       : expected.kind === "legacy-model"
         ? !current.present &&
-          expected.structureGeneration ===
-            state.officialStructureMutationGeneration &&
           expected.programGeneration ===
             state.officialDaybreakProgramMutationGeneration
         : false;
@@ -4111,7 +4102,6 @@
       expandedAdvanced: false,
       interruptedByUserInput: false,
       intent,
-      allowLegacyDaybreakReadOnly: true,
     };
     let removeInputGuard = null;
     let confirmed = false;
