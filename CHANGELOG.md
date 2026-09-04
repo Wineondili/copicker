@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-05 02:17:46 +0800
+
+- Added a standalone, offline-only current Model Rail preview with the full six-model matrix, accepted 1.2 typography scale, six-row geometry, and no settings or injection surface.
+- Preserved the production 240-millisecond click and drag easing, release-coordinate selection, pointer-cancellation rollback, keyboard navigation, and model-aware Fast availability entirely in local preview state.
+
 ## 2026-09-01 21:28:44 +0800
 
 - Recorded renderer `0.12.13` as a strict installed failure on Codex `26.825.51511` build `7377`: the user observed continuous idle no-task flashing across the official Model, Effort, and Speed flyouts, while selecting Daybreak Blue or GPT-5.3 Codex Spark at any effort could leave the renderer unresponsive. The installed payload SHA matched source, the watcher reported `injection-succeeded`, and a bounded read-only probe made no selection mutation.

@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Copicker Model Rail Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #202020;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px 0;
+      overflow: auto;
+      background: #202020;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+        "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    @property --fill-light {
+      syntax: "<color>";
+      inherits: false;
+      initial-value: #EEF9F1;
+    }
+
+    @property --fill-base {
+      syntax: "<color>";
+      inherits: false;
+      initial-value: #DDF3E4;
+    }
+
+    .rail-host {
+      display: block;
+      flex: 0 0 auto;
+      width: 339.75px;
+      height: 230.75px;
+      color-scheme: dark;
+      --popover: rgb(44, 44, 44);
+      --border: #444448;
+      --text: #f3f3f4;
+      --effort-text: #fff;
+      --secondary-text: #8e8e93;
+      --dot: #7e7e83;
+      --dot-active: rgba(255, 255, 255, 0.36);
+      --thumb: #f5f5f6;
+      --daybreak-label: #70b9ff;
+      --row-h: 48px;
+      --row-gap: 16px;
+      --row-count: 6;
+      --thumb-size: 56px;
+      --stage-w: 388px;
+      --model-column-w: 190px;
+      --start-inset: 6px;
+      --text-scale: 1.2;
+      color: var(--text);
+    }
+
+    .popover {
+      position: relative;
+      top: -4px;
+      width: 679.5px;
+      padding: 40px 26px 17.5px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+        var(--popover);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      transform: scale(0.5);
+      transform-origin: top left;
+      user-select: none;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: var(--model-column-w) var(--stage-w);
+      column-gap: 0;
+      align-items: start;
+    }
+
+    .labels {
+      height: 368px;
+      margin-top: 34px;
+      display: grid;
+      grid-template-rows: repeat(var(--row-count), var(--row-h));
+      row-gap: var(--row-gap);
+    }
+
+    .label {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 28px;
+      font-size: calc(22px * var(--text-scale));
+      font-weight: 650;
+      letter-spacing: -0.03em;
+    }
+
+    .label.daybreak {
+      color: var(--daybreak-label);
+    }
+
+    .stage-shell {
+      position: relative;
+      width: var(--stage-w);
+      padding-top: 34px;
+    }
+
+    .effort-labels {
+      position: absolute;
+      left: 0;
+      top: -22px;
+      width: var(--stage-w);
+      height: 30px;
+      pointer-events: none;
+    }
+
+    .effort-label {
+      position: absolute;
+      top: 0;
+      color: var(--effort-text);
+      font-size: calc(22px * var(--text-scale));
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      opacity: 0;
+      transform: translateX(-50%);
+      transition: opacity 180ms ease;
+      white-space: nowrap;
+    }
+
+    .effort-label.ultra {
+      color: #A67DF2;
+    }
+
+    .effort-label.active {
+      opacity: 1;
+    }
+
+    .effort-model {
+      position: absolute;
+      right: calc(100% + 7px);
+      bottom: 0;
+      color: transparent;
+      font: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+      background: linear-gradient(
+        90deg,
+        var(--model-text-light),
+        var(--model-text-dark)
+      );
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .effort-model.daybreak {
+      color: var(--daybreak-label);
+      background: none;
+      -webkit-text-fill-color: currentColor;
+    }
+
+    .effort-fast {
+      position: absolute;
+      left: calc(100% + 7px);
+      bottom: 0;
+      color: #0099ff;
+      font: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .effort-label.fast .effort-fast {
+      opacity: 1;
+    }
+
+    .effort-endpoint {
+      position: absolute;
+      top: calc(3.6px * var(--text-scale));
+      color: var(--secondary-text);
+      font-size: calc(19px * var(--text-scale));
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      opacity: 1;
+      white-space: nowrap;
+      transition: opacity 120ms ease;
+    }
+
+    .effort-endpoint.faster {
+      left: -90px;
+    }
+
+    .effort-endpoint.smarter {
+      right: -47.5px;
+    }
+
+    .effort-endpoint.obscured {
+      opacity: 0;
+    }
+
+    .stage {
+      position: relative;
+      width: var(--stage-w);
+      height: 368px;
+      cursor: pointer;
+      touch-action: none;
+      outline: none;
+    }
+
+    .selection {
+      position: absolute;
+      left: var(--start-inset);
+      bottom: 0;
+      width: 0;
+      height: var(--row-h);
+      border-radius: 24px;
+      --fill-light: #FFF1CF;
+      --fill-base: #FFE6B8;
+      background: linear-gradient(135deg, var(--fill-light) 0%, var(--fill-base) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.06);
+      pointer-events: none;
+      transition:
+        width 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        bottom 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        background 240ms ease;
+    }
+
+    .dot {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--dot);
+      pointer-events: none;
+      transition: background 180ms ease, opacity 180ms ease;
+    }
+
+    .dot.inside {
+      background: var(--dot-active);
+    }
+
+    .thumb {
+      position: absolute;
+      width: var(--thumb-size);
+      height: var(--thumb-size);
+      border-radius: 50%;
+      background: var(--thumb);
+      transform: translate(-50%, -50%);
+      cursor: grab;
+      box-shadow:
+        0 10px 22px rgba(0, 0, 0, 0.24),
+        0 2px 6px rgba(0, 0, 0, 0.10),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+      transition:
+        left 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        top 240ms cubic-bezier(0.22, 0.86, 0.2, 1),
+        transform 150ms ease,
+        box-shadow 150ms ease;
+    }
+
+    .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 17%;
+      background: rgba(74, 74, 80, 0.28);
+      opacity: 0;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 1.5V9h6.5L11 22.5V15H4.5L13 1.5Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 1.5V9h6.5L11 22.5V15H4.5L13 1.5Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+      transition: opacity 160ms ease;
+    }
+
+    .thumb.fast::after {
+      opacity: 1;
+    }
+
+    .thumb.fast-unavailable::after {
+      opacity: 0;
+    }
+
+    .stage.dragging .thumb {
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+
+    .visually-hidden {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .selection,
+      .dot,
+      .thumb,
+      .effort-label,
+      .effort-fast,
+      .effort-endpoint {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main
+    class="rail-host"
+    id="railHost"
+    data-preview-model="Terra"
+    data-preview-effort="medium"
+    data-preview-fast="false"
+    aria-label="Standalone Copicker model rail preview"
+  >
+    <section class="popover" data-design="preview-2d" aria-label="Copicker">
+      <div class="main">
+        <div class="labels" id="modelLabels"></div>
+        <div class="stage-shell">
+          <div class="effort-labels" id="effortLabels">
+            <div class="effort-endpoint faster">Faster</div>
+            <div class="effort-endpoint smarter">Smarter</div>
+          </div>
+          <div class="stage" id="stage" tabindex="0" aria-label="2D selector">
+            <div class="selection" id="selection"></div>
+            <div id="dots"></div>
+            <div class="thumb" id="thumb"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="visually-hidden" id="selectionStatus" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const EFFORTS = ["low", "medium", "high", "xhigh", "max", "ultra"];
+      const ROWS = [
+        {
+          id: "sol",
+          name: "Sol",
+          dots: [1, 2, 3, 4, 5, 6],
+          colors: ["#FBE1E5", "#F7C6CC"],
+          textColors: ["#f1c0c9", "#edb7c1"],
+          supportsFast: true,
+        },
+        {
+          id: "terra",
+          name: "Terra",
+          dots: [1, 2, 3, 4, 5, 6],
+          colors: ["#FFF1CF", "#FFE6B8"],
+          textColors: ["#f0d69b", "#ebcd90"],
+          supportsFast: true,
+        },
+        {
+          id: "luna",
+          name: "Luna",
+          dots: [1, 2, 3, 4, 5],
+          colors: ["#EEF9F1", "#DDF3E4"],
+          textColors: ["#c1e2cb", "#b7dcc3"],
+          supportsFast: true,
+        },
+        {
+          id: "daybreak-blue",
+          name: "Daybreak",
+          dots: [1, 2, 3, 4, 5, 6],
+          colors: ["#DDEEFF", "#C2E0FF"],
+          textColors: ["#afd2f2", "#9bc5eb"],
+          supportsFast: false,
+        },
+        {
+          id: "gpt-5.5",
+          name: "GPT-5.5",
+          dots: [1, 2, 3, 4],
+          colors: ["#E3EDFF", "#CADCFF"],
+          textColors: ["#bad0f4", "#a9c3ee"],
+          supportsFast: true,
+        },
+        {
+          id: "gpt-5.3-codex-spark",
+          name: "Codex Spark",
+          dots: [1, 2, 3, 4],
+          colors: ["#F0E7FF", "#E0D1FA"],
+          textColors: ["#d4c0f2", "#c8afea"],
+          supportsFast: false,
+        },
+      ];
+
+      const ROW_HEIGHT = 48;
+      const ROW_GAP = 16;
+      const STAGE_WIDTH = 388;
+      const STAGE_HEIGHT = 368;
+      const LEFT_PADDING = 34;
+      const USABLE_WIDTH = 320;
+      const START_INSET = 6;
+      const RIGHT_INSET_IN_THUMB = 12;
+      const CLICK_MOVE_THRESHOLD = 5;
+      const ROW_CENTERS = ROWS.map(
+        (_, index) => index * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2,
+      );
+      const ROW_BOTTOMS = ROWS.map(
+        (_, index) => STAGE_HEIGHT - (index + 1) * ROW_HEIGHT - index * ROW_GAP,
+      );
+      const COLUMN_CENTERS = Array.from(
+        { length: EFFORTS.length },
+        (_, index) => LEFT_PADDING + (USABLE_WIDTH / 5) * index,
+      );
+
+      const railHost = document.getElementById("railHost");
+      const modelLabels = document.getElementById("modelLabels");
+      const effortLabels = document.getElementById("effortLabels");
+      const stage = document.getElementById("stage");
+      const dots = document.getElementById("dots");
+      const selection = document.getElementById("selection");
+      const thumb = document.getElementById("thumb");
+      const selectionStatus = document.getElementById("selectionStatus");
+
+      let currentRow = 1;
+      let currentIndex = 1;
+      let fastMode = false;
+      let commitCount = 0;
+      let activePointerID = null;
+      let pointerDownOnThumb = false;
+      let pointerMoved = false;
+      let pointerStartX = 0;
+      let pointerStartY = 0;
+      let gestureStartSelection = null;
+
+      function clamp(value, minimum, maximum) {
+        return Math.min(Math.max(value, minimum), maximum);
+      }
+
+      function snapshotSelection() {
+        return { currentRow, currentIndex, fastMode };
+      }
+
+      function applySelection(snapshot) {
+        ({ currentRow, currentIndex, fastMode } = snapshot);
+        renderSelection();
+      }
+
+      function configureModelText(element, row) {
+        element.textContent = row.name;
+        element.dataset.model = row.name;
+        element.classList.toggle("daybreak", row.id === "daybreak-blue");
+        element.style.setProperty("--model-text-light", row.textColors[0]);
+        element.style.setProperty("--model-text-dark", row.textColors[1]);
+      }
+
+      function overlaps(first, second) {
+        return !(
+          first.right <= second.left ||
+          first.left >= second.right ||
+          first.bottom <= second.top ||
+          first.top >= second.bottom
+        );
+      }
+
+      function updateEndpointVisibility() {
+        const activeLabel = document.querySelector(".effort-label.active");
+        const activeRects = activeLabel ? [activeLabel.getBoundingClientRect()] : [];
+        const activeModel = activeLabel?.querySelector(".effort-model");
+        const activeFast = activeLabel?.querySelector(".effort-fast");
+        if (activeModel) activeRects.push(activeModel.getBoundingClientRect());
+        if (activeLabel?.classList.contains("fast") && activeFast) {
+          activeRects.push(activeFast.getBoundingClientRect());
+        }
+        const activeRect = activeRects.length > 0
+          ? {
+              left: Math.min(...activeRects.map((rect) => rect.left)),
+              right: Math.max(...activeRects.map((rect) => rect.right)),
+              top: Math.min(...activeRects.map((rect) => rect.top)),
+              bottom: Math.max(...activeRects.map((rect) => rect.bottom)),
+            }
+          : null;
+
+        for (const endpoint of document.querySelectorAll(".effort-endpoint")) {
+          endpoint.classList.toggle(
+            "obscured",
+            Boolean(activeRect) && overlaps(activeRect, endpoint.getBoundingClientRect()),
+          );
+        }
+      }
+
+      function renderSelection({ announce = false } = {}) {
+        const row = ROWS[currentRow];
+        const dotNumber = row.dots[currentIndex];
+        const effort = EFFORTS[dotNumber - 1];
+        const x = COLUMN_CENTERS[dotNumber - 1];
+        const width = Math.min(STAGE_WIDTH, x + RIGHT_INSET_IN_THUMB);
+
+        selection.style.width = `${Math.max(ROW_HEIGHT, width - START_INSET)}px`;
+        selection.style.height = `${ROW_HEIGHT}px`;
+        selection.style.bottom = `${ROW_BOTTOMS[currentRow]}px`;
+        selection.style.borderRadius = `${ROW_HEIGHT / 2}px`;
+        selection.style.setProperty("--fill-light", row.colors[0]);
+        selection.style.setProperty("--fill-base", row.colors[1]);
+
+        thumb.style.left = `${x}px`;
+        thumb.style.top = `${ROW_CENTERS[currentRow]}px`;
+        thumb.classList.toggle("fast", fastMode);
+        thumb.classList.toggle("fast-unavailable", !row.supportsFast);
+
+        for (const dot of document.querySelectorAll(".dot")) {
+          const dotRow = Number(dot.dataset.row);
+          const dotNumberForElement = Number(dot.dataset.dot);
+          dot.classList.toggle(
+            "inside",
+            dotRow === currentRow && COLUMN_CENTERS[dotNumberForElement - 1] <= width,
+          );
+        }
+
+        for (const modelLabel of document.querySelectorAll(".effort-model")) {
+          configureModelText(modelLabel, row);
+        }
+
+        for (const [index, label] of [...document.querySelectorAll(".effort-label")].entries()) {
+          const active = index === dotNumber - 1;
+          label.classList.toggle("active", active);
+          label.classList.toggle("fast", active && fastMode);
+        }
+
+        railHost.dataset.previewModel = row.name;
+        railHost.dataset.previewEffort = effort;
+        railHost.dataset.previewFast = String(fastMode);
+        railHost.dataset.previewRow = String(currentRow);
+        railHost.dataset.previewIndex = String(currentIndex);
+        stage.setAttribute(
+          "aria-label",
+          `${row.name}, ${effort}${row.supportsFast ? fastMode ? ", Fast" : "" : ", Fast unavailable"}`,
+        );
+        if (announce) {
+          selectionStatus.textContent = stage.getAttribute("aria-label");
+        }
+        requestAnimationFrame(updateEndpointVisibility);
+      }
+
+      function nearestRowFromY(y) {
+        let best = 0;
+        let bestDistance = Infinity;
+        for (const [index, center] of ROW_CENTERS.entries()) {
+          const distance = Math.abs(y - center);
+          if (distance < bestDistance) {
+            best = index;
+            bestDistance = distance;
+          }
+        }
+        return best;
+      }
+
+      function nearestIndexInRow(rowIndex, x) {
+        let best = 0;
+        let bestDistance = Infinity;
+        for (const [index, dotNumber] of ROWS[rowIndex].dots.entries()) {
+          const distance = Math.abs(x - COLUMN_CENTERS[dotNumber - 1]);
+          if (distance < bestDistance) {
+            best = index;
+            bestDistance = distance;
+          }
+        }
+        return best;
+      }
+
+      function selectionFromPointer(clientX, clientY) {
+        const rect = stage.getBoundingClientRect();
+        const x = clamp(clientX - rect.left, 0, rect.width);
+        const y = clamp(clientY - rect.top, 0, rect.height);
+        const scaledX = (x / rect.width) * STAGE_WIDTH;
+        const scaledY = (y / rect.height) * STAGE_HEIGHT;
+        const rowIndex = nearestRowFromY(scaledY);
+        return {
+          rowIndex,
+          indexInRow: nearestIndexInRow(rowIndex, scaledX),
+        };
+      }
+
+      function previewPointerSelection(clientX, clientY, startFastMode) {
+        const target = selectionFromPointer(clientX, clientY);
+        if (currentRow === target.rowIndex && currentIndex === target.indexInRow) return;
+        currentRow = target.rowIndex;
+        currentIndex = target.indexInRow;
+        fastMode = Boolean(startFastMode && ROWS[currentRow].supportsFast);
+        renderSelection();
+      }
+
+      function recordCommit() {
+        commitCount += 1;
+        railHost.dataset.commitCount = String(commitCount);
+        railHost.dataset.committedModel = ROWS[currentRow].name;
+        railHost.dataset.committedEffort = EFFORTS[ROWS[currentRow].dots[currentIndex] - 1];
+        railHost.dataset.committedFast = String(fastMode);
+        renderSelection({ announce: true });
+      }
+
+      function resetPointerGesture() {
+        stage.classList.remove("dragging");
+        activePointerID = null;
+        pointerDownOnThumb = false;
+        pointerMoved = false;
+        gestureStartSelection = null;
+      }
+
+      for (const row of ROWS) {
+        const label = document.createElement("div");
+        label.className = `label${row.id === "daybreak-blue" ? " daybreak" : ""}`;
+        label.textContent = row.name;
+        modelLabels.append(label);
+      }
+
+      for (const [index, effort] of EFFORTS.entries()) {
+        const label = document.createElement("div");
+        label.className = `effort-label${effort === "ultra" ? " ultra" : ""}`;
+        label.style.left = `${COLUMN_CENTERS[index]}px`;
+
+        const modelLabel = document.createElement("span");
+        modelLabel.className = "effort-model";
+        configureModelText(modelLabel, ROWS[currentRow]);
+        label.append(modelLabel, document.createTextNode(effort));
+
+        const fastLabel = document.createElement("span");
+        fastLabel.className = "effort-fast";
+        fastLabel.textContent = "Fast";
+        label.append(fastLabel);
+        effortLabels.append(label);
+      }
+
+      for (const [rowIndex, row] of ROWS.entries()) {
+        for (const dotNumber of row.dots) {
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          dot.dataset.row = String(rowIndex);
+          dot.dataset.dot = String(dotNumber);
+          dot.style.left = `${COLUMN_CENTERS[dotNumber - 1]}px`;
+          dot.style.top = `${ROW_CENTERS[rowIndex]}px`;
+          dots.append(dot);
+        }
+      }
+
+      stage.addEventListener("pointerdown", (event) => {
+        if (!event.isPrimary || event.button !== 0 || activePointerID !== null) return;
+        event.preventDefault();
+        stage.focus({ preventScroll: true });
+        activePointerID = event.pointerId;
+        pointerDownOnThumb = event.target === thumb;
+        pointerMoved = false;
+        pointerStartX = event.clientX;
+        pointerStartY = event.clientY;
+        gestureStartSelection = snapshotSelection();
+        stage.setPointerCapture(event.pointerId);
+        stage.classList.add("dragging");
+        if (!pointerDownOnThumb) {
+          previewPointerSelection(event.clientX, event.clientY, gestureStartSelection.fastMode);
+        }
+      });
+
+      stage.addEventListener("pointermove", (event) => {
+        if (
+          event.pointerId !== activePointerID ||
+          !stage.hasPointerCapture(event.pointerId)
+        ) {
+          return;
+        }
+        if (
+          Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) >
+          CLICK_MOVE_THRESHOLD
+        ) {
+          pointerMoved = true;
+        }
+        if (!pointerDownOnThumb || pointerMoved) {
+          previewPointerSelection(event.clientX, event.clientY, gestureStartSelection.fastMode);
+        }
+      });
+
+      stage.addEventListener("pointerup", (event) => {
+        if (event.pointerId !== activePointerID) return;
+        const movedAtRelease =
+          Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY) >
+          CLICK_MOVE_THRESHOLD;
+        const shouldToggleFast =
+          pointerDownOnThumb && !pointerMoved && !movedAtRelease;
+
+        if (shouldToggleFast) {
+          if (ROWS[currentRow].supportsFast) {
+            fastMode = !fastMode;
+            recordCommit();
+          }
+        } else {
+          previewPointerSelection(event.clientX, event.clientY, gestureStartSelection.fastMode);
+          recordCommit();
+        }
+
+        if (stage.hasPointerCapture(event.pointerId)) {
+          stage.releasePointerCapture(event.pointerId);
+        }
+        resetPointerGesture();
+      });
+
+      stage.addEventListener("pointercancel", (event) => {
+        if (event.pointerId !== activePointerID) return;
+        applySelection(gestureStartSelection);
+        if (stage.hasPointerCapture(event.pointerId)) {
+          stage.releasePointerCapture(event.pointerId);
+        }
+        resetPointerGesture();
+      });
+
+      stage.addEventListener("keydown", (event) => {
+        const isArrow = event.key.startsWith("Arrow");
+        const isSpace =
+          event.key === " " || event.key === "Spacebar" || event.code === "Space";
+        if (!isArrow && !isSpace) return;
+
+        event.preventDefault();
+        if (isSpace) {
+          if (!event.repeat && ROWS[currentRow].supportsFast) {
+            fastMode = !fastMode;
+            recordCommit();
+          }
+          return;
+        }
+
+        if (event.key === "ArrowUp") {
+          currentRow = Math.max(0, currentRow - 1);
+          currentIndex = Math.min(currentIndex, ROWS[currentRow].dots.length - 1);
+        } else if (event.key === "ArrowDown") {
+          currentRow = Math.min(ROWS.length - 1, currentRow + 1);
+          currentIndex = Math.min(currentIndex, ROWS[currentRow].dots.length - 1);
+        } else if (event.key === "ArrowLeft") {
+          currentIndex = Math.max(0, currentIndex - 1);
+        } else if (event.key === "ArrowRight") {
+          currentIndex = Math.min(currentIndex + 1, ROWS[currentRow].dots.length - 1);
+        }
+        if (!ROWS[currentRow].supportsFast) fastMode = false;
+        recordCommit();
+      });
+
+      railHost.dataset.commitCount = "0";
+      renderSelection();
+    })();
+  </script>
+</body>
+</html>
