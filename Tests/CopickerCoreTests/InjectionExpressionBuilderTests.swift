@@ -1,6 +1,32 @@
 import Foundation
+import JavaScriptCore
 import Testing
 @testable import CopickerCore
+
+@Test func installerSkipsBrowserPagesAndForeignFrames() throws {
+    let context = try #require(JSContext())
+    _ = context.evaluateScript("""
+    var executedFrames = [];
+    function frame(url) {
+      return { url, executeJavaScript: async () => { executedFrames.push(url); return { triggerFound: true }; } };
+    }
+    function contents(url, frames) {
+      return { isDestroyed: () => false, getType: () => 'webview', getURL: () => url,
+        mainFrame: { framesInSubtree: frames }, on: () => {} };
+    }
+    var official = contents('app://-/index.html', [frame('app://-/index.html'), frame('https://unrelated.example/')]);
+    var browserPage = contents('https://unrelated.example/', [frame('https://unrelated.example/')]);
+    var electron = { app: { on: () => {} }, webContents: { getAllWebContents: () => [official, browserPage] } };
+    var require = () => electron;
+    var process = { getBuiltinModule: () => ({}) };
+    """)
+    let expression = try InjectionExpressionBuilder.makeInstallerExpression(payload: "true")
+    _ = context.evaluateScript(expression + ".then(value => { globalThis.installationResult = value; });")
+    #expect(context.exception == nil)
+    let frames = try #require(context.objectForKeyedSubscript("executedFrames")?.toArray() as? [String])
+    #expect(frames == ["app://-/index.html"])
+    #expect(context.objectForKeyedSubscript("installationResult")?.forProperty("installed")?.toBool() == true)
+}
 
 @Test func safelyEmbedsPayloadAsAJavaScriptLiteral() throws {
     let payload = """

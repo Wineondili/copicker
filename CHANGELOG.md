@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-10 01:15:52 +0800
+
+- Inspected the signed Codex `26.903.61454` build `8378` picker while leaving the app and existing tasks running. Confirmed the new model radio list, explicit/default selection marker, and model-specific strength slider; the installed renderer `0.12.14` still expected legacy Model/Effort/Speed flyouts.
+- Added renderer candidate `0.12.15` with a bounded no-task transaction for the new layout, passive checked-state recognition, Default display, catalog-resolved Astra support, and model-aware Fast handling. A failed slider restores the original selection only while composer ownership remains valid; a replacement composer cancels the transaction and resynchronizes the rail without writing to the replacement. Retained the accepted click/drag easing and legacy-layout fallback.
+- Added Astra to the settings model schema/UI and standalone preview while preserving saved visibility preferences. Restricted the main hook to `app://` web contents and frames after observing the old hook enter an unrelated browser fixture; guarded disposed renderers against queued synchronization callbacks.
+- Passed 46 offline tests, inline JavaScript and whitespace checks, and the release build. The isolated browser fixture passed 42 synthetic model/effort/Fast combinations, Default display and explicit selection, frozen-slider rollback, and replacement-composer cancellation/resynchronization, with no console warnings or errors.
+- Live candidate loading stopped before mutation when test windows became real tasks or were closed. Production installation, real Codex model switching, first-message persistence, restart, cold login, push, and release remain unverified/unperformed; this is a reviewable candidate, not a live-accepted fix.
+
 ## 2026-09-05 02:17:46 +0800
 
 - Added a standalone, offline-only current Model Rail preview with the full six-model matrix, accepted 1.2 typography scale, six-row geometry, and no settings or injection surface.

@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.14";
+  const VERSION = "0.12.15";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -34,6 +34,8 @@
     '[data-reasoning-selected="true"]';
   const OFFICIAL_CHECK_ICON_SELECTOR = 'svg[width="17"][height="17"]';
   const MODEL_ROW_SELECTOR = "[data-model-picker-model-row]";
+  const MODEL_LIST_VIEW_SELECTOR = "[data-model-picker-view]";
+  const MODEL_RADIO_SELECTOR = '[role="menuitemradio"]';
   const CONVERSATION_CONTEXT_SELECTOR = "[data-above-composer-conversation-id]";
   const FAST_MODE_SELECTOR = '[role="menuitemcheckbox"][data-fast-mode-enabled]';
   const DAYBREAK_PROGRAM_CONTROL_SELECTOR =
@@ -114,6 +116,16 @@
   };
   const ALL_ROWS = [
     {
+      id: "astra",
+      name: "Astra",
+      catalogDisplayName: "GPT-6-Astra",
+      catalogDisplayNames: ["GPT-6-Astra", "GPT-6 Astra"],
+      dots: [1, 2, 3, 4, 5, 6],
+      colors: ["#E3F8F8", "#C6ECEC"],
+      textColors: ["#bfe7e7", "#a9d9d9"],
+      supportsFast: true,
+    },
+    {
       id: "sol",
       name: "Sol",
       catalogDisplayName: "GPT-5.6-Sol",
@@ -176,6 +188,21 @@
   ];
 
   /* COPICKER_BEHAVIOR_CONTRACT_BEGIN */
+  function modelListSelectionKind(options, explicit) {
+    if (!Array.isArray(options) || options.length < 2 ||
+        ![true, false].includes(explicit)) return null;
+    if (options[0].model !== null || options[0].markedSelected) return null;
+    const models = options.slice(1).map((option) => option.model);
+    if (models.some((model) => typeof model !== "string" || !model) ||
+        new Set(models).size !== models.length) return null;
+    const selected = options.flatMap((option, index) => option.selected ? [index] : []);
+    if (selected.length !== 1) return null;
+    const index = selected[0];
+    if (index === 0) return explicit ? null : "default";
+    if (!explicit || !options[index].markedSelected || options[index].locked) return null;
+    return "model";
+  }
+
   function isValidThreadID(value) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       String(value || ""),
@@ -1483,6 +1510,7 @@
       version: VERSION,
     };
   }
+  if (previous) previous.dismissedForCurrentOpen = true;
   previous?.dispose?.();
 
   const state = {
@@ -1507,6 +1535,8 @@
     currentIndex: null,
     recognizedRow: null,
     recognizedEffort: null,
+    defaultSelection: false,
+    modelListKeyboardDispatch: false,
     fastMode: false,
     selectionRevision: 0,
     railSelectionGeneration: 0,
@@ -2022,6 +2052,8 @@
   }
 
   function currentOfficialCatalogEntryFromModelRow(surface) {
+    const currentList = modelListSnapshot(surface);
+    if (currentList) return currentList.catalogEntry;
     if (!surface || !state.officialModelCatalog) return null;
     const modelRows = [...surface.querySelectorAll(MODEL_ROW_SELECTOR)]
       .map((marker) => marker.closest(OFFICIAL_MENU_ITEM_SELECTOR) || marker);
@@ -2054,6 +2086,21 @@
     state.currentThreadID = resolveCurrentThreadID(trigger);
     if (state.pendingOfficialSelection && !state.currentThreadID) {
       setSwitchState("pending");
+      return;
+    }
+
+    state.defaultSelection = false;
+    const listSnapshot = modelListSnapshot(state.primarySurface, trigger);
+    if (listSnapshot) {
+      const selection = listSnapshot.fastMode === null && !listSnapshot.isDefault
+        ? { rowIndex: null, indexInRow: null, modelName: "Other", effort: null, fastMode: false }
+        : selectionFromModelListSnapshot(listSnapshot);
+      applySelection(selection, { render: false });
+      state.defaultSelection = listSnapshot.isDefault;
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      state.lastSwitchError = null;
+      setSwitchState(state.currentThreadID ? "ready" : "no-thread");
       return;
     }
 
@@ -2172,7 +2219,7 @@
       return {
         rowIndex: null,
         indexInRow: null,
-        modelName: "Other",
+        modelName: state.defaultSelection ? "Default" : "Other",
         effort: null,
         fastMode: false,
       };
@@ -2200,6 +2247,7 @@
   }
 
   function applySelection(selection, { render = true } = {}) {
+    state.defaultSelection = selection?.modelName === "Default";
     const explicitlyUnselectable = selection?.rowIndex === null;
     const rowIndex = Number.isInteger(selection?.rowIndex)
       ? selection.rowIndex
@@ -2240,6 +2288,7 @@
 
   function markSelectionChanged(host) {
     if (hasSelectorSelection()) {
+      state.defaultSelection = false;
       const row = ROWS[state.currentRow];
       state.recognizedRow = row;
       state.recognizedEffort = EFFORTS[row.dots[state.currentIndex] - 1];
@@ -2657,6 +2706,16 @@
     const trigger = findOfficialComposerTrigger();
     const surface = trigger ? findPrimarySurface(trigger) : state.primarySurface;
     const daybreakProgram = officialDaybreakProgramState(surface);
+    const currentList = modelListSnapshot(surface, trigger);
+    if (currentList?.isDefault && !state.commitInFlight) {
+      latest.reconciled = true;
+      latest.selection = null;
+      state.confirmedSelection = null;
+      state.confirmedThreadID = null;
+      applySelection(selectionFromModelListSnapshot(currentList));
+      setSwitchState("ready");
+      return;
+    }
     const composerRoot =
       trigger?.closest("[data-codex-composer-root]") || null;
     const liveLegacyModelProven =
@@ -2673,7 +2732,8 @@
       latest.legacyProgramGeneration ===
         state.officialDaybreakProgramMutationGeneration;
     const legacyModelProven =
-      cachedLegacyModelProven || liveLegacyModelProven;
+      cachedLegacyModelProven || liveLegacyModelProven ||
+      Boolean(modelListSnapshot(surface));
     const daybreakStateAllowsConfirmation =
       daybreakProgramAllowsBaseConfirmation(
         daybreakProgram.present,
@@ -3152,6 +3212,256 @@
     };
   }
 
+  function modelListRoot(surface) {
+    if (!surface) return null;
+    const roots = [...surface.querySelectorAll(MODEL_LIST_VIEW_SELECTOR)].filter(
+      (root) => root.closest(PRIMARY_SURFACE_SELECTOR) === surface &&
+        ["simple", "advanced"].includes(root.getAttribute("data-model-picker-view")) &&
+        root.querySelector(MODEL_RADIO_SELECTOR) &&
+        root.querySelector("[data-explicit-model]") &&
+        root.querySelector(REASONING_SLIDER_SELECTOR),
+    );
+    return roots.length === 1 ? roots[0] : null;
+  }
+
+  function modelListSnapshot(surface, trigger = findOfficialComposerTrigger()) {
+    const root = modelListRoot(surface);
+    if (!root || !trigger || !state.officialModelCatalog) return null;
+    const explicitControls = [...root.querySelectorAll("[data-explicit-model]")];
+    if (explicitControls.length !== 1) return null;
+    const explicitValue = explicitControls[0].getAttribute("data-explicit-model");
+    if (!["true", "false"].includes(explicitValue)) return null;
+    // Both views remain mounted. Read their checked state without opening them.
+    const options = [...root.querySelectorAll(MODEL_RADIO_SELECTOR)].map((element) => {
+      const labelValues = [element, ...element.querySelectorAll("span")].map(
+        (label) => String(label.textContent || "").replace(/\s+/g, " ").trim(),
+      );
+      const matches = state.officialModelCatalog.filter((entry) =>
+        officialExactLabelMatch(labelValues, officialModelLabelCandidates([entry.displayName])),
+      );
+      return {
+        element,
+        catalogEntry: matches.length === 1 ? matches[0] : null,
+        model: matches.length === 1 ? matches[0].model : null,
+        selected: element.getAttribute("aria-checked") === "true",
+        markedSelected: element.getAttribute("data-model-selected") === "true",
+        locked: element.hasAttribute("aria-describedby"),
+      };
+    });
+    const kind = modelListSelectionKind(options, explicitValue === "true");
+    if (!kind) return null;
+    const selected = options.find((option) => option.selected);
+    const effort = trigger.getAttribute("data-selected-reasoning-effort");
+    if (kind !== "default" && (!EFFORTS.includes(effort) ||
+        !selected.catalogEntry.supportedEfforts.has(effort))) return null;
+    const checkboxState = readOfficialFastMode(surface);
+    const fastMode = checkboxState ??
+      (selected.catalogEntry?.serviceTierOptionCount === 1 ? false : null);
+    return {
+      root, options, catalogEntry: selected.catalogEntry,
+      isDefault: kind === "default", effort, fastMode,
+    };
+  }
+
+  function selectionFromModelListSnapshot(snapshot) {
+    const row = snapshot.catalogEntry && ALL_ROWS.find((candidate) =>
+      rowMatchesDisplayName(candidate, snapshot.catalogEntry.displayName),
+    );
+    const rowIndex = row ? ROWS.indexOf(row) : -1;
+    const recognized = row && EFFORTS.includes(snapshot.effort);
+    return {
+      rowIndex: recognized && rowIndex >= 0 ? rowIndex : null,
+      indexInRow: recognized && rowIndex >= 0 ? EFFORTS.indexOf(snapshot.effort) : null,
+      modelName: snapshot.isDefault ? "Default" : row?.name || "Other",
+      effort: snapshot.isDefault ? null : recognized ? snapshot.effort : null,
+      fastMode: Boolean(row?.supportsFast && snapshot.fastMode),
+    };
+  }
+
+  function currentModelListSnapshot(context) {
+    const trigger = assertOfficialProxyContext(context);
+    const surface = findOfficialPrimarySurfaceForProxy(trigger);
+    const snapshot = modelListSnapshot(surface, trigger);
+    if (!snapshot || officialDaybreakProgramState(surface).present) {
+      throw new Error("The current Codex model-list layout changed or is ambiguous.");
+    }
+    return { ...snapshot, surface, trigger };
+  }
+
+  async function openModelList(context) {
+    let snapshot = currentModelListSnapshot(context);
+    if (snapshot.root.getAttribute("data-model-picker-view") === "advanced") return snapshot;
+    const toggle = await waitForOfficialState(() => {
+      snapshot = currentModelListSnapshot(context);
+      const toggles = [...snapshot.root.querySelectorAll("[data-model-picker-view-toggle]")]
+        .filter(officialControlIsUsable);
+      return toggles.length === 1 ? toggles[0] : null;
+    }, "The model-list control stayed unavailable.", OFFICIAL_TRANSIENT_CONTROL_TIMEOUT_MS);
+    assertOfficialProxyContext(context);
+    clickOfficialControl(toggle);
+    return waitForOfficialState(() => {
+      const current = currentModelListSnapshot(context);
+      return current.root.getAttribute("data-model-picker-view") === "advanced" ? current : null;
+    }, "The official model list did not open.");
+  }
+
+  async function chooseModelListEntry(entry, context, beforeMutation = () => {}) {
+    const snapshot = await openModelList(context);
+    const options = snapshot.options.filter((option, index) =>
+      entry ? option.model === entry.model : index === 0 && option.model === null,
+    );
+    if (options.length !== 1 || options[0].locked || entry?.hidden ||
+        !officialControlIsUsable(options[0].element)) {
+      throw new Error("The requested official model is unavailable or locked.");
+    }
+    assertOfficialProxyContext(context);
+    if (!options[0].selected) beforeMutation();
+    clickOfficialControl(options[0].element);
+    return waitForOfficialState(() => {
+      const current = currentModelListSnapshot(context);
+      const selected = entry
+        ? !current.isDefault && current.catalogEntry?.model === entry.model
+        : current.isDefault;
+      return selected && current.root.getAttribute("data-model-picker-view") === "simple"
+        ? current : null;
+    }, "The official model list did not confirm the requested model.");
+  }
+
+  async function ensureModelListSimple(context) {
+    const snapshot = currentModelListSnapshot(context);
+    return snapshot.root.getAttribute("data-model-picker-view") === "simple"
+      ? snapshot : chooseModelListEntry(snapshot.catalogEntry, context);
+  }
+
+  async function setModelListEffort(effort, entry, context, beforeMutation = () => {}) {
+    const seen = new Set();
+    for (let step = 0; step < EFFORTS.length; step += 1) {
+      const snapshot = await ensureModelListSimple(context);
+      if (snapshot.isDefault || snapshot.catalogEntry?.model !== entry.model) {
+        throw new Error("The model changed while setting reasoning effort.");
+      }
+      if (snapshot.effort === effort) return;
+      if (!entry.supportedEfforts.has(effort) || seen.has(snapshot.effort)) break;
+      seen.add(snapshot.effort);
+      const sliders = [...snapshot.root.querySelectorAll(REASONING_SLIDER_SELECTOR)]
+        .filter(officialControlIsUsable);
+      if (sliders.length !== 1) break;
+      const key = EFFORTS.indexOf(effort) < EFFORTS.indexOf(snapshot.effort)
+        ? "ArrowLeft" : "ArrowRight";
+      assertOfficialProxyContext(context);
+      beforeMutation();
+      // Route only this synchronous synthetic key past our own rail handler.
+      state.modelListKeyboardDispatch = true;
+      try {
+        sliders[0].dispatchEvent(new KeyboardEvent("keydown", {
+          key, code: key, bubbles: true, cancelable: true,
+        }));
+      } finally {
+        state.modelListKeyboardDispatch = false;
+      }
+      await waitForOfficialState(() => {
+        const current = currentModelListSnapshot(context);
+        return current.effort !== snapshot.effort ? current : null;
+      }, "The official strength slider did not advance.", 750);
+    }
+    throw new Error("The requested effort is not reachable in the current official slider.");
+  }
+
+  async function setModelListFast(enabled, context, beforeMutation = () => {}, normalize = false) {
+    const snapshot = await ensureModelListSimple(context);
+    if (snapshot.fastMode === null) throw new Error("The current Speed selection is ambiguous.");
+    if (snapshot.catalogEntry?.serviceTierOptionCount === 1) {
+      if (enabled) throw new Error("Fast is unavailable for this model.");
+      return;
+    }
+    const controls = [...snapshot.root.querySelectorAll(FAST_MODE_SELECTOR)].filter(officialControlIsUsable);
+    if (controls.length !== 1) throw new Error("The official Fast checkbox is unavailable.");
+    if (snapshot.fastMode === enabled && !(normalize && !enabled)) return;
+    assertOfficialProxyContext(context);
+    beforeMutation();
+    clickOfficialControl(controls[0]);
+    await waitForOfficialState(() => {
+      const current = currentModelListSnapshot(context);
+      return current.fastMode === !snapshot.fastMode ? current : null;
+    }, "The official Fast checkbox did not confirm the change.");
+    if (!enabled && !snapshot.fastMode) {
+      await setModelListFast(false, context, beforeMutation);
+    }
+  }
+
+  async function performModelListControlProxy(selection, catalogEntry, intent) {
+    const context = { composerRoot: intent.composerRoot, interruptedByUserInput: false };
+    const removeGuard = installOfficialProxyInputGuard(context);
+    const epoch = state.officialInteractionEpoch;
+    let baseline = null;
+    let mutationStarted = false;
+    let normalizedStandard = false;
+    const beforeMutation = () => {
+      assertSelectionIntent(intent);
+      assertOfficialProxyContext(context);
+      mutationStarted = true;
+    };
+    state.officialProxyReadDepth += 1;
+    try {
+      assertSelectionIntent(intent);
+      await ensureOfficialPrimaryOpen(context);
+      baseline = currentModelListSnapshot(context);
+      if (baseline.fastMode === null || baseline.catalogEntry?.hidden) {
+        throw new Error("The initial official selection cannot be restored exactly.");
+      }
+      const target = baseline.options.filter((option) => option.model === catalogEntry.model);
+      if (target.length !== 1 || target[0].locked ||
+          target[0].element.matches('[data-disabled],[aria-disabled="true"]')) {
+        throw new Error("The target model is disabled or locked.");
+      }
+      await ensureModelListSimple(context);
+      if (!baseline.fastMode) {
+        await setModelListFast(false, context, beforeMutation, true);
+        normalizedStandard = mutationStarted;
+      } else if (!selection.fastMode || !catalogEntry.fastTierID) {
+        await setModelListFast(false, context, beforeMutation);
+      }
+      await chooseModelListEntry(catalogEntry, context, beforeMutation);
+      await setModelListEffort(selection.effort, catalogEntry, context, beforeMutation);
+      await setModelListFast(Boolean(selection.fastMode), context, beforeMutation);
+      for (let pass = 0; pass < 2; pass += 1) {
+        const current = currentModelListSnapshot(context);
+        if (current.isDefault || current.fastMode === null ||
+            !selectionsEqual(selectionFromModelListSnapshot(current), selection)) {
+          throw new Error("The official model, effort, and speed did not confirm the selection.");
+        }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+      assertSelectionIntent(intent);
+      state.defaultSelection = false;
+      return selectionFromModelListSnapshot(currentModelListSnapshot(context));
+    } catch (error) {
+      if (mutationStarted && baseline) {
+        let restored = false;
+        if (officialProxyContextTrigger(context) && state.officialInteractionEpoch === epoch) {
+          try {
+            await chooseModelListEntry(baseline.catalogEntry, context);
+            if (!baseline.isDefault) await setModelListEffort(baseline.effort, baseline.catalogEntry, context);
+            await setModelListFast(baseline.fastMode, context);
+            const current = currentModelListSnapshot(context);
+            restored = current.isDefault === baseline.isDefault &&
+              current.catalogEntry?.model === baseline.catalogEntry?.model &&
+              current.effort === baseline.effort && current.fastMode === baseline.fastMode;
+          } catch {}
+        }
+        error.officialRollbackStatus = restored ? normalizedStandard ? "restored-normalized" : "restored" : "failed";
+        error.rollbackSelection = restored ? selectionFromModelListSnapshot(baseline) : null;
+      }
+      throw error;
+    } finally {
+      removeGuard();
+      state.officialProxyReadDepth = Math.max(0, state.officialProxyReadDepth - 1);
+      if (!officialProxyContextTrigger(context) || state.officialInteractionEpoch !== epoch) {
+        state.officialSelectionDirty = true;
+      }
+    }
+  }
+
   function officialAdvancedRows(surface) {
     const modelTriggers = [...surface.querySelectorAll(MODEL_ROW_SELECTOR)]
       .map((label) => label.closest(OFFICIAL_MENU_ITEM_SELECTOR))
@@ -3492,6 +3802,12 @@
     selection,
     context,
   ) {
+    const trigger = assertOfficialProxyContext(context);
+    const surface = findOfficialPrimarySurfaceForProxy(trigger);
+    if (modelListSnapshot(surface, trigger) && !officialDaybreakProgramState(surface).present) {
+      context.expectedDaybreakState = { kind: "model-list" };
+      return;
+    }
     const advanced = await ensureOfficialAdvancedRows(context);
     const initialProgram = officialDaybreakProgramState(advanced.surface);
     if (initialProgram.present) {
@@ -3559,6 +3875,8 @@
     const current = officialDaybreakProgramState(surface);
     const unchanged = expected.kind === "program-off"
       ? current.present && current.checked === false
+      : expected.kind === "model-list"
+        ? Boolean(modelListSnapshot(surface, trigger)) && !current.present
       : expected.kind === "legacy-model"
         ? !current.present &&
           expected.programGeneration ===
@@ -4011,6 +4329,12 @@
     selection,
     intent,
   ) {
+    const modern = modelListSnapshot(state.primarySurface);
+    if (modern) {
+      assertSelectionIntent(intent);
+      return modern.fastMode !== null &&
+        selectionsEqual(selectionFromModelListSnapshot(modern), selection);
+    }
     const context = {
       composerRoot: intent?.composerRoot || null,
       expandedAdvanced: false,
@@ -4052,6 +4376,9 @@
   }
 
   async function performOfficialControlProxy(selection, catalogEntry, intent) {
+    if (modelListRoot(state.primarySurface)) {
+      return performModelListControlProxy(selection, catalogEntry, intent);
+    }
     const row = ROWS[selection.rowIndex];
     const context = {
       composerRoot: intent?.composerRoot || null,
@@ -4693,7 +5020,7 @@
     element.replaceChildren();
     element.classList.toggle("recognized", Boolean(row && effort));
     if (!row || !effort) {
-      element.textContent = "Other";
+      element.textContent = state.defaultSelection ? "Default" : "Other";
       return;
     }
     const model = document.createElement("span");
@@ -4723,7 +5050,7 @@
 
     if (!selected) {
       const recognized = Boolean(recognizedRow && recognizedEffort);
-      host.setAttribute("data-selector-model", recognized ? recognizedRow.name : "Other");
+      host.setAttribute("data-selector-model", recognized ? recognizedRow.name : state.defaultSelection ? "Default" : "Other");
       host.setAttribute("data-selector-effort", recognized ? recognizedEffort : "");
       host.setAttribute("data-selector-fast", "false");
       host.setAttribute("data-selector-fast-available", "false");
@@ -4742,7 +5069,7 @@
       }
       updateEndpointVisibility(shadow);
       renderInactiveStatus(otherElement, recognizedRow, recognizedEffort);
-      if (modelElement) modelElement.textContent = recognized ? recognizedRow.name : "Other";
+      if (modelElement) modelElement.textContent = recognized ? recognizedRow.name : state.defaultSelection ? "Default" : "Other";
       if (effortElement) {
         effortElement.textContent = recognized ? recognizedEffort : "";
         effortElement.classList.toggle("ultra", recognizedEffort === "ultra");
@@ -4884,6 +5211,7 @@
 
     state.currentRow = target.rowIndex;
     state.currentIndex = target.indexInRow;
+    state.defaultSelection = false;
     const row = ROWS[target.rowIndex];
     state.recognizedRow = row;
     state.recognizedEffort = EFFORTS[row.dots[target.indexInRow] - 1];
@@ -6121,6 +6449,7 @@
   }
 
   function syncNow() {
+    if (state.disposed) return;
     state.scheduled = false;
     removePreviousVisual();
 
@@ -6197,7 +6526,7 @@
   }
 
   function scheduleSync() {
-    if (state.scheduled) return;
+    if (state.disposed || state.scheduled) return;
     state.scheduled = true;
     requestAnimationFrame(syncNow);
   }
@@ -6287,6 +6616,7 @@
     if (document.visibilityState === "hidden") state.dismissForCurrentOpen();
   };
   state.handleKeyDown = (event) => {
+    if (state.modelListKeyboardDispatch && !event.isTrusted) return;
     if (event.key === "Escape") {
       state.dismissForCurrentOpen();
       return;

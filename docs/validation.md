@@ -138,7 +138,7 @@ Record the exact CoPicker commit/tag and Codex version/build, then test:
 2. Light/dark icon variants remain legible.
 3. Page title, `常规`, cards, switches, segmented controls, actions, model order, copy, and warnings match the accepted baseline.
 4. At least one model remains enabled.
-5. All six model toggles persist.
+5. All configured model toggles persist, including the new Astra option in candidate `0.12.15`.
 6. Top/left/right and all four appearance options persist.
 7. Stale revision conflicts display authoritative values.
 8. Autosave does not open Inspector or mutate the current renderer.
@@ -171,7 +171,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
 | Renderer `0.12.12` live result | Injected and visible on build `7377`, but selection had no effect; probes observed `serviceTier: "default"`, exact `legacy-model`, `Other`, and `error` |
 | Renderer `0.12.13` live result | Idle no-task Model/Effort/Speed flyouts looped visibly; Daybreak and Codex Spark could leave the renderer unresponsive |
-| Current `main` renderer candidate | `0.12.14`; removes idle flyout probing and self-retrying classification while retaining explicit no-task selection and animation; uninstalled |
+| Current `main` renderer candidate | `0.12.15`; build-`8378` radio-list/slider adapter, Astra, and Default display; production installation and live switching remain pending |
 | Live-accepted Codex | `26.820.60940` build `7119` |
 | Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |

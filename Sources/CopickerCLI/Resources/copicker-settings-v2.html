@@ -638,6 +638,16 @@
           <div class="settings-card">
             <div class="setting-row model-row">
               <div class="setting-copy">
+                <h3>GPT-6 Astra</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="astra" aria-label="显示 GPT-6 Astra" />
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              </label>
+            </div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.6 Sol</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
               </div>
@@ -750,6 +760,7 @@
         const SAVE_TOOL = "copicker_settings_save";
         const APPLY_TOOL = "copicker_settings_apply";
         const MODEL_IDS = [
+          "astra",
           "sol",
           "terra",
           "luna",

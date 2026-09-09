@@ -9,7 +9,7 @@ Current versions:
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v2.html` |
-| Renderer fallback on current `main` | `0.12.14` development candidate |
+| Renderer fallback on current `main` | `0.12.15` development candidate |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
@@ -46,6 +46,8 @@ The only persisted fields are:
 | `appearance` | `codex`, `system`, `light`, `dark` | `dark` |
 
 The file is `~/Library/Application Support/Copicker/settings.json`. Writes are validated, normalized to the fixed model order, atomic, and mode `0600`.
+
+Candidate `0.12.15` adds the `astra` visibility option for GPT-6 Astra with six reasoning levels. Existing saved visibility preferences and the default Sol/Terra/Luna selection remain unchanged; enabling Astra is an explicit preference edit.
 
 Saves carry the caller's expected revision. An identical save is idempotent. A real change increments the revision. A stale save fails with the current authoritative snapshot so an old window cannot overwrite a newer edit.
 

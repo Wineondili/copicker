@@ -88,6 +88,29 @@ func rapidPointerReleaseUsesItsFinalDisplacement() throws {
 }
 
 @Test
+func modelListSelectionRejectsAmbiguousDefaultAndLockedModels() throws {
+    let context = try behaviorContext()
+    let classify = try #require(context.objectForKeyedSubscript("modelListSelectionKind"))
+    let defaultRow: [String: Any] = ["model": NSNull(), "selected": false, "markedSelected": false]
+    let selectedModel: [String: Any] = ["model": "test-model", "selected": true, "markedSelected": true]
+    #expect(classify.call(withArguments: [[defaultRow, selectedModel], true])?.toString() == "model")
+    #expect(classify.call(withArguments: [[defaultRow, selectedModel], false])?.isNull == true)
+    var checkedDefault = defaultRow
+    checkedDefault["selected"] = true
+    #expect(classify.call(withArguments: [[checkedDefault, selectedModel], true])?.isNull == true)
+    var uncheckedModel = selectedModel
+    uncheckedModel["selected"] = false
+    uncheckedModel["markedSelected"] = false
+    #expect(classify.call(withArguments: [[checkedDefault, uncheckedModel], false])?.toString() == "default")
+    var lockedModel = selectedModel
+    lockedModel["locked"] = true
+    #expect(classify.call(withArguments: [[defaultRow, lockedModel], true])?.isNull == true)
+    #expect(classify.call(withArguments: [[defaultRow, selectedModel, uncheckedModel], true])?.isNull == true)
+    #expect(classify.call(withArguments: [[defaultRow, uncheckedModel], true])?.isNull == true)
+    #expect(classify.call(withArguments: [[defaultRow, selectedModel], NSNull()])?.isNull == true)
+}
+
+@Test
 func threadResolutionRequiresOneExactCurrentComposerIdentifier() throws {
     let context = try behaviorContext()
     let function = try #require(context.objectForKeyedSubscript("exactValidThreadID"))

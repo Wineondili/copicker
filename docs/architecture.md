@@ -6,6 +6,12 @@ The accepted behavior and exact values are defined in [accepted-baseline.md](acc
 
 ## System overview
 
+### Build 8378 model-list adapter
+
+Renderer `0.12.15` recognizes the exact owned `[data-model-picker-view]` root, its Default/model radio rows, explicit-selection marker, and keyboard-controlled strength slider. Inactive panels remain mounted, so checked state can be read without idle menu navigation. On an explicit no-task selection, it preflights the target, preserves the current model/default state, normalizes ambiguous Standard through the official Fast checkbox where available, selects the radio, advances the official slider with bounded synthetic keys, and confirms model/effort/speed twice. Rollback is suppressed if the original composer or external-input generation changes. Existing-task writes continue through `thread/settings/update`; the new radio-list topology no longer requires the legacy three-flyout Daybreak classification.
+
+The main-process hook now restricts injection to `app://` web contents and frames. Inspection found that the previous hook also visited in-app browser pages; arbitrary browser sites must not receive the Codex renderer adapter. The legacy three-flyout transaction described later remains available for older layouts.
+
 ```mermaid
 flowchart LR
     Source[Tagged or pinned source checkout]

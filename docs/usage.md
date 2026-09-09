@@ -1,6 +1,8 @@
 # Using CoPicker
 
-This guide describes the full-feature `v0.99.0` pre-release with CLI/plugin `0.99.0` and renderer `0.12.8`, plus the current `main` renderer candidate `0.12.14`. The published renderer behavior was live-accepted at runtime commit `c0343d4` under the earlier CLI label `0.12.0-dev`, against Codex `26.820.60940` build `7119`. Renderer `0.12.9` passed rapid drag but failed new-task selection; `0.12.11` restored the original animation. Renderer `0.12.12` rejected the live `serviceTier: "default"` Standard value and the account's exact legacy Daybreak Model topology. Installed renderer `0.12.13` corrected those two blockers but introduced a self-triggered idle no-task flyout loop that made Daybreak and Codex Spark appear to freeze the app. Renderer `0.12.14` removes that idle proxy behavior and awaits focused live acceptance. See [accepted-baseline.md](accepted-baseline.md) for exact requirement IDs and measurements.
+This guide covers the published `v0.99.0` pre-release (renderer `0.12.8`) and the current `main` candidate `0.12.15`. The published runtime remains accepted at `c0343d4`, under CLI label `0.12.0-dev`, on Codex build `7119`. The new candidate adapts the live-inspected Codex `26.903.61454` build `8378` model-list and strength-slider layout; production installation and live switching acceptance remain pending. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
+
+On build `8378`, an explicit selection uses the official model radio row, model-specific reasoning slider, and Fast checkbox. Idle synchronization reads the already-mounted checked state without opening flyouts. Default appears as `Default` and has no active rail cell. Astra is available in CoPicker's model visibility settings, with six reasoning levels and catalog-resolved Fast; existing visibility preferences are preserved. The three-flyout constraints below describe the legacy build-`7377` fallback.
 
 CoPicker appears only with the official compact first-level model/reasoning picker. It does not replace the full-width model list opened from the composer input.
 
@@ -50,6 +52,7 @@ The row order is fixed. Settings may hide rows but must retain at least one.
 
 | Row | Efforts | Fast | Notes |
 | --- | --- | --- | --- |
+| GPT-6 Astra | Light, Medium, High, Extra High, Max, Ultra | Yes | Added in candidate `0.12.15`; rail label `Astra` |
 | GPT-5.6 Sol | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `Sol` |
 | GPT-5.6 Terra | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `Terra` |
 | GPT-5.6 Luna | Light, Medium, High, Extra High, Max | Yes | No Ultra cell |

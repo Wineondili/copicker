@@ -18,15 +18,15 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.14
+renderer_version=0.12.15
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v2.html
 marketplace_name=copicker-local
 plugin_id=copicker@copicker-local
 accepted_codex_version=26.820.60940
 accepted_codex_build=7119
-inspected_codex_version=26.825.51511
-inspected_codex_build=7377
+inspected_codex_version=26.903.61454
+inspected_codex_build=8378
 accepted_architecture=arm64
 accepted_window_width_css_px=1440
 accepted_window_height_css_px=810
@@ -46,7 +46,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Renderer development candidate | `0.12.14` | Current `main` payload; stops proxy-owned classification churn from retriggering itself and removes idle no-task flyout probing; not yet installed |
+| Renderer development candidate | `0.12.15` | Adds the build-`8378` model-radio-list and strength-slider adapter; validation status is recorded below |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
 | Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
@@ -56,7 +56,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Public GitHub release | `v0.99.0` | Full-feature immutable source pre-release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Codex desktop | `26.820.60940` build `7119` | Exact build for current live acceptance |
-| Current diagnosed Codex desktop | `26.825.51511` build `7377` | Bundle inspection plus bounded live installation/probe evidence; no selector mutation was performed by the diagnostic probes |
+| Current diagnosed Codex desktop | `26.903.61454` build `8378` | Signed bundle and bounded live picker inspection; Node inspection is enabled and the existing watcher successfully injected `0.12.14` |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
 | Installed watcher evidence | `0.12.0-dev`, loaded, `injection-succeeded` | Verified for the accepted Codex PID before the release-only version bump |
@@ -74,11 +74,19 @@ Renderer `0.12.12` adapted the proxy to the statically inspected build-`7377` ac
 
 Renderer `0.12.13` recognized both `null` and the observed official `"default"` value as Standard and restored mutation through an exact legacy Daybreak Model topology. After installation, the user reported that Daybreak and Codex Spark could make the app appear frozen at every effort and that an idle no-task picker continuously flashed the three official flyouts. Source tracing established the matching self-trigger mechanism: passive no-task synchronization opened Model/Effort/Speed, its own Daybreak-leaf DOM churn invalidated classification, and same-composer retry scheduled another pass. The same unbounded retry could occupy the shared commit queue around non-Fast special-model transitions.
 
-Current `main` advances to renderer `0.12.14`. It never opens nested official controls for idle no-task synchronization, coalesces a duplicate in-flight thread classification without scheduling a same-key retry, ignores proxy-owned Daybreak structural churn when tracking external state, and suppresses selector reinitialization while bounded classification is reading official controls. A successful no-task selection remains confirmed across a same-composer trigger remount. Explicit no-task selection still performs one bounded official-control transaction because the inspected renderer exposes no equivalent public method for its draft/default/prewarm workflow. The separate Daybreak program policy, strict transaction baselines, pointer animation, and release-coordinate commit state machine remain unchanged. This candidate has not yet been installed or user-tested.
+Renderer `0.12.14` addressed the build-`7377` refresh loop. It never opens nested official controls for idle no-task synchronization, coalesces a duplicate in-flight thread classification without scheduling a same-key retry, ignores proxy-owned Daybreak structural churn when tracking external state, and suppresses selector reinitialization while bounded classification is reading official controls. A successful no-task selection remains confirmed across a same-composer trigger remount. Explicit no-task selection still performs one bounded official-control transaction because the inspected renderer exposes no equivalent public method for its draft/default/prewarm workflow. The separate Daybreak program policy, strict transaction baselines, pointer animation, and release-coordinate commit state machine remain unchanged. On 2026-09-10, the installed watcher confirmed this payload injected into build `8378`; that proves injection, not compatibility with its redesigned picker.
 
 The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
 
 ## Product requirements
+
+### Build 8378 compatibility update
+
+Renderer `0.12.15` adapts the owned `[data-model-picker-view]` surface with `simple` and `advanced` panels. Advanced now contains a Default radio and model radios; selecting a model returns to its model-specific strength slider. The three-flyout transaction below remains a legacy-build fallback and is not used for this layout.
+
+The adapter reads checked radio state from the already-mounted inactive panel without opening menus while idle. It validates a unique selected model against `model/list`, confirms explicit/default state through `[data-explicit-model]`, rejects locked or ambiguous rows, and drives the official model radio, strength keyboard control, and Fast checkbox. Each no-task transaction stays bound to its original unsent composer, verifies model/effort/speed, and attempts restoration only while that composer and external-input generation remain unchanged. Missing effort steps and inaccessible controls terminate boundedly. Default is displayed as `Default`, with no concrete model cell selected; it is not a new selectable rail row. Unrepresentable speed tiers fail closed.
+
+Astra is an additional supported row with six efforts and catalog-resolved Fast. Existing visibility preferences and the three-row default are preserved; Astra is available in the model visibility settings. The previous six models retain their effort counts, colors, and pointer animation.
 
 ### Activation and ownership
 
@@ -105,6 +113,7 @@ The selectable and rendered order is fixed.
 
 | Order | Persisted key | Official names matched | Rail label | Efforts | Fast | Fill gradient | Dark label gradient |
 | ---: | --- | --- | --- | --- | --- | --- | --- |
+| 0 | `astra` | `GPT-6-Astra`, `GPT-6 Astra` | `Astra` | low, medium, high, xhigh, max, ultra | Yes | `#E3F8F8 → #C6ECEC` | `#bfe7e7 → #a9d9d9` |
 | 1 | `sol` | `GPT-5.6-Sol`, `GPT-5.6 Sol` | `Sol` | low, medium, high, xhigh, max, ultra | Yes | `#FBE1E5 → #F7C6CC` | `#f1c0c9 → #edb7c1` |
 | 2 | `terra` | `GPT-5.6-Terra`, `GPT-5.6 Terra` | `Terra` | low, medium, high, xhigh, max, ultra | Yes | `#FFF1CF → #FFE6B8` | `#f0d69b → #ebcd90` |
 | 3 | `luna` | `GPT-5.6-Luna`, `GPT-5.6 Luna` | `Luna` | low, medium, high, xhigh, max | Yes | `#EEF9F1 → #DDF3E4` | `#c1e2cb → #b7dcc3` |

@@ -51,10 +51,12 @@ public enum InjectionExpressionBuilder {
             if (type !== "window" && type !== "webview") return false;
             const url = contents.getURL();
             if (url.startsWith("devtools:")) return false;
+            if (!url.startsWith("app://")) return false;
             const frames = contents.mainFrame?.framesInSubtree || [];
             let injected = false;
             let triggerFound = false;
             for (const frame of frames) {
+              if (!String(frame.url).startsWith("app://")) continue;
               try {
                 const outcome = await frame.executeJavaScript(state.source, true);
                 injected = true;

@@ -1,5 +1,13 @@
 # Design QA
 
+## 2026-09-10 — Build 8378 radio-list compatibility candidate
+
+- Inspected Codex `26.903.61454` build `8378` in the running process without a restart. The official picker retains both simple and advanced panels, and advanced now contains a Default row plus seven model radio rows. The compact view uses an explicit-model marker, model-specific strength keyboard control, and Fast checkbox.
+- Renderer `0.12.15` adds this layout independently from the legacy Model/Effort/Speed flyouts. It adds Astra with six effort levels, displays Default without selecting a model cell, and retains the accepted 240-millisecond pointer easing.
+- Isolated browser fixture: 42 synthetic model/effort/Fast cases passed, including transitions through Daybreak and Codex Spark. An unresponsive native-slider fixture terminated boundedly and restored Astra/xhigh/Standard. Default display and Default-to-explicit-Astra selection passed. Replacing the composer during a pending transaction preserved the replacement state and resynchronized the rail to Terra/medium.
+- The fixture uses synthetic catalog data and native-control handlers. It is regression evidence, not live Codex switching acceptance. Live candidate loading was stopped by guards when test windows changed to real tasks or were closed; no running task's model was changed.
+- Production installation, live model switching, first-message persistence, restart, and cold-login checks remain pending. The following entries describe older candidates and do not supersede this status.
+
 ## 2026-09-01 — Renderer 0.12.13 flyout loop and special-model freeze
 
 - Strict result: installed renderer `0.12.13` failed. The user observed that Daybreak Blue and GPT-5.3 Codex Spark could leave Codex unresponsive at every effort, and an idle no-task picker continuously flashed the official Model, Effort, and Speed flyouts.

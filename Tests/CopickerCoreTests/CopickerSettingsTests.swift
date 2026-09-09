@@ -90,6 +90,7 @@ func settingsStoreRejectsEmptyModelVisibilityAndStaleWrites() throws {
 func settingsModelContractsMatchRequestedEffortCounts() {
     #expect(
         CopickerModel.allCases == [
+            .astra,
             .sol,
             .terra,
             .luna,
@@ -103,4 +104,5 @@ func settingsModelContractsMatchRequestedEffortCounts() {
     #expect(CopickerModel.daybreakBlue.effortLabels.count == 6)
     #expect(CopickerModel.luna.effortLabels.count == 5)
     #expect(CopickerModel.sol.effortLabels.count == 6)
+    #expect(CopickerModel.astra.effortLabels.count == 6)
 }

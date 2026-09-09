@@ -50,7 +50,7 @@
       display: block;
       flex: 0 0 auto;
       width: 339.75px;
-      height: 230.75px;
+      height: 262.75px;
       color-scheme: dark;
       --popover: rgb(44, 44, 44);
       --border: #444448;
@@ -63,7 +63,7 @@
       --daybreak-label: #70b9ff;
       --row-h: 48px;
       --row-gap: 16px;
-      --row-count: 6;
+      --row-count: 7;
       --thumb-size: 56px;
       --stage-w: 388px;
       --model-column-w: 190px;
@@ -98,7 +98,7 @@
     }
 
     .labels {
-      height: 368px;
+      height: 432px;
       margin-top: 34px;
       display: grid;
       grid-template-rows: repeat(var(--row-count), var(--row-h));
@@ -226,7 +226,7 @@
     .stage {
       position: relative;
       width: var(--stage-w);
-      height: 368px;
+      height: 432px;
       cursor: pointer;
       touch-action: none;
       outline: none;
@@ -368,6 +368,14 @@
       const EFFORTS = ["low", "medium", "high", "xhigh", "max", "ultra"];
       const ROWS = [
         {
+          id: "astra",
+          name: "Astra",
+          dots: [1, 2, 3, 4, 5, 6],
+          colors: ["#E3F8F8", "#C6ECEC"],
+          textColors: ["#bfe7e7", "#a9d9d9"],
+          supportsFast: true,
+        },
+        {
           id: "sol",
           name: "Sol",
           dots: [1, 2, 3, 4, 5, 6],
@@ -420,7 +428,7 @@
       const ROW_HEIGHT = 48;
       const ROW_GAP = 16;
       const STAGE_WIDTH = 388;
-      const STAGE_HEIGHT = 368;
+      const STAGE_HEIGHT = 432;
       const LEFT_PADDING = 34;
       const USABLE_WIDTH = 320;
       const START_INSET = 6;
@@ -446,7 +454,7 @@
       const thumb = document.getElementById("thumb");
       const selectionStatus = document.getElementById("selectionStatus");
 
-      let currentRow = 1;
+      let currentRow = 2;
       let currentIndex = 1;
       let fastMode = false;
       let commitCount = 0;

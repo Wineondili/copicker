@@ -20,7 +20,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Renderer development candidate | `0.12.14` | `model-rail.js` `VERSION`; removes the installed `0.12.13` idle proxy loop and bounds classification without changing explicit selection or animation |
+| Renderer development candidate | `0.12.15` | `model-rail.js` `VERSION`; adapts the build-`8378` radio-list picker and adds Astra/Default recognition; live switching remains pending |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
@@ -28,7 +28,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the full six-model implementation at renderer `0.12.8`. Renderer `0.12.9` was installed for a focused live pass: rapid pointer release passed, but the new-unsent-task official-control proxy did not. Renderer `0.12.10` changed one obsolete item anchor, and `0.12.11` restored the original 240-millisecond click/drag positional easing. Renderer `0.12.12` adapted the proxy to Codex `26.825.51511` build `7377`, but a real installation had no selection effect: bounded probes showed `serviceTier: "default"`, an exact legacy Daybreak Model topology, and CoPicker `Other`/`error`. Renderer `0.12.13` corrected those two blockers, then failed its live pass because idle no-task synchronization repeatedly simulated the three official flyouts; proxy-owned Daybreak structure changes retriggered classification, and Daybreak/Codex Spark could leave the renderer unresponsive. Current `main` advances to `0.12.14`, removing idle no-task proxy reads, coalescing duplicate classification, and excluding bounded proxy-owned churn from external invalidation while retaining explicit transactions and interaction behavior. It remains uninstalled and must not be described as accepted until the focused live gates are rerun. `v0.11.0` remains an immutable historical three-model release.
+The public `v0.99.0` pre-release packages the accepted six-model implementation at renderer `0.12.8`; `v0.11.0` remains an immutable historical three-model release. The intermediate `0.12.9`–`0.12.14` compatibility and live-failure history is retained in [accepted-baseline.md](accepted-baseline.md). Current `main` is candidate `0.12.15`, adapting the build-`8378` model radio list, Default mode, and model-specific strength controls. Run current-layout regression checks and a guarded no-task live pass before promoting it; isolated success is not live acceptance.
 
 ## Supported development boundary
 

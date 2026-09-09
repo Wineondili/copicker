@@ -1,6 +1,7 @@
 import Foundation
 
 public enum CopickerModel: String, Codable, CaseIterable, Sendable {
+    case astra
     case sol
     case terra
     case luna
@@ -10,6 +11,7 @@ public enum CopickerModel: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
+        case .astra: "GPT-6 Astra"
         case .sol: "GPT-5.6 Sol"
         case .terra: "GPT-5.6 Terra"
         case .luna: "GPT-5.6 Luna"
@@ -25,7 +27,7 @@ public enum CopickerModel: String, Codable, CaseIterable, Sendable {
             ["Light", "Medium", "High", "Extra High"]
         case .luna:
             ["Light", "Medium", "High", "Extra High", "Max"]
-        case .sol, .terra, .daybreakBlue:
+        case .astra, .sol, .terra, .daybreakBlue:
             ["Light", "Medium", "High", "Extra High", "Max", "Ultra"]
         }
     }
