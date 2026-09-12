@@ -307,6 +307,26 @@
         text-wrap: pretty;
       }
 
+      .model-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 8px;
+      }
+
+      .model-lifecycle {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 6px;
+        border: 1px solid var(--copicker-border-default);
+        border-radius: 999px;
+        color: var(--copicker-text-secondary);
+        font-size: var(--copicker-font-xs);
+        font-weight: var(--copicker-weight-medium);
+        line-height: var(--copicker-line-xs);
+        white-space: nowrap;
+      }
+
       .section-footer {
         padding: 6px 16px 0;
       }
@@ -699,8 +719,12 @@
             </div>
             <div class="setting-row model-row">
               <div class="setting-copy">
-                <h3>GPT-5.3 Codex Spark</h3>
+                <div class="model-heading">
+                  <h3>GPT-5.3 Codex Spark</h3>
+                  <span class="model-lifecycle" data-model-lifecycle="retiring">Retiring</span>
+                </div>
                 <p class="model-efforts">Light · Medium · High · Extra High · 不支持 Fast</p>
+                <p class="model-warning">Tibo（@thsottiaux）于 2026-09-11 宣布将于次周退役；未公布确切日期。官方仍提供此模型时可继续选择。</p>
                 <p class="model-warning">可能需要 ChatGPT Pro 订阅（Pro 5x / 20x）；未出现在当前账户的官方模型列表时无法切换。</p>
               </div>
               <label class="switch">
@@ -884,7 +908,7 @@
               let result;
               try {
                 result = await rpc("ui/initialize", {
-                  appInfo: { name: "CoPicker", version: "0.12.17" },
+                  appInfo: { name: "CoPicker", version: "0.12.18" },
                   appCapabilities: { availableDisplayModes: ["inline"] },
                   protocolVersion: UI_PROTOCOL_VERSIONS[0],
                 }, INITIALIZE_TIMEOUT_MS);

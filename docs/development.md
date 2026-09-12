@@ -20,7 +20,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Current renderer | `0.12.17` | `model-rail.js` `VERSION`; native settings handshake added while preserving the accepted `0.12.16` picker behavior |
+| Current renderer | `0.12.18` | `model-rail.js` `VERSION`; Spark lifecycle annotation only, preserving native settings initialization and picker behavior |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v3.html` | `CopickerMCPProtocol.settingsResourceURI`; v2 remains a read alias |
@@ -28,7 +28,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the accepted six-model implementation at renderer `0.12.8`; `v0.11.0` remains an immutable historical three-model release. Compatibility and live-failure history is retained in [accepted-baseline.md](accepted-baseline.md). Current `main` is renderer `0.12.16`, adapting the model radio list, Default mode, and strength controls, including unrelated unselected model radios in build `8881`. Live switches and user-reported first-message routing passed without a Codex restart. Keep source tests, settings-resource/backend delivery, live interaction, restart, and publication evidence separate.
+The public `v0.99.0` pre-release packages the accepted six-model implementation at renderer `0.12.8`; `v0.11.0` remains an immutable historical three-model release. Compatibility and live-failure history is retained in [accepted-baseline.md](accepted-baseline.md). Current `main` is renderer `0.12.18`, preserving the model radio list, Default mode, and strength-control adaptation from `0.12.16`, and native settings initialization from `0.12.17`. The latest change is a display-only Spark retirement notice; no lifecycle flag changes model IDs, effort cells, availability, or persisted preferences. Live switches and user-reported first-message routing passed on `0.12.16` without a Codex restart. Keep source tests, settings-resource/backend delivery, live interaction, restart, and publication evidence separate.
 
 ## Supported development boundary
 

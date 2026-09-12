@@ -106,3 +106,19 @@ func settingsModelContractsMatchRequestedEffortCounts() {
     #expect(CopickerModel.sol.effortLabels.count == 6)
     #expect(CopickerModel.astra.effortLabels.count == 6)
 }
+
+@Test
+func retiringStatusDoesNotRemoveSparkFromSavedVisibility() throws {
+    #expect(CopickerModel.codexSpark.lifecycleLabel == "Retiring")
+    #expect(CopickerModel.allCases.filter { $0.lifecycleLabel != nil } == [.codexSpark])
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("CopickerRetiringTests-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CopickerSettingsStore(fileURL: directory.appendingPathComponent("settings.json"))
+    let saved = try store.save(CopickerSettings(
+        revision: 0, enabled: true, visibleModels: [.codexSpark],
+        preferredPlacement: .top, appearance: .dark
+    ), expectedRevision: 0)
+    #expect(saved.visibleModels == [.codexSpark])
+    #expect(try store.read() == saved)
+}

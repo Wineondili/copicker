@@ -202,7 +202,30 @@ func settingsModelRowsMatchThePersistedModelContract() throws {
         let efforts = model.effortLabels.joined(separator: " · ")
         let fastNotice = [.daybreakBlue, .codexSpark].contains(model) ? " · 不支持 Fast" : ""
         #expect(row.contains("<p class=\"model-efforts\">\(efforts)\(fastNotice)</p>"))
+        if let lifecycle = model.lifecycleLabel {
+            #expect(row.contains("data-model-lifecycle=\"retiring\">\(lifecycle)</span>"))
+        } else {
+            #expect(!row.contains("data-model-lifecycle=\"retiring\""))
+        }
     }
     #expect(!html.contains("name=\"visible-model\" value=\"default\""))
     #expect(html.contains("CoPicker 同样显示 Default"))
+}
+
+@Test
+func retiringSparkKeepsItsRailIdentityAndEffortCells() throws {
+    let root = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    for path in ["Sources/CopickerCLI/Resources/model-rail.js", "tools/model-rail-preview.html"] {
+        let source = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
+        let start = try #require(source.range(of: "id: \"gpt-5.3-codex-spark\"")?.lowerBound)
+        let end = try #require(source.range(of: "supportsFast: false", range: start..<source.endIndex)?.upperBound)
+        let row = String(source[start..<end])
+        #expect(row.contains("name: \"Codex Spark\""))
+        #expect(row.contains("lifecycle: \"retiring\""))
+        #expect(row.contains("dots: [1, 2, 3, 4]"))
+        #expect(source.contains("badge.textContent = \"Retiring\""))
+        #expect(source.contains("var(--thumb-size) / 2 + 16px"))
+        #expect(!source.contains("THUMB_SIZE"))
+    }
 }

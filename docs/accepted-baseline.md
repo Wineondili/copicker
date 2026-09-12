@@ -18,7 +18,7 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.17
+renderer_version=0.12.18
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v3.html
 marketplace_name=copicker-local
@@ -48,7 +48,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Current renderer | `0.12.17` | Installed; candidate native document completed initialization and displayed settings on build `8881`; the user confirmed opening and saving |
+| Current renderer | `0.12.18` | Adds a display-only Spark Retiring notice; keeps the previously accepted native initialization and picker behavior |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
@@ -62,8 +62,8 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.17`, loaded, `injection-succeeded` | Verified on build `8881`; source/installed hashes match and the user's tested preferences were preserved |
-| Fresh installed settings backend | Seven-model schema, v3 resource and v2 read alias | Read-only fresh-process verification passed; no additional Codex restart was performed during the settings fix |
+| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.18`, loaded, `injection-succeeded` | Verified on build `8881` after the user-authorized CoPicker-only update; source/release/installed hashes match and the user's tested preferences were preserved |
+| Fresh installed settings backend | Seven-model schema, v3 resource and v2 read alias, Spark Retiring notice | Read-only fresh-process verification passed; Codex was not restarted and existing MCP connections were not globally refreshed |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
@@ -136,6 +136,7 @@ The selectable and rendered order is fixed.
 - **CP-MOD-005 — Daybreak presentation.** The rail omits `Blue`; `Daybreak` uses theme-adaptive blue (`#70b9ff` dark, `#176fbd` light).
 - **CP-MOD-006 — Access notices.** Daybreak may require Codex Trusted Access for Cyber and necessary network access. Codex Spark may require an eligible ChatGPT Pro subscription. Settings do not grant either entitlement.
 - **CP-MOD-007 — Current-build Daybreak boundary.** In Codex build `7377`, the separate Daybreak program path removes `gpt-daybreak-blue-latest` from the official Model submenu and exposes a `menuitemcheckbox` that may remap both the current and configured default base model. Renderer `0.12.14` does not activate that broader program control without an accepted base-model/effort policy. When the control is present, the Daybreak row is rejected; ordinary model commits are allowed only while the exact control is explicitly off and are rejected while it is enabled, busy, disabled, or otherwise ambiguous. When Codex instead exposes one exact legacy Daybreak Model leaf, it is treated as the normal model-backed topology and mutation is allowed while the absence of a program control is rechecked across the transaction. When neither exact topology is observable, mutation fails closed because no bounded signal separates no entitlement from unresolved verified access. `thread/settings/update` alone cannot express build `7377`'s separate program state.
+- **CP-MOD-008 — Spark retirement notice.** Display `Retiring` for Codex Spark in settings, the rail, and its standalone preview. [Tibo's original post](https://x.com/thsottiaux/status/2098300998968357218), published 2026-09-11 and directly verified on X, announced retirement for the following week without an exact day. This is an announced future retirement, not proof of current unavailability: the inspected `model/list` still exposed Spark with null `upgrade`/`upgradeInfo`. Keep its ID, four effort cells, non-Fast behavior, visibility preference, and normal catalog checks unchanged. The rail badge occupies unused space after Spark's last cell and must not change host geometry, overlap its thumb, or capture pointer input. Do not infer a precise shutdown date or disable the row automatically from the announcement.
 
 ### Placement, avoidance, and animation
 

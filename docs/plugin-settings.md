@@ -9,7 +9,7 @@ Current versions:
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v3.html` (v2 read alias retained) |
-| Renderer fallback on current `main` | `0.12.17` |
+| Renderer fallback on current `main` | `0.12.18` |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
@@ -25,6 +25,12 @@ The page now sends `ui/initialize`, validates the supported protocol, applies ho
 The [official UI guidance](https://developers.openai.com/plugins/build/chatgpt-ui) recommends MCP Apps initialization and a new resource URI for breaking UI changes. The native cache key is now v3; the source filename stays `copicker-settings-v2.html`, and a fresh server also accepts v2 reads for retained tool catalogs. Existing long-lived MCP connections can still carry their older resource until refreshed or restarted; replacing a native sandbox document for a live test is not a claim that every cached connection has been invalidated.
 
 The actual native sandbox reached `ready`, rendered all seven rows, and read the stored preferences. The user manually verified opening and saving, then explicitly confirmed the resulting visibility changes were theirs. Installation preserved that snapshot. The new installed MCP process serves the initialized v3/v2 document; no Codex restart or second global MCP refresh was performed during this fix.
+
+## Spark lifecycle notice in 0.12.18
+
+Spark's settings row displays a `Retiring` badge and a dated explanation of [Tibo's 2026-09-11 announcement](https://x.com/thsottiaux/status/2098300998968357218). He specified the following week, not an exact date. This annotation does not disable the switch, alter its persisted key, or grant/withdraw model access; actual selection still requires the official catalog and controls. The runtime HTML remains network-free, with source links kept in documentation.
+
+This display-only update retains resource URI v3 and its v2 read alias, with no protocol or persistence migration. Previously loaded native resources may remain cached until their connection refreshes normally; a current executable on disk does not prove that an already-open settings page has reloaded.
 
 ## Package layout
 

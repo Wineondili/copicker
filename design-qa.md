@@ -1,5 +1,16 @@
 # Design QA
 
+## 2026-09-12 — Spark Retiring notice
+
+- Directly verified [Tibo's original X post](https://x.com/thsottiaux/status/2098300998968357218), published 2026-09-11, against the user-provided screenshot. The post announces retirement the following week without an exact day. The inspected official catalog still lists Spark with null upgrade metadata; the label is `Retiring`, not `Retired` or an automatic availability cutoff.
+- Renderer `0.12.18` adds a small status pill in Spark's unused rail space and a matching settings badge with the dated explanation. Model labels/IDs, colors, effort cells, Fast behavior, saved preferences, and animation code are unchanged. The standalone preview uses the same badge placement.
+- Standalone rail at a `1280 × 720` viewport: host `339.75 × 262.75` CSS px, badge `46.17 × 14.80` CSS px, 8 CSS px separation after the final thumb, fully inside the stage, and `pointer-events: none`. All 37 cells remain present, including Spark's four cells. Clicking the fourth Spark cell produced `Codex Spark / xhigh / Fast false` in preview-only state; the rail had no console warnings/errors.
+- Actual settings HTML under a local in-memory MCP host initialized to `Ready`; Spark remained enabled and its toggle saved a mock revision. At 390 px document width there was no horizontal overflow, the badge stayed within its 348 px row, and the switch remained enabled. One initial browser/sandbox MutationObserver exception did not recur on a scoped reload; no MutationObserver API exists in the shipped settings document. This is isolated UI evidence, not a live native settings save or an exhaustive viewport/animation pass.
+- All 56 offline tests, JavaScript syntax/whitespace checks, and the release build passed. Added contracts for the status label, unchanged rail identity/efforts, and persistence of a Spark-only visibility selection in a temporary test store. No real model selection, prompt submission, or preference write was performed.
+- After explicit user approval, backed up the installed managed artifacts, installed the release, and reloaded only CoPicker's existing watcher. Source/release/installed resource hashes match; a fresh MCP process serves source-exact v3 and v2 documents including the notice. The watcher reports `injection-succeeded` on the same Codex PID (omitted), build `8881`; preferences and the LaunchAgent plist remain byte-identical. No Codex restart, global MCP refresh, or invalidation of existing native resource caches was performed.
+
+result: announcement verified; source/build, isolated UI, installed artifacts, and fresh MCP resources passed; no new live model-routing or restart/cold-login acceptance claimed
+
 ## 2026-09-12 — Native settings initialization fix
 
 - Post-restart source/installed hashes and MCP inventory matched `0.12.16`, but its native settings entry displayed a blank/loading surface. The native sandbox had already read preferences; its document lacked `ui/initialize`, so the native host had not established its display mode. The existing renderer suppressed its fallback because a native entry was present.

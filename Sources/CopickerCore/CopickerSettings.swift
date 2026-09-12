@@ -32,6 +32,10 @@ public enum CopickerModel: String, Codable, CaseIterable, Sendable {
             ["Light", "Medium", "High", "Extra High", "Max", "Ultra"]
         }
     }
+
+    public var lifecycleLabel: String? {
+        self == .codexSpark ? "Retiring" : nil
+    }
 }
 
 public enum CopickerPlacement: String, Codable, CaseIterable, Sendable {

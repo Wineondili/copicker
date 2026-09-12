@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.17";
+  const VERSION = "0.12.18";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -178,6 +178,8 @@
     {
       id: "gpt-5.3-codex-spark",
       name: "Codex Spark",
+      lifecycle: "retiring",
+      lifecycleNote: "Retiring — announced by Tibo on 2026-09-11 for the following week; exact date not announced.",
       catalogDisplayName: "GPT-5.3 Codex Spark",
       catalogDisplayNames: ["GPT-5.3 Codex Spark", "GPT-5.3-Codex-Spark"],
       dots: [1, 2, 3, 4],
@@ -5005,6 +5007,7 @@
   function configureModelText(element, row) {
     if (!element || !row) return;
     element.textContent = row.name;
+    element.title = row.lifecycleNote || "";
     element.setAttribute("data-model", row.name);
     element.classList.toggle("daybreak", row.id === "daybreak-blue");
     if (row.id === "daybreak-blue") {
@@ -5027,6 +5030,7 @@
     const model = document.createElement("span");
     model.className = `recognized-model${row.id === "daybreak-blue" ? " daybreak" : ""}`;
     model.textContent = row.name;
+    model.title = row.lifecycleNote || "";
     const effortLabel = document.createElement("span");
     effortLabel.className = "recognized-effort";
     effortLabel.textContent = effort;
@@ -5405,6 +5409,20 @@
 
         .label.daybreak { color: var(--daybreak-label); }
 
+        .row-lifecycle {
+          position: absolute;
+          transform: translateY(-50%);
+          padding: 3px 8px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          color: var(--text);
+          font-size: calc(18px * var(--text-scale));
+          font-weight: 500;
+          line-height: 1;
+          white-space: nowrap;
+          pointer-events: none;
+        }
+
         .stage-shell {
           position: relative;
           width: var(--stage-w);
@@ -5719,6 +5737,7 @@
       const label = document.createElement("div");
       label.className = `label${row.id === "daybreak-blue" ? " daybreak" : ""}`;
       label.textContent = row.name;
+      label.title = row.lifecycleNote || "";
       modelLabels?.append(label);
     }
 
@@ -5739,6 +5758,16 @@
     }
 
     for (const [rowIndex, row] of ROWS.entries()) {
+      if (row.lifecycle === "retiring") {
+        const badge = document.createElement("span");
+        badge.className = "row-lifecycle";
+        badge.dataset.modelLifecycle = row.lifecycle;
+        badge.textContent = "Retiring";
+        badge.title = row.lifecycleNote;
+        badge.style.left = `calc(${COLUMN_CENTERS[row.dots.length - 1]}px + var(--thumb-size) / 2 + 16px)`;
+        badge.style.top = `${ROW_CENTERS[rowIndex]}px`;
+        stage?.append(badge);
+      }
       for (const dotNumber of row.dots) {
         const dot = document.createElement("div");
         dot.className = "dot";

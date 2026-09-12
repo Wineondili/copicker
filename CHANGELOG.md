@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-12 20:36:54 +0100
+
+- Verified [Tibo's original 2026-09-11 post](https://x.com/thsottiaux/status/2098300998968357218) announcing GPT-5.3-Codex-Spark retirement the following week, without a precise date. Added `Retiring` to CoPicker settings, the model rail, and the standalone preview; advanced the renderer to `0.12.18` without changing the CLI/plugin version, settings schema, or v3 resource URI.
+- Kept Spark's identity, four efforts, non-Fast behavior, normal official-catalog checks, and saved visibility unchanged. The rail pill occupies unused space beyond the last thumb without changing rail geometry or intercepting pointer input; the settings page includes the dated announcement and does not impose an automatic cutoff.
+- Passed 56 offline tests, JavaScript syntax/whitespace checks, and the release build. The actual local settings document passed mock initialization and saving plus a 390 px no-overflow check; the standalone rail retained its original dimensions and all 37 effort cells, including a successful preview-only Spark/xhigh selection. No real model request or preference write was submitted.
+- With explicit user approval, installed the source-matched executable/resources with a recoverable backup and reloaded only the existing CoPicker watcher. Injection succeeded on the same running Codex process; preferences and LaunchAgent configuration are unchanged. A fresh installed MCP process serves the Retiring document at v3 and v2. No Codex restart, global MCP refresh, push, tag, or release was performed; already-loaded native settings resources may remain cached until their normal refresh.
+
 ## 2026-09-12 18:07:46 +0100
 
 - Fixed the native CoPicker settings page remaining blank on Codex build `8881`: the resource now completes `ui/initialize` and `ui/notifications/initialized` before reading settings, consumes host theme updates, and accepts bridge messages only from its parent. Kept the script-free injected fallback and accepted picker behavior unchanged; advanced the renderer to `0.12.17`.
