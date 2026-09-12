@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-12 18:07:46 +0100
+
+- Fixed the native CoPicker settings page remaining blank on Codex build `8881`: the resource now completes `ui/initialize` and `ui/notifications/initialized` before reading settings, consumes host theme updates, and accepts bridge messages only from its parent. Kept the script-free injected fallback and accepted picker behavior unchanged; advanced the renderer to `0.12.17`.
+- Added bounded initialization retry, ignored late/foreign replies, and prevented uncertain save/apply requests from being replayed through a second transport. Advanced the native settings resource URI to `ui://copicker/settings/v3.html` while retaining v2 as a read alias; the bundled HTML filename remains unchanged.
+- Passed 54 offline tests, JavaScript syntax and whitespace checks, and the release build. The candidate document completed its handshake, loaded all seven models, and became visible in the real native sandbox. The user then manually verified successful opening and saving; their resulting visibility preferences were preserved.
+- Installed the source-matched binary and resources with a recoverable backup and reloaded only the existing Copicker watcher. A fresh installed MCP process advertises v3 and serves initialized HTML at both v3/v2 URIs. No Codex restart, additional global MCP refresh, push, tag, or release was performed; existing connections may retain old cached resources until their normal refresh/restart.
+
 ## 2026-09-12 09:14:55 +0200
 
 - Advanced the renderer to `0.12.16` for Codex `26.908.40834` build `8881`: unrelated unselected native radios no longer invalidate a known selected model; unknown selected, duplicate-known, locked, and ambiguous selections remain fail-closed.

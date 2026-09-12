@@ -101,6 +101,18 @@ struct CopickerMCPProtocolTests {
     }
 
     @Test
+    func settingsResourceRevisionRetainsTheLegacyReadAlias() throws {
+        #expect(CopickerMCPProtocol.settingsResourceURI == "ui://copicker/settings/v3.html")
+        for uri in [CopickerMCPProtocol.settingsResourceURI, "ui://copicker/settings/v2.html"] {
+            let response = try send(method: "resources/read", params: ["uri": uri])
+            let result = try dictionary(response["result"])
+            let contents = try array(result["contents"]).map { try dictionary($0) }
+            #expect(contents.first?["uri"] as? String == uri)
+            #expect(contents.first?["text"] as? String == "<html><body>CoPicker test settings</body></html>")
+        }
+    }
+
+    @Test
     func settingsToolsReadSaveAndRepeatAnIdempotentSnapshot() throws {
         let initial = try callTool(CopickerMCPProtocol.settingsToolName)
         let initialSnapshot = try dictionary(initial["structuredContent"])

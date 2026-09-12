@@ -171,11 +171,11 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
 | Renderer `0.12.12` live result | Injected and visible on build `7377`, but selection had no effect; probes observed `serviceTier: "default"`, exact `legacy-model`, `Other`, and `error` |
 | Renderer `0.12.13` live result | Idle no-task Model/Effort/Speed flyouts looped visibly; Daybreak and Codex Spark could leave the renderer unresponsive |
-| Current `main` renderer | `0.12.16`; hot-loaded on build `8881`; native switches through all seven adapted models passed and the user confirmed selection, sending, and correct model routing |
+| Current `main` renderer | `0.12.17`; adds native settings initialization while preserving the user-accepted model switching from `0.12.16` |
 | Current settings source | Seven model rows match the persisted/MCP/renderer contract; Astra save round-trip covered offline; isolated HTML preview passed model toggles, last-visible-row protection, and mock Apply |
-| Current installed delivery | Release executable and both installed HTML/renderer resources match source SHA-256; the refreshed Copicker watcher reports successful injection into the unchanged Codex PID; all three app renderers report settings/rail `0.12.16` with Astra and Default guidance |
-| Current live MCP settings backend | User-authorized `config/mcpServer/reload` was accepted, but the current loaded task subsequently returned the old MCP settings resource; refreshed-backend readiness and a live Astra save are not confirmed |
-| Fresh installed MCP process | Read-only `tools/list` advertises all seven save-schema model keys and `resources/read` returns the updated Astra/Default document; the user chose a later manual Codex restart to replace retained task connections |
+| Current installed delivery | Release executable and initialized HTML/renderer resources match source SHA-256; the refreshed `0.12.17` watcher reports successful injection without restarting Codex; the user's accepted preference snapshot is unchanged by installation |
+| Native settings interaction | The candidate document reached `ready` in the real native sandbox, displayed seven rows, and loaded preferences; the user manually confirmed successful opening and saving |
+| Fresh installed MCP process | Advertises the seven-model schema and v3 URI; v3 and legacy v2 reads return the initialized document. No new restart/cold-login or all-cache-invalidation claim is made |
 | Live-accepted Codex | `26.820.60940` build `7119` |
 | Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |

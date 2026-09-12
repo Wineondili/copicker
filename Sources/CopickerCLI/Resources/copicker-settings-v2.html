@@ -771,7 +771,9 @@
         const PLACEMENTS = ["top", "left", "right"];
         const APPEARANCES = ["codex", "system", "light", "dark"];
         const BRIDGE_TIMEOUT_MS = 1800;
+        const INITIALIZE_TIMEOUT_MS = 5000;
         const APPLY_BRIDGE_TIMEOUT_MS = 12000;
+        const UI_PROTOCOL_VERSIONS = ["2025-11-21", "2026-01-26"];
 
         const main = document.querySelector("main");
         const saveState = document.querySelector("#save-state");
@@ -794,6 +796,8 @@
         let applying = false;
         let retryApply = false;
         let blockedByConflict = false;
+        let bridgeMode = null;
+        let initializationPromise = null;
 
         function setStatus(message, tone = "normal") {
           saveState.textContent = message;
@@ -831,13 +835,13 @@
           main.dataset.loading = String(loading);
           main.setAttribute("aria-busy", String(loading));
           allInputs.forEach((input) => {
-            input.disabled = loading;
+            input.disabled = loading || !authoritative;
           });
           updateApplyAvailability();
         }
 
         function rpc(method, params, timeoutMs = BRIDGE_TIMEOUT_MS) {
-          const id = nextRequestID++;
+          const id = `copicker-ui-${nextRequestID++}`;
           return new Promise((resolve, reject) => {
             const timeout = window.setTimeout(() => {
               pendingRequests.delete(id);
@@ -846,29 +850,84 @@
               reject(error);
             }, timeoutMs);
             pendingRequests.set(id, { resolve, reject, timeout });
-            window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+            try {
+              window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+            } catch (error) {
+              window.clearTimeout(timeout);
+              pendingRequests.delete(id);
+              reject(error);
+            }
           });
         }
 
-        async function callTool(name, args = {}) {
-          if (
-            name === APPLY_TOOL && window.openai &&
-            typeof window.openai.callTool === "function"
-          ) {
-            return window.openai.callTool(name, args);
+        function applyHostContext(context) {
+          if (!context || typeof context !== "object") return;
+          if (context.theme === "light" || context.theme === "dark") {
+            document.documentElement.style.colorScheme = context.theme;
           }
-          try {
-            return await rpc(
-              "tools/call",
-              { name, arguments: args },
-              name === APPLY_TOOL ? APPLY_BRIDGE_TIMEOUT_MS : BRIDGE_TIMEOUT_MS
-            );
-          } catch (rpcError) {
-            if (window.openai && typeof window.openai.callTool === "function") {
-              return window.openai.callTool(name, args);
+          const variables = context.styles?.variables;
+          if (variables && typeof variables === "object") {
+            for (const [name, value] of Object.entries(variables)) {
+              if (/^--(?:color|font|text|radius)-[a-z0-9-]+$/i.test(name) &&
+                  typeof value === "string" && value.length <= 2048) {
+                document.documentElement.style.setProperty(name, value);
+              }
             }
-            throw rpcError;
           }
+        }
+
+        async function initializeBridge() {
+          if (bridgeMode) return bridgeMode;
+          if (!initializationPromise) {
+            main.dataset.bridgeState = "initializing";
+            initializationPromise = (async () => {
+              let result;
+              try {
+                result = await rpc("ui/initialize", {
+                  appInfo: { name: "CoPicker", version: "0.12.17" },
+                  appCapabilities: { availableDisplayModes: ["inline"] },
+                  protocolVersion: UI_PROTOCOL_VERSIONS[0],
+                }, INITIALIZE_TIMEOUT_MS);
+              } catch (error) {
+                // Only an explicit unsupported-method response permits the legacy bridge.
+                if (error?.code === -32601 &&
+                    typeof window.openai?.callTool === "function") {
+                  bridgeMode = "legacy";
+                  main.dataset.bridgeState = "legacy";
+                  return bridgeMode;
+                }
+                throw error;
+              }
+              if (!UI_PROTOCOL_VERSIONS.includes(result?.protocolVersion)) {
+                throw new Error("CoPicker 与设置宿主的初始化协议不兼容。");
+              }
+              applyHostContext(result.hostContext);
+              window.parent.postMessage({
+                jsonrpc: "2.0",
+                method: "ui/notifications/initialized",
+                params: {},
+              }, "*");
+              bridgeMode = "mcp";
+              main.dataset.bridgeState = "ready";
+              return bridgeMode;
+            })().catch((error) => {
+              initializationPromise = null;
+              main.dataset.bridgeState = "error";
+              throw error;
+            });
+          }
+          return initializationPromise;
+        }
+
+        async function callTool(name, args = {}) {
+          const mode = await initializeBridge();
+          if (mode === "legacy") return window.openai.callTool(name, args);
+          // A timed-out write may have succeeded; never resubmit it through another transport.
+          return rpc(
+            "tools/call",
+            { name, arguments: args },
+            name === APPLY_TOOL ? APPLY_BRIDGE_TIMEOUT_MS : BRIDGE_TIMEOUT_MS
+          );
         }
 
         function completeRequest(message) {
@@ -1097,6 +1156,8 @@
           setStatus("正在读取设置…");
           try {
             const result = await callTool(READ_TOOL);
+            const failure = toolResultFailure(result);
+            if (failure) throw failure;
             const loaded = normalizedSnapshot(result);
             if (!loaded) throw new Error("读取响应缺少有效设置快照。");
             authoritative = loaded;
@@ -1116,7 +1177,13 @@
         }
 
         window.addEventListener("message", (event) => {
+          if (event.source !== window.parent) return;
           const message = event.data;
+          if (message?.jsonrpc === "2.0" &&
+              message.method === "ui/notifications/host-context-changed") {
+            if (bridgeMode === "mcp") applyHostContext(message.params);
+            return;
+          }
           if (message?.method === "copicker/theme") {
             const appearance = message.params?.appearance;
             if (appearance === "light" || appearance === "dark") {
@@ -1134,7 +1201,8 @@
           }
           if (message.method === "ui/notifications/tool-result") {
             const received = normalizedSnapshot(message.params);
-            if (received && !authoritative) {
+            if (received && !authoritative && bridgeMode === "mcp" &&
+                main.dataset.loading !== "true") {
               authoritative = received;
               draft = received;
               writeForm(received);
@@ -1169,16 +1237,6 @@
           void loadSettings();
         });
 
-        const initialOutput = window.openai && window.openai.toolOutput;
-        const initialSnapshot = normalizedSnapshot(initialOutput);
-        if (initialSnapshot) {
-          authoritative = initialSnapshot;
-          draft = initialSnapshot;
-          writeForm(initialSnapshot);
-          setLoading(false);
-          setStatus("已保存 · 下次注入生效");
-          updateApplyAvailability();
-        }
         void loadSettings();
       })();
     </script>

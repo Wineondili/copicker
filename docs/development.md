@@ -20,10 +20,10 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Current renderer | `0.12.16` | `model-rail.js` `VERSION`; build-`8881` live switching and user-reported sending/model routing passed |
+| Current renderer | `0.12.17` | `model-rail.js` `VERSION`; native settings handshake added while preserving the accepted `0.12.16` picker behavior |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
-| Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
+| Settings resource | `ui://copicker/settings/v3.html` | `CopickerMCPProtocol.settingsResourceURI`; v2 remains a read alias |
 | Live-accepted Codex | `26.820.60940` build `7119` | [accepted-baseline.md](accepted-baseline.md) |
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
@@ -119,7 +119,7 @@ The private stdio MCP server can be exercised without registering the plugin or 
 printf '%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v2.html"}}' \
+  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v3.html"}}' \
   | .build/debug/copicker mcp-server
 ```
 

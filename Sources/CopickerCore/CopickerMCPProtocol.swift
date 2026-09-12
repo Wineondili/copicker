@@ -1,7 +1,8 @@
 import Foundation
 
 public struct CopickerMCPProtocol {
-    public static let settingsResourceURI = "ui://copicker/settings/v2.html"
+    public static let settingsResourceURI = "ui://copicker/settings/v3.html"
+    private static let legacySettingsResourceURI = "ui://copicker/settings/v2.html"
     public static let settingsToolName = "copicker_settings"
     public static let settingsSaveToolName = "copicker_settings_save"
     public static let settingsApplyToolName = "copicker_settings_apply"
@@ -103,14 +104,15 @@ public struct CopickerMCPProtocol {
         case "resources/list":
             result = ["resources": [settingsResource]]
         case "resources/read":
-            guard params["uri"] as? String == Self.settingsResourceURI else {
+            guard let uri = params["uri"] as? String,
+                  [Self.settingsResourceURI, Self.legacySettingsResourceURI].contains(uri) else {
                 return encode(errorResponse(
                     id: requestID,
                     code: -32002,
                     message: "Resource not found"
                 ))
             }
-            result = settingsResourceResult
+            result = settingsResourceResult(uri: uri)
         case "resources/templates/list":
             result = ["resourceTemplates": []]
         case "prompts/list":
@@ -465,11 +467,11 @@ public struct CopickerMCPProtocol {
         ]
     }
 
-    private var settingsResourceResult: [String: Any] {
+    private func settingsResourceResult(uri: String) -> [String: Any] {
         [
             "contents": [
                 [
-                    "uri": Self.settingsResourceURI,
+                    "uri": uri,
                     "mimeType": Self.appMIMEType,
                     "text": settingsHTML,
                     "_meta": [

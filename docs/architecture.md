@@ -214,7 +214,9 @@ The local plugin launches the stable installed executable as `copicker mcp-serve
 - `copicker_settings_save`: validate and save a complete snapshot using the expected revision;
 - `copicker_settings_apply`: explicit current-process application handler.
 
-The render tool advertises `ui://copicker/settings/v2.html` with the MCP App MIME type, themed data-URI icons, and empty network/frame allowlists. All tools use `_meta.ui.visibility: ["app"]`; they are host controls, not general model-callable tools.
+The render tool advertises `ui://copicker/settings/v3.html` with the MCP App MIME type, themed data-URI icons, and empty network/frame allowlists. The previous v2 URI remains a read alias for retained tool catalogs. All tools use `_meta.ui.visibility: ["app"]`; they are host controls, not general model-callable tools.
+
+The native HTML initializes the MCP Apps bridge before any tool call. It validates the negotiated protocol, sends the initialized notification, consumes host-context theme updates, and accepts messages only from its parent. A failed initialization has a bounded retry; an already-dispatched save/apply request is not retried automatically on a different transport. The native URI revision is independent from the retained source filename `copicker-settings-v2.html`. The injected fallback strips that script and keeps its existing parent-owned controller.
 
 ### Renderer fallback path
 

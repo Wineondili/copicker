@@ -8,13 +8,23 @@ Current versions:
 | --- | --- |
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
-| MCP App resource | `ui://copicker/settings/v2.html` |
-| Renderer fallback on current `main` | `0.12.16` |
+| MCP App resource | `ui://copicker/settings/v3.html` (v2 read alias retained) |
+| Renderer fallback on current `main` | `0.12.17` |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
-| Currently diagnosed Codex | `26.825.51511` build `7377`; `0.12.12` installed failure plus bounded probe evidence, no successful selection acceptance |
+| Current native settings validation | `26.908.40834` build `8881`; initialized candidate document displayed and user-tested saving passed |
+
+## Native initialization fix in 0.12.17
+
+Build `8881` exposes the native CoPicker entry, so the renderer correctly suppresses its fallback entry. The old v2 document could read preferences but never completed the MCP Apps initialization handshake, leaving the native host's display mode unresolved. Source matching and a standalone preview did not cover this native-host requirement.
+
+The page now sends `ui/initialize`, validates the supported protocol, applies host context, and acknowledges `ui/notifications/initialized` before calling settings tools. It accepts messages only from its parent, shares one pending initialization, supports bounded retry, and never retries an uncertain write through a different transport. Only an explicit unsupported-method response permits the feature-detected legacy bridge. The injected fallback still uses its script-free parent controller.
+
+The [official UI guidance](https://developers.openai.com/plugins/build/chatgpt-ui) recommends MCP Apps initialization and a new resource URI for breaking UI changes. The native cache key is now v3; the source filename stays `copicker-settings-v2.html`, and a fresh server also accepts v2 reads for retained tool catalogs. Existing long-lived MCP connections can still carry their older resource until refreshed or restarted; replacing a native sandbox document for a live test is not a claim that every cached connection has been invalidated.
+
+The actual native sandbox reached `ready`, rendered all seven rows, and read the stored preferences. The user manually verified opening and saving, then explicitly confirmed the resulting visibility changes were theirs. Installation preserved that snapshot. The new installed MCP process serves the initialized v3/v2 document; no Codex restart or second global MCP refresh was performed during this fix.
 
 ## Package layout
 
@@ -67,7 +77,7 @@ All three tools have `_meta.ui.visibility: ["app"]`; they are Codex host control
 
 - read-only entrypoint;
 - returns the authoritative snapshot;
-- declares `_meta.ui.resourceUri` and `openai/outputTemplate` for `ui://copicker/settings/v2.html`;
+- declares `_meta.ui.resourceUri` and `openai/outputTemplate` for `ui://copicker/settings/v3.html`;
 - advertises the private settings entry metadata.
 
 ### `copicker_settings_save`
@@ -216,7 +226,7 @@ swift test
 printf '%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v2.html"}}' \
+  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v3.html"}}' \
   | .build/debug/copicker mcp-server
 ```
 

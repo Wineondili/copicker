@@ -13,10 +13,10 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
 | CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
-| Current renderer | `0.12.16` on `main` | Build `8881` live picker switches passed; the user confirmed sending with the selected model and correct routing |
+| Current renderer | `0.12.17` on `main` | Adds the native settings initialization handshake; retains the user-accepted build-`8881` picker behavior from `0.12.16` |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
-| MCP settings resource | `ui://copicker/settings/v2.html` | Versioned CoPicker settings document |
+| MCP settings resource | `ui://copicker/settings/v3.html` | Initialized native settings document; the old v2 URI remains a read alias |
 | Live-accepted Codex build | `26.820.60940` (`7119`) | Build on which the current UI and interaction baseline was accepted |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present during the accepted installation before the release-only bump |
 

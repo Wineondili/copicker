@@ -18,9 +18,9 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.16
+renderer_version=0.12.17
 settings_schema_version=1
-settings_resource_uri=ui://copicker/settings/v2.html
+settings_resource_uri=ui://copicker/settings/v3.html
 marketplace_name=copicker-local
 plugin_id=copicker@copicker-local
 accepted_codex_version=26.820.60940
@@ -48,21 +48,22 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Current renderer | `0.12.16` | Hot-loaded on build `8881`; bounded native switches passed and the user confirmed selection, sending, and correct model routing on 2026-09-12 |
+| Current renderer | `0.12.17` | Installed; candidate native document completed initialization and displayed settings on build `8881`; the user confirmed opening and saving |
+| Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
 | Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
-| Settings resource | `ui://copicker/settings/v2.html` | Current MCP App document |
+| Settings resource | `ui://copicker/settings/v3.html` | Current MCP App document; v2 is retained as a read alias with the requested URI echoed |
 | Public GitHub release | `v0.99.0` | Full-feature immutable source pre-release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
 | Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.16`, loaded, `injection-succeeded` | Verified on build `8881`; source/installed hashes match and user preferences are unchanged |
-| Fresh installed settings backend | Seven-model schema and updated settings resource | Read-only fresh-process verification passed; user will perform the Codex restart, so post-restart integration is not yet accepted |
+| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.17`, loaded, `injection-succeeded` | Verified on build `8881`; source/installed hashes match and the user's tested preferences were preserved |
+| Fresh installed settings backend | Seven-model schema, v3 resource and v2 read alias | Read-only fresh-process verification passed; no additional Codex restart was performed during the settings fix |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
@@ -156,6 +157,7 @@ The selectable and rendered order is fixed.
 - **CP-SET-005 — Save/apply distinction.** Edits autosave. The default effect boundary is the next process injection. **Apply now** is enabled only after saving and may apply the persisted snapshot to the current process through the guarded Inspector path without restarting Codex.
 - **CP-SET-006 — General group.** The page-level title is `CoPicker`; the first group is `常规`/General. The Apply row is directly below Enable CoPicker, not in a separate bottom group.
 - **CP-SET-007 — Appearance.** Appearance choices are follow Codex, follow system, light, and dark. Light rail background is exactly `rgb(255, 255, 255)`; dark rail background is `rgb(44, 44, 44)`. Model fills remain colored.
+- **CP-SET-008 — Native initialization.** The native resource sends `ui/initialize`, validates the negotiated supported protocol, applies host theme variables, and sends `ui/notifications/initialized` before reading or changing settings. One in-flight initialization is shared; its five-second timeout can be retried, and late replies are ignored. Messages are accepted only from the parent window. An explicit unsupported-method response may select a feature-detected legacy bridge, but a timed-out settings write is never replayed through another transport. Controls remain disabled until an authoritative snapshot is available. The script-free injected fallback retains its separate parent controller.
 
 ### Safety and privacy
 

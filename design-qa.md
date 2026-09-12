@@ -1,5 +1,15 @@
 # Design QA
 
+## 2026-09-12 — Native settings initialization fix
+
+- Post-restart source/installed hashes and MCP inventory matched `0.12.16`, but its native settings entry displayed a blank/loading surface. The native sandbox had already read preferences; its document lacked `ui/initialize`, so the native host had not established its display mode. The existing renderer suppressed its fallback because a native entry was present.
+- Renderer/resource candidate `0.12.17` adds parent-scoped MCP Apps initialization, initialized notification, host-theme updates, bounded retry, and no cross-transport replay of uncertain writes. The resource cache key advances to v3, with a v2 read alias; layout, model rows, picker behavior, and the script-free fallback remain unchanged.
+- The in-app Browser mock host required initialization before showing its iframe and recorded the exact order `ui/initialize → ui/notifications/initialized → tools/call`. An initial browser/sandbox MutationObserver exception was not reproduced on reload; no such API exists in the settings document. Mock pointer interaction was inconclusive while native Settings owned the foreground, so it is not counted as a passing save test.
+- The exact candidate HTML was applied only to the uniquely owned active native CoPicker sandbox. It reached `bridgeState: ready`, `aria-busy: false`, seven rows, no page error, and the saved-preferences status. A screenshot of only the `1171 × 810` settings content rectangle confirmed the page was visible. The user then manually tested and confirmed opening/saving, including their own visibility changes. No further UI tests were performed after acceptance.
+- All 54 offline tests, JavaScript syntax/whitespace validation, and release build passed. Installed executable/resources match the candidate; a fresh installed MCP server advertises v3 and serves the initialized HTML for both v3/v2 reads. Installation preserves the user-tested preferences. Codex remains running without an agent-initiated restart; existing native resource caches are not claimed to have been globally invalidated.
+
+result: native settings opening and user-tested saving passed; source/build/install passed; restart/cold-login not retested
+
 ## 2026-09-12 — Build 8881 live picker and settings synchronization
 
 - Codex `26.908.40834` build `8881`; renderer `0.12.16` hot-loaded without quitting/restarting Codex. An unrelated unselected GPT-5.2 radio caused `0.12.15` to show `Other`; the corrected classifier ignores only unknown unselected rows and still rejects unknown selected or ambiguous states.
