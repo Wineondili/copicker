@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.19";
+  const VERSION = "0.12.20";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -48,6 +48,11 @@
   const OFFICIAL_POINTER_OPEN_GRACE_MS = 180;
   const OFFICIAL_TRANSIENT_CONTROL_TIMEOUT_MS = 3000;
   const SETTINGS_FRAME_STYLE_VARIABLES = [
+    ["--copicker-settings-background", [
+      "--color-surface",
+      "--color-background-surface",
+      "--color-surface-tertiary",
+    ]],
     ["--color-background-primary", [
       "--color-background-surface",
       "--color-surface-tertiary",
@@ -1099,11 +1104,11 @@
       integration.host.setAttribute("data-appearance-resolved", appearance);
       integration.host.style.colorScheme = appearance;
       integration.host.style.background = firstSettingsStyleValue(hostStyle, [
+        "--color-surface",
         "--color-background-surface",
         "--color-surface-tertiary",
-        "--color-surface",
       ]) || (
-        appearance === "light" ? "rgb(255, 255, 255)" : "rgb(30, 30, 30)"
+        appearance === "light" ? "rgb(255, 255, 255)" : "rgb(24, 24, 24)"
       );
       const frameRoot = integration.frame?.contentDocument?.documentElement;
       if (frameRoot) {

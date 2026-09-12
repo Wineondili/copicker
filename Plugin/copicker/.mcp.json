@@ -4,6 +4,9 @@
       "command": "./bin/copicker-mcp",
       "args": [],
       "cwd": ".",
+      "env": {
+        "COPICKER_SETTINGS_RESOURCE_URI": "ui://copicker/settings/v4.html"
+      },
       "env_vars": [
         "HOME"
       ]

@@ -1,8 +1,11 @@
 import Foundation
 
 public struct CopickerMCPProtocol {
-    public static let settingsResourceURI = "ui://copicker/settings/v3.html"
-    private static let legacySettingsResourceURI = "ui://copicker/settings/v2.html"
+    public static let settingsResourceURI = "ui://copicker/settings/v4.html"
+    private static let legacySettingsResourceURIs = [
+        "ui://copicker/settings/v3.html",
+        "ui://copicker/settings/v2.html",
+    ]
     public static let settingsToolName = "copicker_settings"
     public static let settingsSaveToolName = "copicker_settings_save"
     public static let settingsApplyToolName = "copicker_settings_apply"
@@ -105,7 +108,7 @@ public struct CopickerMCPProtocol {
             result = ["resources": [settingsResource]]
         case "resources/read":
             guard let uri = params["uri"] as? String,
-                  [Self.settingsResourceURI, Self.legacySettingsResourceURI].contains(uri) else {
+                  ([Self.settingsResourceURI] + Self.legacySettingsResourceURIs).contains(uri) else {
                 return encode(errorResponse(
                     id: requestID,
                     code: -32002,

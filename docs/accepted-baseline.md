@@ -18,9 +18,9 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.19
+renderer_version=0.12.20
 settings_schema_version=1
-settings_resource_uri=ui://copicker/settings/v3.html
+settings_resource_uri=ui://copicker/settings/v4.html
 marketplace_name=copicker-local
 plugin_id=copicker@copicker-local
 accepted_codex_version=26.820.60940
@@ -48,22 +48,23 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Current renderer | `0.12.19` | Uses version-prefixed Astra/Sol/Terra/Luna rail labels; retains Spark Retiring, native initialization, and picker behavior |
+| Current renderer | `0.12.20` | Owns the native settings background and scroll insets outside the sandbox body reset; retains accepted rail behavior and labels |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
 | Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
-| Settings resource | `ui://copicker/settings/v3.html` | Current MCP App document; v2 is retained as a read alias with the requested URI echoed |
+| Settings resource | `ui://copicker/settings/v4.html` | Current MCP App document; v3 and v2 are retained as read aliases with the requested URI echoed |
 | Public GitHub release | `v0.99.0` | Full-feature immutable source pre-release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
 | Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.19`, loaded, `injection-succeeded` | Verified on build `8881` after the user-authorized CoPicker-only update; source/release/installed hashes match and the user's latest manually updated preferences were retained |
-| Fresh installed settings backend | Seven-model schema, v3 resource and v2 read alias, Spark Retiring notice | Read-only fresh-process verification passed; Codex was not restarted and existing MCP connections were not globally refreshed |
+| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.20`, loaded, `injection-succeeded` | Verified on unchanged Codex PID (omitted), build `8881`; source/release/installed hashes match, and preferences and the LaunchAgent plist are byte-identical |
+| Current settings backend | v4 resource with v3/v2 read aliases and owned page surface | Fresh-process checks pass; after the authorized configuration refresh, the actual native threadless MCP path also returns the v4 document. Already-rendered page cache is a separate gate |
+| Native v4 presentation | Pending in the existing Codex window | Reopening the entry after refresh and CoPicker-only re-registration still retained the old document without the owned shell; no native visual pass or app restart is claimed |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
@@ -161,6 +162,7 @@ The selectable and rendered order is fixed.
 - **CP-SET-006 — General group.** The page-level title is `CoPicker`; the first group is `常规`/General. The Apply row is directly below Enable CoPicker, not in a separate bottom group.
 - **CP-SET-007 — Appearance.** Appearance choices are follow Codex, follow system, light, and dark. Light rail background is exactly `rgb(255, 255, 255)`; dark rail background is `rgb(44, 44, 44)`. Model fills remain colored.
 - **CP-SET-008 — Native initialization.** The native resource sends `ui/initialize`, validates the negotiated supported protocol, applies host theme variables, and sends `ui/notifications/initialized` before reading or changing settings. One in-flight initialization is shared; its five-second timeout can be retried, and late replies are ignored. Messages are accepted only from the parent window. An explicit unsupported-method response may select a feature-detected legacy bridge, but a timed-out settings write is never replayed through another transport. Controls remain disabled until an authoritative snapshot is available. The script-free injected fallback retains its separate parent controller.
+- **CP-SET-009 — Owned settings surface.** In the build-`8881` native plugin entry, the portal starts at `y=0`; unlike built-in settings it supplies neither the 46 CSS px toolbar region nor content padding. Its later sandbox stylesheet resets `html, body, #root` padding to zero. Put the surface background and insets on CoPicker-owned descendants, never on `body`: a full-height shell with a fixed 46 CSS px top spacer, then one scroll viewport with 20 CSS px content padding and the existing 768 CSS px centered column. Dark background is the measured native `--color-surface` value `#181818`, with white as the light fallback. The script-free parent-controlled fallback is already positioned below the native toolbar and must set its own spacer to zero. Keep the 20 CSS px bottom inset inside the scrollable region, so the last section does not touch the window edge. Preserve initialization, autosave, user preferences, and rail geometry.
 
 ### Safety and privacy
 
@@ -200,7 +202,7 @@ The selection fill begins with a rounded left cap. The right edge and thumb geom
 
 ## Accepted native settings measurements
 
-These values were read directly from `getBoundingClientRect()` and `getComputedStyle()` in the running official General settings page. They were not inferred from screenshots.
+These values were originally read directly from `getBoundingClientRect()` and `getComputedStyle()` in the running official General settings page. The Browser settings page on build `8881` was remeasured on 2026-09-12 and retained the same 46 px toolbar, 20 px scroll padding, 768 px column, and heading at `y=66`. Its right-pane background was `rgb(24, 24, 24)` (`--color-surface: #181818`). These values were not inferred from screenshots.
 
 Measurement environment:
 
@@ -223,16 +225,18 @@ Measurement environment:
 | Heading top to first group-title top | `70.3px` |
 | Heading bottom to first group-title top | `41.5px` |
 
-The accepted implementation mirrors the structure, not a fixed window coordinate:
+The parent-controlled fallback mirrors the built-in structure, not a fixed window coordinate:
 
 1. detect the official full-width `overflow-y: auto|scroll` viewport inside the right settings panel;
 2. position the CoPicker host to that viewport rectangle;
-3. give the iframe a 20-pixel body inset on all sides;
+3. give the iframe's owned scroll viewport a 20-pixel content inset on all sides, with no extra toolbar spacer;
 4. center a `max-width: 768px` content column;
 5. use a 24-pixel page heading with unitless `1.2` line height;
 6. keep 32 pixels below the page heading and 40 pixels between groups.
 
 This yields the same `y=66` heading and `70.3px` heading-to-General alignment at the measured window size while continuing to adapt to a different sidebar width, window size, or zoom.
+
+The native MCP entry instead fills the right pane from `y=0`. The v4 document supplies the 46 px toolbar spacer inside its own shell and the same 20 px scroll padding below it. This distinction supersedes using `body` padding for both entry paths: the native sandbox's later reset stylesheet erased that padding in v3, and transparent content exposed the wrong underlying background. Functional opening/saving acceptance of v3 did not establish native surface-style parity.
 
 ### Settings control geometry
 

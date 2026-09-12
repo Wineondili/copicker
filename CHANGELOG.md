@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-12 21:35:00 +0100
+
+- Fixed CoPicker native settings background and vertical insets in renderer `0.12.20`. Build `8881` embeds the MCP page from the pane's top and appends a stylesheet that resets body padding; the page now owns its background, 46 px toolbar spacer, and 20 px padded scroll viewport below those reset targets. The parent-controlled fallback disables the extra spacer and uses the actual native surface token. Preserved rail behavior, labels, controls, and preferences.
+- Advanced the settings resource to v4 with v3/v2 read aliases. Added a matching resource-URI marker to the plugin's MCP environment so resource revisions also change its server configuration, covered by the plugin contract test.
+- Passed 58 offline tests, JavaScript syntax/whitespace checks, and release build. Actual-source local previews reproduce the sandbox CSS reset and verify dark native color, heading at 66 px, approximately 20 px final-content bottom gap, mock saving, fallback placement, light mode, and 390 px no-overflow behavior.
+- With explicit approval, installed source-matched artifacts and the updated registered manifest with recoverable backups, reloaded CoPicker's watcher, and requested official MCP configuration refresh. The native threadless MCP path now returns the v4 fix; an already-rendered page remains a separate presentation gate. Preferences and LaunchAgent configuration are unchanged. No Codex restart, forced MCP-process termination, push, tag, or release was performed.
+- Re-registered only CoPicker through the existing installation workflow and verified the actual installed plugin-cache manifest matches source. User-driven entry reopening still retained the old native page, and browser reload commands were disabled there. Native visual adoption remains pending a user-owned app restart/recreation; local layout and service-delivery checks are not presented as native UI acceptance.
+
 ## 2026-09-12 20:45:45 +0100
 
 - Changed the first four rail labels to `6-Astra`, `5.6-Sol`, `5.6-Terra`, and `5.6-Luna` in renderer `0.12.19` and the standalone preview. Added a presentation-only label field so official catalog matching, internal names, persisted keys, and selection attributes remain unchanged; synchronized moving, recognized-hidden, and accessible status text.

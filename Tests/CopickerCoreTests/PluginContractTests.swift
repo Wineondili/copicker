@@ -48,6 +48,8 @@ func pluginPackageMatchesTheInstalledCLIContract() throws {
     let copicker = try #require(servers["copicker"] as? [String: Any])
     #expect(copicker["command"] as? String == "./bin/copicker-mcp")
     #expect(copicker["env_vars"] as? [String] == ["HOME"])
+    let environment = try #require(copicker["env"] as? [String: String])
+    #expect(environment["COPICKER_SETTINGS_RESOURCE_URI"] == CopickerMCPProtocol.settingsResourceURI)
 
     let launcher = try String(
         contentsOf: pluginRoot.appendingPathComponent("bin/copicker-mcp"),
@@ -262,4 +264,33 @@ func versionedRailLabelsRemainSeparateFromModelIdentity() throws {
     let payload = try String(contentsOf: root.appendingPathComponent("Sources/CopickerCLI/Resources/model-rail.js"), encoding: .utf8)
     #expect(payload.contains("modelDisplayLabel(row).length > 7"))
     #expect(payload.contains("modelDisplayLabel(recognizedRow)"))
+}
+
+@Test
+func settingsSurfaceOwnsItsInsetsOutsideTheSandboxBodyReset() throws {
+    let root = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    let html = try String(contentsOf: root.appendingPathComponent(
+        "Sources/CopickerCLI/Resources/copicker-settings-v2.html"
+    ), encoding: .utf8)
+    #expect(html.contains("<div id=\"copicker-settings-shell\">"))
+    #expect(html.contains("<div class=\"settings-viewport\">"))
+    #expect(html.contains("--copicker-settings-toolbar-inset: 46px"))
+    #expect(html.contains(":root[data-copicker-settings-controller=\"parent\"]"))
+    #expect(html.contains("--copicker-settings-toolbar-inset: 0px"))
+    #expect(html.contains("--copicker-settings-background: var(--color-surface, light-dark(#fff, #181818))"))
+    let bodyStart = try #require(html.range(of: "      body {")?.upperBound)
+    let bodyEnd = try #require(html.range(of: "\n      }", range: bodyStart..<html.endIndex)?.lowerBound)
+    #expect(!html[bodyStart..<bodyEnd].contains("--copicker-page-top-inset"))
+    let viewportStart = try #require(html.range(of: "      .settings-viewport {")?.upperBound)
+    let viewportEnd = try #require(html.range(of: "\n      }", range: viewportStart..<html.endIndex)?.lowerBound)
+    let viewport = html[viewportStart..<viewportEnd]
+    #expect(viewport.contains("overflow: auto"))
+    #expect(viewport.contains("padding: var(--copicker-page-top-inset) 20px"))
+    #expect(viewport.contains("calc(20px + env(safe-area-inset-bottom))"))
+    let payload = try String(contentsOf: root.appendingPathComponent(
+        "Sources/CopickerCLI/Resources/model-rail.js"
+    ), encoding: .utf8)
+    #expect(payload.contains("[\"--copicker-settings-background\", [\n      \"--color-surface\""))
+    #expect(payload.contains("fallbackDocument.documentElement.dataset.copickerSettingsController = \"parent\""))
 }

@@ -102,8 +102,8 @@ struct CopickerMCPProtocolTests {
 
     @Test
     func settingsResourceRevisionRetainsTheLegacyReadAlias() throws {
-        #expect(CopickerMCPProtocol.settingsResourceURI == "ui://copicker/settings/v3.html")
-        for uri in [CopickerMCPProtocol.settingsResourceURI, "ui://copicker/settings/v2.html"] {
+        #expect(CopickerMCPProtocol.settingsResourceURI == "ui://copicker/settings/v4.html")
+        for uri in [CopickerMCPProtocol.settingsResourceURI, "ui://copicker/settings/v3.html", "ui://copicker/settings/v2.html"] {
             let response = try send(method: "resources/read", params: ["uri": uri])
             let result = try dictionary(response["result"])
             let contents = try array(result["contents"]).map { try dictionary($0) }

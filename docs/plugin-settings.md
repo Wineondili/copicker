@@ -8,8 +8,8 @@ Current versions:
 | --- | --- |
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
-| MCP App resource | `ui://copicker/settings/v3.html` (v2 read alias retained) |
-| Renderer fallback on current `main` | `0.12.19` |
+| MCP App resource | `ui://copicker/settings/v4.html` (v3 and v2 read aliases retained) |
+| Renderer fallback on current `main` | `0.12.20` |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
@@ -31,6 +31,16 @@ The actual native sandbox reached `ready`, rendered all seven rows, and read the
 Spark's settings row displays a `Retiring` badge and a dated explanation of [Tibo's 2026-09-11 announcement](https://x.com/thsottiaux/status/2098300998968357218). He specified the following week, not an exact date. This annotation does not disable the switch, alter its persisted key, or grant/withdraw model access; actual selection still requires the official catalog and controls. The runtime HTML remains network-free, with source links kept in documentation.
 
 This display-only update retains resource URI v3 and its v2 read alias, with no protocol or persistence migration. Previously loaded native resources may remain cached until their connection refreshes normally; a current executable on disk does not prove that an already-open settings page has reloaded.
+
+## Native surface fix in 0.12.20
+
+Opening and saving were functional, but the v3 document did not match the built-in page surface. Direct measurement on Codex build `8881` found two ownership differences: the native MCP portal fills the right pane from `y=0`, and a later sandbox stylesheet sets `html, body, #root { padding: 0; }`. CoPicker's body padding was therefore erased and its transparent page exposed the wrong background.
+
+The v4 document owns a full-height shell below the reset targets. It paints the native surface (`--color-surface`, with measured dark fallback `#181818` and light fallback white), reserves 46 CSS px for the toolbar region, and scrolls a separate viewport with 20 CSS px padding on all sides. The heading is at `y=66` and the last section retains a 20 px bottom inset. The existing centered 768 px column, controls, initialization, and autosave remain unchanged. In the script-free fallback, the renderer already positions the iframe below the native toolbar; the parent-controller marker disables the extra spacer, and the renderer copies the actual surface color into the frame.
+
+Resource v4 distinguishes this layout contract from cached v3 documents. Fresh services still accept v3 and v2 reads and echo the requested URI. The plugin's stdio environment includes `COPICKER_SETTINGS_RESOURCE_URI`, checked against the Swift resource URI by an offline contract, so a resource revision also changes the server configuration rather than replacing files behind an unchanged configuration. Rebuilding/installing alone does not invalidate an already-loaded MCP connection or native page. Global MCP refresh remains separately authorized because it can affect other tasks; a queued refresh is not evidence of new resource delivery until read back.
+
+Delivery verification must cover both the stable local marketplace copy and the actual installed plugin cache: copying `.mcp.json` into the marketplace alone is not proof that the cached package changed. The existing installation workflow re-registers only `copicker@copicker-local`; after this step the installed manifest hash matched source, and the actual native threadless MCP resource path returned v4. Nevertheless, reopening the entry in the existing window still showed the old document. The app's browser-page reload commands were disabled for this native surface. Do not equate service delivery with rendered adoption, repeatedly force-refresh unrelated tools, or terminate task services; a later user-owned restart remains the presentation handoff.
 
 ## Package layout
 
@@ -83,7 +93,7 @@ All three tools have `_meta.ui.visibility: ["app"]`; they are Codex host control
 
 - read-only entrypoint;
 - returns the authoritative snapshot;
-- declares `_meta.ui.resourceUri` and `openai/outputTemplate` for `ui://copicker/settings/v3.html`;
+- declares `_meta.ui.resourceUri` and `openai/outputTemplate` for `ui://copicker/settings/v4.html`;
 - advertises the private settings entry metadata.
 
 ### `copicker_settings_save`
@@ -232,7 +242,7 @@ swift test
 printf '%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v3.html"}}' \
+  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v4.html"}}' \
   | .build/debug/copicker mcp-server
 ```
 

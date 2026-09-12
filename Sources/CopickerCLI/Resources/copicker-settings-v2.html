@@ -127,6 +127,8 @@
           normal
         );
         --copicker-page-top-inset: 20px;
+        --copicker-settings-toolbar-inset: 46px;
+        --copicker-settings-background: var(--color-surface, light-dark(#fff, #181818));
         --copicker-weight-normal: var(--font-weight-normal, 400);
         --copicker-weight-medium: var(--font-weight-medium, 500);
       }
@@ -144,13 +146,41 @@
 
       body {
         margin: 0;
-        padding: var(--copicker-page-top-inset) 20px
-          calc(20px + env(safe-area-inset-bottom));
+        padding: 0;
         background: transparent;
         color: var(--copicker-text-primary);
         font-family: inherit;
         font-size: var(--copicker-font-sm);
         line-height: var(--copicker-line-sm);
+      }
+
+      /* The native sandbox resets body padding; own the page surface below it. */
+      #copicker-settings-shell {
+        display: flex;
+        height: 100vh;
+        min-height: 0;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--copicker-settings-background);
+      }
+
+      #copicker-settings-shell::before {
+        content: "";
+        flex: 0 0 var(--copicker-settings-toolbar-inset);
+        pointer-events: none;
+      }
+
+      :root[data-copicker-settings-controller="parent"] {
+        --copicker-settings-toolbar-inset: 0px;
+      }
+
+      .settings-viewport {
+        min-height: 0;
+        flex: 1;
+        overflow: auto;
+        scrollbar-gutter: stable;
+        padding: var(--copicker-page-top-inset) 20px
+          calc(20px + env(safe-area-inset-bottom));
       }
 
       button,
@@ -612,6 +642,8 @@
     </style>
   </head>
   <body>
+    <div id="copicker-settings-shell">
+    <div class="settings-viewport">
     <main data-loading="true" aria-busy="true">
       <header class="page-header">
         <h1>CoPicker</h1>
@@ -775,6 +807,8 @@
 
       </div>
     </main>
+    </div>
+    </div>
 
     <script>
       (() => {
@@ -908,7 +942,7 @@
               let result;
               try {
                 result = await rpc("ui/initialize", {
-                  appInfo: { name: "CoPicker", version: "0.12.19" },
+                  appInfo: { name: "CoPicker", version: "0.12.20" },
                   appCapabilities: { availableDisplayModes: ["inline"] },
                   protocolVersion: UI_PROTOCOL_VERSIONS[0],
                 }, INITIALIZE_TIMEOUT_MS);

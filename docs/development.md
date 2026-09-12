@@ -20,15 +20,15 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Current renderer | `0.12.19` | `model-rail.js` `VERSION`; display labels are separate from model identity, preserving native initialization and picker behavior |
+| Current renderer | `0.12.20` | `model-rail.js` `VERSION`; native settings surface/insets are owned outside the sandbox reset |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
-| Settings resource | `ui://copicker/settings/v3.html` | `CopickerMCPProtocol.settingsResourceURI`; v2 remains a read alias |
+| Settings resource | `ui://copicker/settings/v4.html` | `CopickerMCPProtocol.settingsResourceURI`; v3 and v2 remain read aliases |
 | Live-accepted Codex | `26.820.60940` build `7119` | [accepted-baseline.md](accepted-baseline.md) |
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the accepted six-model implementation at renderer `0.12.8`; `v0.11.0` remains an immutable historical three-model release. Compatibility and live-failure history is retained in [accepted-baseline.md](accepted-baseline.md). Current `main` is renderer `0.12.19`, preserving the model radio list, Default mode, and strength-control adaptation from `0.12.16`, native settings initialization from `0.12.17`, and Spark retirement notice from `0.12.18`. Version-prefixed rail labels use a separate presentation field; model IDs, internal names, catalog aliases, effort cells, and persisted preferences remain unchanged. Live switches and user-reported first-message routing passed on `0.12.16` without a Codex restart. Keep source tests, settings-resource/backend delivery, live interaction, restart, and publication evidence separate.
+The public `v0.99.0` pre-release packages the accepted six-model implementation at renderer `0.12.8`; `v0.11.0` remains an immutable historical three-model release. Compatibility and live-failure history is retained in [accepted-baseline.md](accepted-baseline.md). Current `main` is renderer `0.12.20`, correcting native settings background and scroll insets while preserving the radio-list adaptation, initialization, Spark retirement notice, and version-prefixed rail labels. Model IDs, internal names, catalog aliases, effort cells, and persisted preferences remain unchanged. Live switches and user-reported first-message routing passed on `0.12.16` without a Codex restart. Keep source tests, settings-resource/backend delivery, live interaction, restart, and publication evidence separate.
 
 ## Supported development boundary
 
@@ -119,7 +119,7 @@ The private stdio MCP server can be exercised without registering the plugin or 
 printf '%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v3.html"}}' \
+  '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"ui://copicker/settings/v4.html"}}' \
   | .build/debug/copicker mcp-server
 ```
 

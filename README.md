@@ -13,10 +13,10 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
 | CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
-| Current renderer | `0.12.19` on `main` | Uses version-prefixed rail labels; retains Spark Retiring, native settings initialization, and accepted picker behavior |
+| Current renderer | `0.12.20` on `main` | Fixes native settings background and vertical insets; retains version-prefixed rail labels and Spark Retiring |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
-| MCP settings resource | `ui://copicker/settings/v3.html` | Initialized native settings document; the old v2 URI remains a read alias |
+| MCP settings resource | `ui://copicker/settings/v4.html` | Sandbox-safe native settings surface; v3 and v2 remain read aliases |
 | Live-accepted Codex build | `26.820.60940` (`7119`) | Build on which the current UI and interaction baseline was accepted |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present during the accepted installation before the release-only bump |
 
