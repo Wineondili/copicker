@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-12 20:45:45 +0100
+
+- Changed the first four rail labels to `6-Astra`, `5.6-Sol`, `5.6-Terra`, and `5.6-Luna` in renderer `0.12.19` and the standalone preview. Added a presentation-only label field so official catalog matching, internal names, persisted keys, and selection attributes remain unchanged; synchronized moving, recognized-hidden, and accessible status text.
+- Applied the existing long-label sizing rule to the displayed name without changing font size, cell spacing, colors, or animations. Retained full official names in settings and the Spark Retiring annotation.
+- Passed 57 offline tests, JavaScript syntax/whitespace checks, and release build. The local Browser preview passed all four row/status selections at xhigh, a narrow-viewport Terra/high selection, and label-fit/no-overflow checks at desktop and 390 px widths with no console warnings/errors.
+- With explicit approval, installed source-matched artifacts with a recoverable backup and reloaded only CoPicker's watcher; injection succeeded on the same Codex process. A fresh MCP resource read matches source. Preserved the user's concurrently confirmed manual preference adjustment; no Codex restart, global MCP refresh, push, tag, or release was performed.
+
 ## 2026-09-12 20:36:54 +0100
 
 - Verified [Tibo's original 2026-09-11 post](https://x.com/thsottiaux/status/2098300998968357218) announcing GPT-5.3-Codex-Spark retirement the following week, without a precise date. Added `Retiring` to CoPicker settings, the model rail, and the standalone preview; advanced the renderer to `0.12.18` without changing the CLI/plugin version, settings schema, or v3 resource URI.

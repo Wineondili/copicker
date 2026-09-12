@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide covers the published `v0.99.0` pre-release (renderer `0.12.8`) and current `main` renderer `0.12.18`. The published runtime remains accepted at `c0343d4`, under CLI label `0.12.0-dev`, on Codex build `7119`. Current source retains the accepted build-`8881` model-picker behavior from `0.12.16` and native settings initialization from `0.12.17`, adding only a Spark lifecycle notice. The user confirmed model routing and then native settings opening/saving in separate passes. Installation, restart, and publication remain separate gates. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
+This guide covers the published `v0.99.0` pre-release (renderer `0.12.8`) and current `main` renderer `0.12.19`. The published runtime remains accepted at `c0343d4`, under CLI label `0.12.0-dev`, on Codex build `7119`. Current source retains the accepted build-`8881` model-picker behavior from `0.12.16`, native settings initialization from `0.12.17`, and Spark lifecycle notice from `0.12.18`; the latest update adds version prefixes to the first four rail labels. The user confirmed model routing and then native settings opening/saving in separate passes. Installation, restart, and publication remain separate gates. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
 
 On builds `8378` and `8881`, an explicit selection uses the official model radio row, model-specific reasoning slider, and Fast checkbox. Idle synchronization reads the already-mounted checked state without opening flyouts. Default appears as `Default` and has no active rail cell. Astra is available in CoPicker's model visibility settings, with six reasoning levels and catalog-resolved Fast; existing visibility preferences are preserved. Luna retains the five levels exposed by build `8881`'s native picker. An unrelated unselected native model does not disable supported rows; an unknown selected model still fails closed. The three-flyout constraints below describe the legacy build-`7377` fallback.
 
@@ -52,10 +52,10 @@ The row order is fixed. Settings may hide rows but must retain at least one.
 
 | Row | Efforts | Fast | Notes |
 | --- | --- | --- | --- |
-| GPT-6 Astra | Light, Medium, High, Extra High, Max, Ultra | Yes | Added in candidate `0.12.15`; rail label `Astra` |
-| GPT-5.6 Sol | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `Sol` |
-| GPT-5.6 Terra | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `Terra` |
-| GPT-5.6 Luna | Light, Medium, High, Extra High, Max | Yes | No Ultra cell |
+| GPT-6 Astra | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `6-Astra` |
+| GPT-5.6 Sol | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `5.6-Sol` |
+| GPT-5.6 Terra | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `5.6-Terra` |
+| GPT-5.6 Luna | Light, Medium, High, Extra High, Max | Yes | Rail label `5.6-Luna`; no Ultra cell |
 | Daybreak Blue | Light, Medium, High, Extra High, Max, Ultra | No | Rail label `Daybreak`; theme-adaptive blue |
 | GPT-5.5 | Light, Medium, High, Extra High | Yes | No Max or Ultra |
 | GPT-5.3 Codex Spark | Light, Medium, High, Extra High | No | Rail label `Codex Spark`; `Retiring` notice; no Max or Ultra |

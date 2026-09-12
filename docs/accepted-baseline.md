@@ -18,7 +18,7 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.18
+renderer_version=0.12.19
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v3.html
 marketplace_name=copicker-local
@@ -48,7 +48,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Current renderer | `0.12.18` | Adds a display-only Spark Retiring notice; keeps the previously accepted native initialization and picker behavior |
+| Current renderer | `0.12.19` | Uses version-prefixed Astra/Sol/Terra/Luna rail labels; retains Spark Retiring, native initialization, and picker behavior |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
@@ -62,7 +62,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.18`, loaded, `injection-succeeded` | Verified on build `8881` after the user-authorized CoPicker-only update; source/release/installed hashes match and the user's tested preferences were preserved |
+| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.19`, loaded, `injection-succeeded` | Verified on build `8881` after the user-authorized CoPicker-only update; source/release/installed hashes match and the user's latest manually updated preferences were retained |
 | Fresh installed settings backend | Seven-model schema, v3 resource and v2 read alias, Spark Retiring notice | Read-only fresh-process verification passed; Codex was not restarted and existing MCP connections were not globally refreshed |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
@@ -121,10 +121,10 @@ The selectable and rendered order is fixed.
 
 | Order | Persisted key | Official names matched | Rail label | Efforts | Fast | Fill gradient | Dark label gradient |
 | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 0 | `astra` | `GPT-6-Astra`, `GPT-6 Astra` | `Astra` | low, medium, high, xhigh, max, ultra | Yes | `#E3F8F8 → #C6ECEC` | `#bfe7e7 → #a9d9d9` |
-| 1 | `sol` | `GPT-5.6-Sol`, `GPT-5.6 Sol` | `Sol` | low, medium, high, xhigh, max, ultra | Yes | `#FBE1E5 → #F7C6CC` | `#f1c0c9 → #edb7c1` |
-| 2 | `terra` | `GPT-5.6-Terra`, `GPT-5.6 Terra` | `Terra` | low, medium, high, xhigh, max, ultra | Yes | `#FFF1CF → #FFE6B8` | `#f0d69b → #ebcd90` |
-| 3 | `luna` | `GPT-5.6-Luna`, `GPT-5.6 Luna` | `Luna` | low, medium, high, xhigh, max | Yes | `#EEF9F1 → #DDF3E4` | `#c1e2cb → #b7dcc3` |
+| 0 | `astra` | `GPT-6-Astra`, `GPT-6 Astra` | `6-Astra` | low, medium, high, xhigh, max, ultra | Yes | `#E3F8F8 → #C6ECEC` | `#bfe7e7 → #a9d9d9` |
+| 1 | `sol` | `GPT-5.6-Sol`, `GPT-5.6 Sol` | `5.6-Sol` | low, medium, high, xhigh, max, ultra | Yes | `#FBE1E5 → #F7C6CC` | `#f1c0c9 → #edb7c1` |
+| 2 | `terra` | `GPT-5.6-Terra`, `GPT-5.6 Terra` | `5.6-Terra` | low, medium, high, xhigh, max, ultra | Yes | `#FFF1CF → #FFE6B8` | `#f0d69b → #ebcd90` |
+| 3 | `luna` | `GPT-5.6-Luna`, `GPT-5.6 Luna` | `5.6-Luna` | low, medium, high, xhigh, max | Yes | `#EEF9F1 → #DDF3E4` | `#c1e2cb → #b7dcc3` |
 | 4 | `daybreak-blue` | `Daybreak Blue`, `GPT Daybreak Blue` | `Daybreak` | low, medium, high, xhigh, max, ultra | No | `#DDEEFF → #C2E0FF` | `#afd2f2 → #9bc5eb` |
 | 5 | `gpt-5.5` | `GPT-5.5` | `GPT-5.5` | low, medium, high, xhigh | Yes | `#E3EDFF → #CADCFF` | `#bad0f4 → #a9c3ee` |
 | 6 | `gpt-5.3-codex-spark` | `GPT-5.3 Codex Spark`, `GPT-5.3-Codex-Spark` | `Codex Spark` | low, medium, high, xhigh | No | `#F0E7FF → #E0D1FA` | `#d4c0f2 → #c8afea` |
@@ -137,6 +137,8 @@ The selectable and rendered order is fixed.
 - **CP-MOD-006 — Access notices.** Daybreak may require Codex Trusted Access for Cyber and necessary network access. Codex Spark may require an eligible ChatGPT Pro subscription. Settings do not grant either entitlement.
 - **CP-MOD-007 — Current-build Daybreak boundary.** In Codex build `7377`, the separate Daybreak program path removes `gpt-daybreak-blue-latest` from the official Model submenu and exposes a `menuitemcheckbox` that may remap both the current and configured default base model. Renderer `0.12.14` does not activate that broader program control without an accepted base-model/effort policy. When the control is present, the Daybreak row is rejected; ordinary model commits are allowed only while the exact control is explicitly off and are rejected while it is enabled, busy, disabled, or otherwise ambiguous. When Codex instead exposes one exact legacy Daybreak Model leaf, it is treated as the normal model-backed topology and mutation is allowed while the absence of a program control is rechecked across the transaction. When neither exact topology is observable, mutation fails closed because no bounded signal separates no entitlement from unresolved verified access. `thread/settings/update` alone cannot express build `7377`'s separate program state.
 - **CP-MOD-008 — Spark retirement notice.** Display `Retiring` for Codex Spark in settings, the rail, and its standalone preview. [Tibo's original post](https://x.com/thsottiaux/status/2098300998968357218), published 2026-09-11 and directly verified on X, announced retirement for the following week without an exact day. This is an announced future retirement, not proof of current unavailability: the inspected `model/list` still exposed Spark with null `upgrade`/`upgradeInfo`. Keep its ID, four effort cells, non-Fast behavior, visibility preference, and normal catalog checks unchanged. The rail badge occupies unused space after Spark's last cell and must not change host geometry, overlap its thumb, or capture pointer input. Do not infer a precise shutdown date or disable the row automatically from the announcement.
+
+- **CP-MOD-009 — Version-prefixed rail labels.** Display the first four models as `6-Astra`, `5.6-Sol`, `5.6-Terra`, and `5.6-Luna` in rail rows, moving status, recognized-but-hidden status, accessibility labels, and the standalone preview. Keep these display labels separate from internal names, official catalog aliases, persisted keys, and machine-readable selection attributes. Settings retain full official model names. Apply the existing long-label column rule to displayed text, so a visible Terra or Luna uses the established 339.75 CSS px host width; do not shrink the font or change stage/effort spacing to fit the new text.
 
 ### Placement, avoidance, and animation
 
@@ -175,7 +177,7 @@ The rail is authored at an internal scale and rendered at `0.5`.
 
 | Parameter | Internal/source value | Rendered value or rule |
 | --- | ---: | --- |
-| Base three-row host | `579.5 × 269.5` equivalent inner geometry | `289.75 × 134.75` CSS px |
+| Short-label three-row host | `579.5 × 269.5` equivalent inner geometry | `289.75 × 134.75` CSS px when no displayed label exceeds seven characters |
 | Long-label inner width | `679.5` | `339.75` CSS px |
 | Host height | `134.75 + max(0, rowCount - 3) × 32` | Already expressed in rendered CSS px |
 | Stage width | `388` | `194` CSS px |
@@ -189,6 +191,8 @@ The rail is authored at an internal scale and rendered at `0.5`.
 | Popover padding | `40px 26px 17.5px` | `20px 13px 8.75px` CSS px |
 | Popover radius | `24` | `12` CSS px |
 | Text scale | `1.2` | Applied before the outer `0.5` scale |
+
+As of `0.12.19`, the default Sol/Terra/Luna set uses the existing long-label width because `5.6-Terra` and `5.6-Luna` exceed seven characters. Its height and the rail's stage, cells, typography, and animation dimensions remain unchanged.
 
 The top row contains `Faster` at the left, the moving model/effort/Fast status, and `Smarter` at the right. The former bottom model-plus-effort status row remains hidden. Endpoint labels hide temporarily if the moving effort label would overlap them. Text aligns to the bottom of the top-label row.
 

@@ -1,5 +1,14 @@
 # Design QA
 
+## 2026-09-12 — Version-prefixed rail labels
+
+- User-requested labels: `6-Astra`, `5.6-Sol`, `5.6-Terra`, `5.6-Luna`. Renderer `0.12.19` separates these presentation strings from the unchanged internal names, official catalog aliases, persisted keys, and selector state attributes. Row labels, moving status, recognized-hidden status, accessibility text, and the standalone preview share the display helper. The settings page retains full official names, and Spark's Retiring badge remains unchanged.
+- Kept fonts, colors, stage geometry, effort cells, and animations. The existing long-label rule now measures visible text, so default Sol/Terra/Luna uses the established 339.75 CSS px host width rather than clipping the longer labels into the short-label column. No new sizing constant was introduced.
+- Local in-app Browser preview at `1280 × 720` and `390 × 844`: correct page/title and meaningful content, no error overlay or console warnings/errors, all labels fit, and no horizontal overflow at 390 px. The seven-row host remains `339.75 × 262.75` CSS px with 37 cells. Clicks on each first-four row's xhigh cell displayed the expected new label while the internal preview model remained Astra/Sol/Terra/Luna; a narrow-viewport Terra/high click also updated correctly. Screenshots support the rendered check; these are preview-only selections, not live Codex routing tests.
+- All 57 offline tests, JavaScript syntax/whitespace checks, and release build passed. After explicit approval, backed up and updated the installed artifacts and reloaded only CoPicker's watcher. Source/release/installed hashes and a fresh MCP resource read match; injection succeeded on unchanged Codex PID (omitted), build `8881`. A preference save during the check was explicitly confirmed as the user's manual adjustment and retained, without rollback. No Codex restart or global MCP refresh was performed.
+
+result: exact labels, preview interaction/layout, source/build, and installed delivery passed; live model routing and restart/cold-login not retested
+
 ## 2026-09-12 — Spark Retiring notice
 
 - Directly verified [Tibo's original X post](https://x.com/thsottiaux/status/2098300998968357218), published 2026-09-11, against the user-provided screenshot. The post announces retirement the following week without an exact day. The inspected official catalog still lists Spark with null upgrade metadata; the label is `Retiring`, not `Retired` or an automatic availability cutoff.

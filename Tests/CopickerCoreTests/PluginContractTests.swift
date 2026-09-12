@@ -229,3 +229,37 @@ func retiringSparkKeepsItsRailIdentityAndEffortCells() throws {
         #expect(!source.contains("THUMB_SIZE"))
     }
 }
+
+@Test
+func versionedRailLabelsRemainSeparateFromModelIdentity() throws {
+    let root = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    let labels = [
+        (id: "astra", name: "Astra", label: "6-Astra"),
+        (id: "sol", name: "Sol", label: "5.6-Sol"),
+        (id: "terra", name: "Terra", label: "5.6-Terra"),
+        (id: "luna", name: "Luna", label: "5.6-Luna"),
+    ]
+    for path in ["Sources/CopickerCLI/Resources/model-rail.js", "tools/model-rail-preview.html"] {
+        let source = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
+        for expected in labels {
+            let start = try #require(source.range(of: "id: \"\(expected.id)\"")?.lowerBound)
+            let end = try #require(source.range(of: "supportsFast: true", range: start..<source.endIndex)?.upperBound)
+            let row = String(source[start..<end])
+            #expect(row.contains("name: \"\(expected.name)\""))
+            #expect(row.contains("displayLabel: \"\(expected.label)\""))
+            if path.hasSuffix(".js") {
+                #expect(row.contains("catalogDisplayName: \"GPT-\(expected.label)\""))
+            }
+        }
+        #expect(source.contains("return row.displayLabel || row.name;"))
+        #expect(source.contains("element.textContent = modelDisplayLabel(row);"))
+        #expect(source.contains("label.textContent = modelDisplayLabel(row);"))
+        #expect(source.contains("element.setAttribute(\"data-model\", row.name)") ||
+                source.contains("element.dataset.model = row.name"))
+        #expect(!source.contains("textContent = row.name"))
+    }
+    let payload = try String(contentsOf: root.appendingPathComponent("Sources/CopickerCLI/Resources/model-rail.js"), encoding: .utf8)
+    #expect(payload.contains("modelDisplayLabel(row).length > 7"))
+    #expect(payload.contains("modelDisplayLabel(recognizedRow)"))
+}

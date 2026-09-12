@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.18";
+  const VERSION = "0.12.19";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -118,6 +118,7 @@
     {
       id: "astra",
       name: "Astra",
+      displayLabel: "6-Astra",
       catalogDisplayName: "GPT-6-Astra",
       catalogDisplayNames: ["GPT-6-Astra", "GPT-6 Astra"],
       dots: [1, 2, 3, 4, 5, 6],
@@ -128,6 +129,7 @@
     {
       id: "sol",
       name: "Sol",
+      displayLabel: "5.6-Sol",
       catalogDisplayName: "GPT-5.6-Sol",
       catalogDisplayNames: ["GPT-5.6-Sol", "GPT-5.6 Sol"],
       dots: [1, 2, 3, 4, 5, 6],
@@ -138,6 +140,7 @@
     {
       id: "terra",
       name: "Terra",
+      displayLabel: "5.6-Terra",
       catalogDisplayName: "GPT-5.6-Terra",
       catalogDisplayNames: ["GPT-5.6-Terra", "GPT-5.6 Terra"],
       dots: [1, 2, 3, 4, 5, 6],
@@ -148,6 +151,7 @@
     {
       id: "luna",
       name: "Luna",
+      displayLabel: "5.6-Luna",
       catalogDisplayName: "GPT-5.6-Luna",
       catalogDisplayNames: ["GPT-5.6-Luna", "GPT-5.6 Luna"],
       dots: [1, 2, 3, 4, 5],
@@ -188,6 +192,10 @@
       supportsFast: false,
     },
   ];
+
+  function modelDisplayLabel(row) {
+    return row.displayLabel || row.name;
+  }
 
   /* COPICKER_BEHAVIOR_CONTRACT_BEGIN */
   function modelListSelectionKind(options, explicit) {
@@ -1454,7 +1462,7 @@
   const USABLE_WIDTH = STAGE_WIDTH - LEFT_PADDING - RIGHT_PADDING;
   const START_INSET = 6;
   const RIGHT_INSET_IN_THUMB = 12;
-  const MODEL_COLUMN_WIDTH = ROWS.some((row) => row.name.length > 7) ? 190 : 90;
+  const MODEL_COLUMN_WIDTH = ROWS.some((row) => modelDisplayLabel(row).length > 7) ? 190 : 90;
   const POPOVER_INNER_WIDTH = 579.5 + (MODEL_COLUMN_WIDTH - 90);
   const HOST_WIDTH = POPOVER_INNER_WIDTH * 0.5;
   const HOST_HEIGHT = 134.75 + Math.max(0, ROWS.length - 3) * 32;
@@ -5006,7 +5014,7 @@
 
   function configureModelText(element, row) {
     if (!element || !row) return;
-    element.textContent = row.name;
+    element.textContent = modelDisplayLabel(row);
     element.title = row.lifecycleNote || "";
     element.setAttribute("data-model", row.name);
     element.classList.toggle("daybreak", row.id === "daybreak-blue");
@@ -5029,7 +5037,7 @@
     }
     const model = document.createElement("span");
     model.className = `recognized-model${row.id === "daybreak-blue" ? " daybreak" : ""}`;
-    model.textContent = row.name;
+    model.textContent = modelDisplayLabel(row);
     model.title = row.lifecycleNote || "";
     const effortLabel = document.createElement("span");
     effortLabel.className = "recognized-effort";
@@ -5074,7 +5082,7 @@
       }
       updateEndpointVisibility(shadow);
       renderInactiveStatus(otherElement, recognizedRow, recognizedEffort);
-      if (modelElement) modelElement.textContent = recognized ? recognizedRow.name : state.defaultSelection ? "Default" : "Other";
+      if (modelElement) modelElement.textContent = recognized ? modelDisplayLabel(recognizedRow) : state.defaultSelection ? "Default" : "Other";
       if (effortElement) {
         effortElement.textContent = recognized ? recognizedEffort : "";
         effortElement.classList.toggle("ultra", recognizedEffort === "ultra");
@@ -5083,7 +5091,7 @@
       shadow.querySelector("#stage")?.setAttribute(
         "aria-label",
         recognized
-          ? `${recognizedRow.name}, ${recognizedEffort}, hidden from selector`
+          ? `${modelDisplayLabel(recognizedRow)}, ${recognizedEffort}, hidden from selector`
           : "2D selector, no recognized selection",
       );
       return;
@@ -5141,7 +5149,7 @@
     }
     updateEndpointVisibility(shadow);
 
-    if (modelElement) modelElement.textContent = row.name;
+    if (modelElement) modelElement.textContent = modelDisplayLabel(row);
     if (effortElement) {
       effortElement.textContent = effort;
       effortElement.classList.toggle("ultra", effort === "ultra");
@@ -5149,7 +5157,7 @@
     fastElement?.classList.toggle("active", state.fastMode);
     shadow.querySelector("#stage")?.setAttribute(
       "aria-label",
-      `${row.name}, ${effort}${
+      `${modelDisplayLabel(row)}, ${effort}${
         row.supportsFast
           ? state.fastMode ? ", Fast" : ""
           : ", Fast unavailable"
@@ -5736,7 +5744,7 @@
     for (const row of ROWS) {
       const label = document.createElement("div");
       label.className = `label${row.id === "daybreak-blue" ? " daybreak" : ""}`;
-      label.textContent = row.name;
+      label.textContent = modelDisplayLabel(row);
       label.title = row.lifecycleNote || "";
       modelLabels?.append(label);
     }

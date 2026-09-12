@@ -384,6 +384,7 @@
         {
           id: "astra",
           name: "Astra",
+          displayLabel: "6-Astra",
           dots: [1, 2, 3, 4, 5, 6],
           colors: ["#E3F8F8", "#C6ECEC"],
           textColors: ["#bfe7e7", "#a9d9d9"],
@@ -392,6 +393,7 @@
         {
           id: "sol",
           name: "Sol",
+          displayLabel: "5.6-Sol",
           dots: [1, 2, 3, 4, 5, 6],
           colors: ["#FBE1E5", "#F7C6CC"],
           textColors: ["#f1c0c9", "#edb7c1"],
@@ -400,6 +402,7 @@
         {
           id: "terra",
           name: "Terra",
+          displayLabel: "5.6-Terra",
           dots: [1, 2, 3, 4, 5, 6],
           colors: ["#FFF1CF", "#FFE6B8"],
           textColors: ["#f0d69b", "#ebcd90"],
@@ -408,6 +411,7 @@
         {
           id: "luna",
           name: "Luna",
+          displayLabel: "5.6-Luna",
           dots: [1, 2, 3, 4, 5],
           colors: ["#EEF9F1", "#DDF3E4"],
           textColors: ["#c1e2cb", "#b7dcc3"],
@@ -440,6 +444,10 @@
           supportsFast: false,
         },
       ];
+
+      function modelDisplayLabel(row) {
+        return row.displayLabel || row.name;
+      }
 
       const ROW_HEIGHT = 48;
       const ROW_GAP = 16;
@@ -495,7 +503,7 @@
       }
 
       function configureModelText(element, row) {
-        element.textContent = row.name;
+        element.textContent = modelDisplayLabel(row);
         element.title = row.lifecycleNote || "";
         element.dataset.model = row.name;
         element.classList.toggle("daybreak", row.id === "daybreak-blue");
@@ -583,7 +591,7 @@
         railHost.dataset.previewIndex = String(currentIndex);
         stage.setAttribute(
           "aria-label",
-          `${row.name}, ${effort}${row.supportsFast ? fastMode ? ", Fast" : "" : ", Fast unavailable"}`,
+          `${modelDisplayLabel(row)}, ${effort}${row.supportsFast ? fastMode ? ", Fast" : "" : ", Fast unavailable"}`,
         );
         if (announce) {
           selectionStatus.textContent = stage.getAttribute("aria-label");
@@ -659,7 +667,7 @@
       for (const row of ROWS) {
         const label = document.createElement("div");
         label.className = `label${row.id === "daybreak-blue" ? " daybreak" : ""}`;
-        label.textContent = row.name;
+        label.textContent = modelDisplayLabel(row);
         label.title = row.lifecycleNote || "";
         modelLabels.append(label);
       }
