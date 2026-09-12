@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.15";
+  const VERSION = "0.12.16";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -192,14 +192,15 @@
     if (!Array.isArray(options) || options.length < 2 ||
         ![true, false].includes(explicit)) return null;
     if (options[0].model !== null || options[0].markedSelected) return null;
-    const models = options.slice(1).map((option) => option.model);
+    const models = options.slice(1).map((option) => option.model).filter((model) => model !== null);
     if (models.some((model) => typeof model !== "string" || !model) ||
         new Set(models).size !== models.length) return null;
     const selected = options.flatMap((option, index) => option.selected ? [index] : []);
     if (selected.length !== 1) return null;
     const index = selected[0];
     if (index === 0) return explicit ? null : "default";
-    if (!explicit || !options[index].markedSelected || options[index].locked) return null;
+    if (!explicit || typeof options[index].model !== "string" ||
+        !options[index].markedSelected || options[index].locked) return null;
     return "model";
   }
 

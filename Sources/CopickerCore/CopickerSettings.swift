@@ -26,6 +26,7 @@ public enum CopickerModel: String, Codable, CaseIterable, Sendable {
         case .gpt55, .codexSpark:
             ["Light", "Medium", "High", "Extra High"]
         case .luna:
+            // Build 8881's native picker exposes five steps despite a broader model/list entry.
             ["Light", "Medium", "High", "Extra High", "Max"]
         case .astra, .sol, .terra, .daybreakBlue:
             ["Light", "Medium", "High", "Extra High", "Max", "Ultra"]

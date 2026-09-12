@@ -9,7 +9,7 @@ Current versions:
 | CLI/plugin release | `0.99.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v2.html` |
-| Renderer fallback on current `main` | `0.12.15` development candidate |
+| Renderer fallback on current `main` | `0.12.16` |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
@@ -47,7 +47,13 @@ The only persisted fields are:
 
 The file is `~/Library/Application Support/Copicker/settings.json`. Writes are validated, normalized to the fixed model order, atomic, and mode `0600`.
 
-Candidate `0.12.15` adds the `astra` visibility option for GPT-6 Astra with six reasoning levels. Existing saved visibility preferences and the default Sol/Terra/Luna selection remain unchanged; enabling Astra is an explicit preference edit.
+Renderer `0.12.16` retains the `astra` visibility option introduced in `0.12.15`. The HTML, Swift settings model, MCP save schema, renderer, and standalone preview share the seven-row order: Astra, Sol, Terra, Luna, Daybreak, GPT-5.5, Codex Spark. Their effort counts are 6/6/6/5/6/4/4; Luna's five-step limit follows the live build-`8881` native picker rather than the broader catalog entry. Daybreak and Codex Spark remain non-Fast. Default is explained as a native display state, not an eighth visibility option.
+
+Existing saved visibility preferences and the default Sol/Terra/Luna selection remain unchanged; enabling Astra is an explicit preference edit. Updating the renderer alone is insufficient for a new persisted model key: ship its settings HTML and Swift MCP backend together. Old already-running MCP processes may retain their original schema until Codex refreshes those connections; do not restart Codex or reload unrelated task tools just to update this page.
+
+On 2026-09-12 the user explicitly authorized a global MCP refresh. The installed executable/resources and all three live renderer settings pages were updated to `0.12.16` without changing the saved preferences or restarting Codex. The official `config/mcpServer/reload` returned success, but a subsequent `mcpServer/resource/read` in the current loaded task still returned the old settings document. The [official app-server contract](https://learn.chatgpt.com/docs/app-server#api-overview) defines this operation as queuing a refresh for loaded tasks, not proving that every connection has already been replaced. Consequently, current-task MCP readiness and a live Astra preference save remain unconfirmed; do not force-stop task services to convert this into an acceptance claim.
+
+The user then chose to restart Codex manually after the build. The final release binary was rebuilt and remains SHA-identical to the installed executable. Starting a separate fresh instance of that installed MCP executable for read-only `tools/list` and `resources/read` verified the seven-model save schema and updated Astra/Default HTML. This proves the next settings-service process has the new contract; actual post-restart integration is still a separate acceptance gate.
 
 Saves carry the caller's expected revision. An identical save is idempotent. A real change increments the revision. A stale save fails with the current authoritative snapshot so an old window cannot overwrite a newer edit.
 

@@ -108,6 +108,12 @@ func modelListSelectionRejectsAmbiguousDefaultAndLockedModels() throws {
     #expect(classify.call(withArguments: [[defaultRow, selectedModel, uncheckedModel], true])?.isNull == true)
     #expect(classify.call(withArguments: [[defaultRow, uncheckedModel], true])?.isNull == true)
     #expect(classify.call(withArguments: [[defaultRow, selectedModel], NSNull()])?.isNull == true)
+    let unknownRow: [String: Any] = ["model": NSNull(), "selected": false, "markedSelected": false]
+    #expect(classify.call(withArguments: [[defaultRow, selectedModel, unknownRow], true])?.toString() == "model")
+    var unknownSelected = unknownRow
+    unknownSelected["selected"] = true
+    unknownSelected["markedSelected"] = true
+    #expect(classify.call(withArguments: [[defaultRow, uncheckedModel, unknownSelected], true])?.isNull == true)
 }
 
 @Test

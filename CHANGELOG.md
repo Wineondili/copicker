@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-12 09:14:55 +0200
+
+- Advanced the renderer to `0.12.16` for Codex `26.908.40834` build `8881`: unrelated unselected native radios no longer invalidate a known selected model; unknown selected, duplicate-known, locked, and ambiguous selections remain fail-closed.
+- Hot-loaded and confirmed bounded native selections through all seven adapted models, including Fast/non-Fast transitions and a trusted pointer click with the original easing. The user independently confirmed correct selection, successful sending, and correct model routing. No Codex restart or task submission was performed by the inspection helpers.
+- Synchronized settings guidance and contracts across the seven-row HTML, Swift/MCP model schema, renderer, and existing standalone preview. Preserved Luna's five verified native steps, the original visibility preferences, all geometry/animation, and Default as a display-only state. Added exact row/order/effort/Fast regression coverage and an Astra MCP save round-trip.
+- Passed 47 offline tests, JavaScript syntax and whitespace checks, and the release build. The isolated in-app settings preview passed Astra visibility, mock autosave, last-visible-row protection, and mock Apply without console warnings/errors. Updated the installed executable/resources with matching SHA-256 and a recoverable local backup, reloaded only the existing Copicker watcher, and confirmed all three app renderers carry the updated settings page. Saved preferences and the LaunchAgent plist remain byte-identical. The separately user-authorized official MCP refresh was accepted, but the current loaded task still returned the old MCP resource afterward; live Astra persistence is not claimed. Restart/cold-login, push, tag, and release remain untested/unperformed.
+- Rebuilt the release after the user chose to restart Codex manually. A fresh process of the installed MCP executable advertises all seven models and returns the updated Astra/Default settings resource, with no real preference write. The old current-task connection is not force-stopped; post-restart integration acceptance remains user-owned.
+
 ## 2026-09-10 01:15:52 +0800
 
 - Inspected the signed Codex `26.903.61454` build `8378` picker while leaving the app and existing tasks running. Confirmed the new model radio list, explicit/default selection marker, and model-specific strength slider; the installed renderer `0.12.14` still expected legacy Model/Effort/Speed flyouts.

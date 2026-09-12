@@ -110,7 +110,7 @@ struct CopickerMCPProtocolTests {
         let arguments: [String: Any] = [
             "expectedRevision": 0,
             "enabled": false,
-            "visibleModels": ["sol", "gpt-5.5", "daybreak-blue"],
+            "visibleModels": ["sol", "gpt-5.5", "daybreak-blue", "astra"],
             "preferredPlacement": "left",
             "appearance": "codex",
         ]
@@ -122,6 +122,7 @@ struct CopickerMCPProtocolTests {
         #expect(savedSnapshot["revision"] as? Int == 1)
         #expect(savedSnapshot["enabled"] as? Bool == false)
         #expect(savedSnapshot["preferredPlacement"] as? String == "left")
+        #expect(savedSnapshot["visibleModels"] as? [String] == ["astra", "sol", "daybreak-blue", "gpt-5.5"])
 
         let repeated = try callTool(
             CopickerMCPProtocol.settingsSaveToolName,

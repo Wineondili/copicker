@@ -18,15 +18,17 @@ accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
 cli_version=0.99.0
-renderer_version=0.12.15
+renderer_version=0.12.16
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v2.html
 marketplace_name=copicker-local
 plugin_id=copicker@copicker-local
 accepted_codex_version=26.820.60940
 accepted_codex_build=7119
-inspected_codex_version=26.903.61454
-inspected_codex_build=8378
+inspected_codex_version=26.908.40834
+inspected_codex_build=8881
+accepted_picker_renderer_version=0.12.16
+accepted_picker_codex_build=8881
 accepted_architecture=arm64
 accepted_window_width_css_px=1440
 accepted_window_height_css_px=810
@@ -46,7 +48,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
-| Renderer development candidate | `0.12.15` | Adds the build-`8378` model-radio-list and strength-slider adapter; validation status is recorded below |
+| Current renderer | `0.12.16` | Hot-loaded on build `8881`; bounded native switches passed and the user confirmed selection, sending, and correct model routing on 2026-09-12 |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
 | Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
@@ -55,11 +57,12 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Settings resource | `ui://copicker/settings/v2.html` | Current MCP App document |
 | Public GitHub release | `v0.99.0` | Full-feature immutable source pre-release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
-| Codex desktop | `26.820.60940` build `7119` | Exact build for current live acceptance |
-| Current diagnosed Codex desktop | `26.903.61454` build `8378` | Signed bundle and bounded live picker inspection; Node inspection is enabled and the existing watcher successfully injected `0.12.14` |
+| Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
+| Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Installed watcher evidence | `0.12.0-dev`, loaded, `injection-succeeded` | Verified for the accepted Codex PID before the release-only version bump |
+| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.16`, loaded, `injection-succeeded` | Verified on build `8881`; source/installed hashes match and user preferences are unchanged |
+| Fresh installed settings backend | Seven-model schema and updated settings resource | Read-only fresh-process verification passed; user will perform the Codex restart, so post-restart integration is not yet accepted |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
@@ -76,17 +79,21 @@ Renderer `0.12.13` recognized both `null` and the observed official `"default"` 
 
 Renderer `0.12.14` addressed the build-`7377` refresh loop. It never opens nested official controls for idle no-task synchronization, coalesces a duplicate in-flight thread classification without scheduling a same-key retry, ignores proxy-owned Daybreak structural churn when tracking external state, and suppresses selector reinitialization while bounded classification is reading official controls. A successful no-task selection remains confirmed across a same-composer trigger remount. Explicit no-task selection still performs one bounded official-control transaction because the inspected renderer exposes no equivalent public method for its draft/default/prewarm workflow. The separate Daybreak program policy, strict transaction baselines, pointer animation, and release-coordinate commit state machine remain unchanged. On 2026-09-10, the installed watcher confirmed this payload injected into build `8378`; that proves injection, not compatibility with its redesigned picker.
 
-The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
+The historical full-runtime and native-settings-geometry acceptance remains tied to CLI label `0.12.0-dev` and Codex build `7119`. On 2026-09-12, hot-loaded renderer `0.12.16` additionally passed live picker selection on build `8881`; the user explicitly confirmed that selected models can send and that actual model routing is correct. That acceptance does not imply a new settings-geometry, restart, cold-login, or published-release pass.
 
 ## Product requirements
 
-### Build 8378 compatibility update
+### Builds 8378 and 8881 compatibility update
 
 Renderer `0.12.15` adapts the owned `[data-model-picker-view]` surface with `simple` and `advanced` panels. Advanced now contains a Default radio and model radios; selecting a model returns to its model-specific strength slider. The three-flyout transaction below remains a legacy-build fallback and is not used for this layout.
 
 The adapter reads checked radio state from the already-mounted inactive panel without opening menus while idle. It validates a unique selected model against `model/list`, confirms explicit/default state through `[data-explicit-model]`, rejects locked or ambiguous rows, and drives the official model radio, strength keyboard control, and Fast checkbox. Each no-task transaction stays bound to its original unsent composer, verifies model/effort/speed, and attempts restoration only while that composer and external-input generation remain unchanged. Missing effort steps and inaccessible controls terminate boundedly. Default is displayed as `Default`, with no concrete model cell selected; it is not a new selectable rail row. Unrepresentable speed tiers fail closed.
 
+Build `8881` also exposes unrelated native model radios, including GPT-5.2, that need not resolve in the current catalog. Renderer `0.12.16` tolerates an unknown **unselected** radio without invalidating a known selected model; an unknown selected radio, duplicate known model, locked selection, or ambiguous checked state still fails closed. Bounded native transactions confirmed Astra, Sol, Terra, Luna, GPT-5.5, Daybreak, and Codex Spark, including Fast and non-Fast transitions. A trusted pointer click retained visible positional easing and left the official picker open. The user separately verified selection followed by sending and correct model routing; no model request was submitted by the inspection helpers.
+
 Astra is an additional supported row with six efforts and catalog-resolved Fast. Existing visibility preferences and the three-row default are preserved; Astra is available in the model visibility settings. The previous six models retain their effort counts, colors, and pointer animation.
+
+Luna deliberately retains five displayed efforts: the build-`8881` native strength control reports Max as step five of five, even though `model/list` advertises an additional Ultra effort. Settings and the standalone preview must reflect the verified native control, not expose that inaccessible sixth step. Model settings also explain that Default is a display state, not another visibility row.
 
 ### Activation and ownership
 

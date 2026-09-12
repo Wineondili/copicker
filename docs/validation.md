@@ -171,7 +171,11 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
 | Renderer `0.12.12` live result | Injected and visible on build `7377`, but selection had no effect; probes observed `serviceTier: "default"`, exact `legacy-model`, `Other`, and `error` |
 | Renderer `0.12.13` live result | Idle no-task Model/Effort/Speed flyouts looped visibly; Daybreak and Codex Spark could leave the renderer unresponsive |
-| Current `main` renderer candidate | `0.12.15`; build-`8378` radio-list/slider adapter, Astra, and Default display; production installation and live switching remain pending |
+| Current `main` renderer | `0.12.16`; hot-loaded on build `8881`; native switches through all seven adapted models passed and the user confirmed selection, sending, and correct model routing |
+| Current settings source | Seven model rows match the persisted/MCP/renderer contract; Astra save round-trip covered offline; isolated HTML preview passed model toggles, last-visible-row protection, and mock Apply |
+| Current installed delivery | Release executable and both installed HTML/renderer resources match source SHA-256; the refreshed Copicker watcher reports successful injection into the unchanged Codex PID; all three app renderers report settings/rail `0.12.16` with Astra and Default guidance |
+| Current live MCP settings backend | User-authorized `config/mcpServer/reload` was accepted, but the current loaded task subsequently returned the old MCP settings resource; refreshed-backend readiness and a live Astra save are not confirmed |
+| Fresh installed MCP process | Read-only `tools/list` advertises all seven save-schema model keys and `resources/read` returns the updated Astra/Default document; the user chose a later manual Codex restart to replace retained task connections |
 | Live-accepted Codex | `26.820.60940` build `7119` |
 | Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |
@@ -181,6 +185,8 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Public runtime release | `v0.99.0` full-feature source pre-release; no prebuilt executable attached |
 
 The accepted watcher, UI, and Inspector evidence applies specifically to Codex `26.820.60940` build `7119` and runtime source `c0343d4`; none of those rows is live evidence for the statically inspected build `7377`. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
+
+The 2026-09-12 build-`8881` picker acceptance is newer and specific: official checked model, reasoning effort, Fast state, and confirmed transaction state were inspected after bounded no-task selections; a trusted pointer click kept the native picker open and showed intermediate easing. The user then independently confirmed that selections send successfully using the expected model. This does not claim an exhaustive live effort matrix, a new native-settings-geometry pass, or restart/cold-login acceptance. The settings browser check used the actual shipped HTML and an in-memory mock bridge at `127.0.0.1`, with a `1280 × 720` viewport, seven rows, no horizontal overflow, no blank/error overlay, and no console warnings/errors. Its Apply success is deliberately mock-only; offline MCP tests separately verify Astra persistence and revision handling.
 
 ## New-machine acceptance record
 

@@ -176,3 +176,28 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(!settingsHTML.contains("http://"))
     #expect(!settingsHTML.contains("https://"))
 }
+
+@Test
+func settingsModelRowsMatchThePersistedModelContract() throws {
+    let repositoryRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+    let html = try String(
+        contentsOf: repositoryRoot.appendingPathComponent(
+            "Sources/CopickerCLI/Resources/copicker-settings-v2.html"
+        ),
+        encoding: .utf8
+    )
+    let rows = html.components(separatedBy: "<div class=\"setting-row model-row\">").dropFirst()
+    #expect(rows.count == CopickerModel.allCases.count)
+    for (row, model) in zip(rows, CopickerModel.allCases) {
+        #expect(row.contains("<h3>\(model.displayName)</h3>"))
+        #expect(row.contains("name=\"visible-model\" value=\"\(model.rawValue)\""))
+        let efforts = model.effortLabels.joined(separator: " · ")
+        let fastNotice = [.daybreakBlue, .codexSpark].contains(model) ? " · 不支持 Fast" : ""
+        #expect(row.contains("<p class=\"model-efforts\">\(efforts)\(fastNotice)</p>"))
+    }
+    #expect(!html.contains("name=\"visible-model\" value=\"default\""))
+    #expect(html.contains("CoPicker 同样显示 Default"))
+}

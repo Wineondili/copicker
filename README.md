@@ -13,7 +13,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
 | CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
-| Renderer development candidate | `0.12.15` on `main` | Adapts build `8378` model radios and strength controls; adds Astra and Default recognition; live switching remains pending |
+| Current renderer | `0.12.16` on `main` | Build `8881` live picker switches passed; the user confirmed sending with the selected model and correct routing |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
 | MCP settings resource | `ui://copicker/settings/v2.html` | Versioned CoPicker settings document |
@@ -22,7 +22,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 The current runtime baseline was installed and accepted on Apple silicon with Codex `26.820.60940` build `7119`. The user confirmed that the final CoPicker settings geometry matches the official settings page. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-`v0.99.0` packages the accepted full-feature implementation with release metadata; its renderer `0.12.8` remains unchanged from `c0343d4`. Later candidates repaired pointer release and restored its original easing, then addressed the build-`7377` official-control proxy and its idle refresh loop. After the update to build `8378`, the existing watcher again injected `0.12.14`, but the picker structure had changed. Candidate `0.12.15` adapts the new model radio list and model-specific strength slider, adds Astra, and recognizes Default. Its isolated regression checks pass; live switching and production installation remain pending. `v0.99.0` is still the immutable published install ref.
+`v0.99.0` packages the accepted full-feature implementation with release metadata; its renderer `0.12.8` remains unchanged from `c0343d4`. Later candidates repaired pointer release and restored its original easing, then addressed the build-`7377` proxy and refresh loop. Renderer `0.12.15` added the redesigned radio-list/strength-slider adapter and Astra. Renderer `0.12.16` additionally tolerates unrelated unselected model radios observed on Codex `26.908.40834` build `8881`. It passed live selection and user-reported sending/model-routing checks without restarting Codex. Persistent installation, restart/cold-login, and publication are separate gates; `v0.99.0` remains the immutable published install ref.
 
 See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v0.99.0 release notes](docs/releases/v0.99.0.md) for the packaged feature and validation boundary.
 

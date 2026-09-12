@@ -1,12 +1,25 @@
 # Design QA
 
+## 2026-09-12 — Build 8881 live picker and settings synchronization
+
+- Codex `26.908.40834` build `8881`; renderer `0.12.16` hot-loaded without quitting/restarting Codex. An unrelated unselected GPT-5.2 radio caused `0.12.15` to show `Other`; the corrected classifier ignores only unknown unselected rows and still rejects unknown selected or ambiguous states.
+- Native checked-model/effort/Fast confirmation passed for Astra/low/Standard, Sol/ultra/Fast, Terra/medium/Standard, Luna/max/Standard, GPT-5.5/xhigh/Fast, Daybreak/low/Standard, and Codex Spark/medium/Standard. A trusted pointer click also confirmed Terra/high/Standard, left the native menu open, and showed an intermediate thumb position during the existing easing. Do not label this an exhaustive live matrix or a separately completed automated drag pass.
+- The user independently reported that models select correctly and that sending uses the selected model with correct routing. This supersedes the earlier pending live-selection/first-message status for the tested picker flow. No model request was submitted by the inspection helpers, and ownership guards stopped further attempts when the prepared composer changed.
+- Settings source and standalone preview retain seven rows with effort counts 6/6/6/5/6/4/4. The native Luna slider reports Max as step five of five on this build, despite six catalog efforts. Existing preference defaults, dimensions, colors, non-Fast rows, and 240-millisecond pointer easing remain unchanged. The settings footer explains native availability and Default display without adding a Default row.
+- Isolated settings HTML, `1280 × 720`, in-app Browser: title and meaningful content present; seven model rows; no horizontal overflow or framework overlay; no console warnings/errors. Enabling Astra and hiding the three original defaults saved in mock state; attempting to hide the last row was rejected; mock Apply completed. Screenshot: local `settings-desktop.png` artifact outside the repository. The actual MCP Astra save/read contract passed offline. These are not live settings persistence or newly measured native settings geometry claims.
+- All 47 offline tests, JavaScript syntax checks, whitespace validation, and release build passed. After the user authorized MCP refresh, the installed executable/resources were updated with a recoverable local backup and matching SHA-256, and only the existing Copicker watcher was reloaded. All three app renderers report rail/settings `0.12.16`; the saved-preferences and LaunchAgent-plist hashes are unchanged. The official MCP refresh request was accepted, but a subsequent read in the current loaded task still returned the old settings document, consistent with the documented queued-refresh boundary. Live Astra persistence is not confirmed. Codex stayed at PID (omitted), and no Codex restart or publication was performed.
+
+- Final handoff: the user chose to restart Codex manually after the build. The final release rebuild passed and remains SHA-identical to the installed executable. A fresh installed MCP process passed read-only schema/resource verification for all seven models and the updated settings document, without writing preferences. No old task connection was force-stopped.
+
+result: live picker and user-reported model routing passed; settings source/isolated UI, installed page delivery, and fresh MCP process passed; post-restart integration remains user-owned
+
 ## 2026-09-10 — Build 8378 radio-list compatibility candidate
 
 - Inspected Codex `26.903.61454` build `8378` in the running process without a restart. The official picker retains both simple and advanced panels, and advanced now contains a Default row plus seven model radio rows. The compact view uses an explicit-model marker, model-specific strength keyboard control, and Fast checkbox.
 - Renderer `0.12.15` adds this layout independently from the legacy Model/Effort/Speed flyouts. It adds Astra with six effort levels, displays Default without selecting a model cell, and retains the accepted 240-millisecond pointer easing.
 - Isolated browser fixture: 42 synthetic model/effort/Fast cases passed, including transitions through Daybreak and Codex Spark. An unresponsive native-slider fixture terminated boundedly and restored Astra/xhigh/Standard. Default display and Default-to-explicit-Astra selection passed. Replacing the composer during a pending transaction preserved the replacement state and resynchronized the rail to Terra/medium.
 - The fixture uses synthetic catalog data and native-control handlers. It is regression evidence, not live Codex switching acceptance. Live candidate loading was stopped by guards when test windows changed to real tasks or were closed; no running task's model was changed.
-- Production installation, live model switching, first-message persistence, restart, and cold-login checks remain pending. The following entries describe older candidates and do not supersede this status.
+- At this checkpoint production installation, live model switching, first-message persistence, restart, and cold-login checks remained pending. The 2026-09-12 entry above supersedes the live-selection/first-message portion only; the following entries describe older candidates.
 
 ## 2026-09-01 — Renderer 0.12.13 flyout loop and special-model freeze
 
