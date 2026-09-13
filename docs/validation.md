@@ -22,6 +22,12 @@ The current product contract is [accepted-baseline.md](accepted-baseline.md). De
 | Inspector closure | Port `9229` is idle after the action | Any other gate |
 | Commit/push/tag/release | Publication state | Installation or live acceptance |
 
+## Source-only reproduction evidence (2026-09-13)
+
+The privacy-cleaned public source at `9f6b6362792ec88aa68988d3c5c6ac8f4cf0a847` was exported with `git archive` into a fresh directory without `.git`, existing build outputs, or local reference files. On Apple silicon with macOS `27.0` (build `26A428`) and Apple Swift `6.4`, its Debug build, all 59 offline tests, and Release build passed. The executable reported `Copicker 1.0.0`, and `Copicker_CopickerCLI.bundle` was present alongside it. Script/launcher executable modes and required hidden plugin metadata are tracked in Git.
+
+This proves a source-only build on that toolchain, not a clean-OS provisioning test, bit-for-bit binary reproducibility, an installer run on another Mac, or renewed live acceptance. No installer, injection, LaunchAgent change, Codex restart, or real settings write was performed. See [source-only reproduction](installation.md#source-only-reproduction-without-installation) and [the host baseline](accepted-baseline.md#current-environment-and-evidence-boundary). The current source also extends documentation contracts for the engine metadata and non-blocking version policy.
+
 ## Offline validation command set
 
 These commands must not signal Codex, open Inspector, mutate the real LaunchAgent, or change persisted user settings:
@@ -208,6 +214,8 @@ Architecture:
 Swift version:
 Codex CLI version:
 Codex desktop version/build:
+Electron version evidence (declared dependency or runtime probe):
+Chromium framework version:
 Official app path/bundle ID:
 Release build:
 Offline tests:

@@ -13,16 +13,21 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Layer | Current value | Meaning |
 | --- | --- | --- |
 | Latest GitHub release | `v1.0.0` stable | Current full-feature, source-distributed package |
-| Accepted full-feature runtime code | `c127509ae0a05f50c14757d2a212b79951126f46` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
+| Historical full-runtime code | `c127509ae0a05f50c14757d2a212b79951126f46` | Older six-model acceptance and rollback anchor, not the current picker adapter |
 | CLI and plugin version | `1.0.0` | Version reported by the stable release package |
 | Current renderer | `0.12.20` on `main` | Fixes native settings background and vertical insets; retains version-prefixed rail labels and Spark Retiring |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
 | MCP settings resource | `ui://copicker/settings/v4.html` | Sandbox-safe native settings surface; v3 and v2 remain read aliases |
-| Live-accepted Codex build | `26.820.60940` (`7119`) | Build on which the current UI and interaction baseline was accepted |
-| Live-accepted CLI label | `0.12.0-dev` | Version string present during the accepted installation before the release-only bump |
+| Current adapted Codex Desktop | `26.908.40834` (build `8881`) | Picker selection/routing and later native settings presentation user-confirmed |
+| Electron dependency declared by Codex | `42.3.0` | Read from the official app's package metadata; not a fresh runtime version probe |
+| Bundled Chromium framework | `152.0.7977.83` | Read from Codex Framework metadata and corroborated by its binary version string |
+| Historical full-runtime Codex build | `26.820.60940` (`7119`) | Earlier complete runtime/restart acceptance, not the current supported-version label |
+| Historical live CLI label | `0.12.0-dev` | Version string present during that older installation |
 
 The current package targets the verified Codex `26.908.40834` build `8881` picker. Model selection and actual routing were user-confirmed; after the manual-restart handoff, the user confirmed the corrected native settings interface on 2026-09-13. The original full-runtime baseline on Apple silicon with build `7119` remains historical. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
+
+These are tested compatibility baselines, not a version allowlist. A different Codex Desktop, Electron, or Chromium version alone does not prevent CoPicker from running. Actual capability and ownership checks still apply: unavailable Inspector support, unrecognized or ambiguous controls, and unconfirmed official mutations can stop the affected operation safely. A matching version does not guarantee account entitlements or every UI variant. See [the detailed environment and evidence boundary](docs/accepted-baseline.md#current-environment-and-evidence-boundary).
 
 `v1.0.0` packages renderer `0.12.20`: seven-model selection, no-task refresh-loop fixes, the original click/drag easing, version-prefixed labels, Spark Retiring, native settings initialization, and the corrected background/scroll insets. Its renderer and settings HTML are unchanged from user-accepted source `6979811`. `v0.99.0` remains the immutable older six-model pre-release. Installation, user acceptance, cold-login checks, and publication are separate gates.
 
@@ -39,7 +44,7 @@ cd copicker
 ./script/install.sh
 ```
 
-For forensic comparison or rollback to the exact code that was installed during live acceptance, use the runtime anchor instead:
+For forensic comparison or rollback to the **historical build-7119** acceptance only, use the older runtime anchor below. It is not the current-build installation recommendation:
 
 ```bash
 git clone https://github.com/Wineondili/copicker.git copicker-c127509
@@ -51,6 +56,8 @@ git checkout --detach c127509ae0a05f50c14757d2a212b79951126f46
 Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`, and the `codex` CLI must be available because the current full-feature installer registers the local settings plugin.
 
 The release is source-distributed. GitHub supplies its standard source archives; no unsigned or non-notarized prebuilt executable is attached. Building on the target Mac avoids shipping a machine-specific native binary.
+
+All CoPicker build inputs, renderer/settings resources, installer scripts, plugin metadata, and icons are tracked in this repository. There are no external Swift package dependencies, Git submodules, or required files in `local-docs/`. The official Codex app and a plugin-capable Codex CLI are separate installation prerequisites, not redistributed source. For a build-only check that does not install or inject anything, follow [source-only reproduction](docs/installation.md#source-only-reproduction-without-installation).
 
 The installer may inject an already-running Codex process when it loads the watcher. It never quits or restarts Codex. For the cleanest first acceptance, run the installer, then quit and reopen Codex yourself.
 
@@ -90,7 +97,7 @@ Open **Settings → Integrations → CoPicker**. The entry appears below the bui
 Settings include:
 
 - enable or disable CoPicker;
-- show or hide each of the six adapted models, while retaining at least one;
+- show or hide each of the seven adapted models, while retaining at least one;
 - prefer top, left, or right placement;
 - follow Codex, follow macOS, or force light or dark appearance.
 

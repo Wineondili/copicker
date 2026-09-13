@@ -16,7 +16,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 | Layer | Current accepted value | Where it is defined |
 | --- | --- | --- |
-| Accepted runtime-code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | [accepted-baseline.md](accepted-baseline.md) |
+| Historical full-runtime code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Older six-model acceptance; [accepted-baseline.md](accepted-baseline.md) |
 | Stable GitHub release | `v1.0.0` | Immutable annotated tag/release; `v1.0.0^{commit}` resolves its package commit |
 | CLI and plugin | `1.0.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
@@ -24,7 +24,9 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
 | Settings resource | `ui://copicker/settings/v4.html` | `CopickerMCPProtocol.settingsResourceURI`; v3 and v2 remain read aliases |
-| Live-accepted Codex | `26.820.60940` build `7119` | [accepted-baseline.md](accepted-baseline.md) |
+| Current adapted Codex | `26.908.40834` build `8881` | Picker/routing and later settings presentation user-confirmed |
+| Host engine metadata | Electron dependency `42.3.0`; Chromium framework `152.0.7977.83` | [Evidence and non-blocking version policy](accepted-baseline.md#current-environment-and-evidence-boundary) |
+| Historical full-runtime Codex | `26.820.60940` build `7119` | Earlier complete runtime/restart evidence only |
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c127509`.
 

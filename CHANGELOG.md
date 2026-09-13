@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 10:03:49 +0100
+
+- Clarified the current Codex Desktop `26.908.40834` build `8881` picker/routing and native-settings acceptance, explicitly labeling build `7119` and its full-runtime source anchor historical. Corrected the README settings count to seven models.
+- Recorded the host package's declared Electron `42.3.0` dependency separately from the observed Chromium framework `152.0.7977.83`. Documented capability-based checks rather than a version allowlist; no runtime gate, selector, renderer, or installation behavior changed.
+- Added source-only reproduction steps, complete-source/resource and plugin-CLI prerequisites, and environment/evidence limits. Verified the cleaned public Git archive independently with Debug/Release builds and 59 offline tests; extended documentation contracts for the baseline. No installation, injection, host restart, push, tag, or Release update was performed.
+
 ## 2026-09-13 09:32:11 +0100
 
 - Per owner authorization, sanitized personal machine paths, local artifact references, concrete process identifiers, and personal preference snapshots throughout public history and release snapshots. Runtime source and normal authorship remain unchanged; no app, account, or installed preferences are modified.

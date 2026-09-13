@@ -20,13 +20,37 @@ Do not install moving `main` when reproducibility matters. Use `v1.0.0` for a no
 - Swift package minimum: macOS 14 or later.
 - Live-verified architecture: Apple silicon `arm64`.
 - Current picker and user-confirmed settings environment: Codex `26.908.40834` build `8881`; historical full-runtime acceptance remains build `7119`.
+- Inspected host package declares Electron `42.3.0`; its bundled Chromium / Codex Framework reports `152.0.7977.83`. These are separate metadata fields, not interchangeable version numbers.
 - Official app path: `/Applications/ChatGPT.app`.
 - Official bundle identifier: `com.openai.codex`.
 - Build toolchain: Xcode Command Line Tools or Xcode with Swift 6 or later.
-- Current full-feature installer: requires the `codex` CLI to register the local settings plugin.
+- Current full-feature installer: requires a `codex` CLI exposing plugin marketplace/list/add/remove commands to register the local settings plugin. `codex-cli 0.154.0` was inspected; an arbitrary older CLI may lack this interface.
 - Private Codex DOM, Electron fuses, app-server methods, and settings routes may change in a later desktop build.
 
 CoPicker never edits, replaces, unpacks into, or re-signs the official application. The LaunchAgent starts only in the logged-in user's GUI session.
+
+These are tested compatibility baselines, not a version allowlist. A different host version alone does not block execution; actual Inspector, process-ownership, UI-anchor, and official-confirmation checks still apply. See [the exact environment and acceptance limits](accepted-baseline.md#current-environment-and-evidence-boundary). The latest user acceptance is for the current picker/routing and native settings surface, not every model/effort combination, every Mac, or cold login.
+
+## Source-only reproduction without installation
+
+The public repository contains all CoPicker source, SwiftPM resources, tests, executable scripts, hidden plugin/marketplace metadata, and required icons. It has no external Swift package dependencies, Git submodules, or required local reference files. A GitHub source archive also works without a `.git` directory; keep its hidden `.agents` and plugin metadata files when extracting or copying it.
+
+After cloning the pinned tag or extracting its source archive, run from the project root:
+
+```bash
+swift package dump-package >/dev/null
+swift build
+swift test
+swift build -c release
+COPICKER_BUILD_DIR="$(swift build -c release --show-bin-path)"
+"$COPICKER_BUILD_DIR/copicker" version
+test -d "$COPICKER_BUILD_DIR/Copicker_CopickerCLI.bundle"
+bash -n script/install.sh script/build_and_run.sh
+```
+
+These commands do not run the installer, load a LaunchAgent, open Inspector, or alter Codex. Offline builds/tests require macOS and Swift tools, but not an installed Codex app, login, account model catalog, or local `local-docs/` files. Node.js is optional for `node --check Sources/CopickerCLI/Resources/model-rail.js`; no npm install is required. The dependency-free source can build offline once the Apple developer tools are installed. Matching output functionality is the goal; byte-identical binaries across different compilers/SDKs are not promised.
+
+The official Codex Desktop app and the plugin-capable Codex CLI remain separately installed prerequisites for the full installation and live behavior. This repository does not redistribute either product or reproduce another account's model access. Keep the executable and its SwiftPM resource bundle together; sharing only the binary omits required resources.
 
 ## Inspect a new Mac before installation
 
@@ -36,6 +60,7 @@ uname -m
 xcode-select -p
 swift --version
 codex --version
+codex plugin --help
 test -d /Applications/ChatGPT.app && echo "Codex app found"
 ```
 

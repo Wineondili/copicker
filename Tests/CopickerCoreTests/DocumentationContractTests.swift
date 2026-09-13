@@ -74,6 +74,9 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
     #expect(values["plugin_id"] == "copicker@copicker-local")
     #expect(values["inspected_codex_version"] == "26.908.40834")
     #expect(values["inspected_codex_build"] == "8881")
+    #expect(values["inspected_electron_dependency_version"] == "42.3.0")
+    #expect(values["inspected_chromium_framework_version"] == "152.0.7977.83")
+    #expect(values["host_version_policy"] == "capability-based-not-version-allowlist")
 
     #expect(settingsHTML.contains("--copicker-page-top-inset: 20px"))
     #expect(settingsHTML.contains("width: min(100%, 768px)"))
@@ -142,6 +145,16 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     #expect(currentReleaseNotes.contains("user-confirmed"))
     #expect(currentReleaseNotes.contains("no unsigned or non-notarized prebuilt executable"))
     #expect(currentReleaseNotes.contains("git clone --branch v1.0.0"))
+
+    for document in [readme, installation, baseline] {
+        #expect(document.contains("26.908.40834"))
+        #expect(document.contains("42.3.0"))
+        #expect(document.contains("152.0.7977.83"))
+        #expect(document.contains("not a version allowlist"))
+    }
+    #expect(installation.contains("Source-only reproduction without installation"))
+    #expect(installation.contains("Copicker_CopickerCLI.bundle"))
+    #expect(installation.contains("codex plugin --help"))
 
     #expect(values["official_settings_toolbar_height_css_px"] == "46")
     #expect(values["official_settings_panel_inset_css_px"] == "20")

@@ -31,6 +31,9 @@ inspected_codex_version=26.908.40834
 inspected_codex_build=8881
 accepted_picker_renderer_version=0.12.16
 accepted_picker_codex_build=8881
+inspected_electron_dependency_version=42.3.0
+inspected_chromium_framework_version=152.0.7977.83
+host_version_policy=capability-based-not-version-allowlist
 accepted_architecture=arm64
 accepted_window_width_css_px=1440
 accepted_window_height_css_px=810
@@ -48,7 +51,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 | Item | Accepted value | Status |
 | --- | --- | --- |
-| Runtime-code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Installed, live-reviewed, and user-accepted |
+| Historical full-runtime code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Older installed, live-reviewed, and user-accepted six-model code |
 | CLI/plugin release | `1.0.0` | Current source-distributed stable release package |
 | Current renderer | `0.12.20` | Owns the native settings background and scroll insets outside the sandbox body reset; retains accepted rail behavior and labels |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
@@ -61,7 +64,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Public GitHub release | `v1.0.0` | Full-feature immutable stable source release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
-| Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
+| Current adapted Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; later native v4 settings presentation user-confirmed |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
 | Pre-restart installed watcher | CLI `0.99.0`, renderer/settings `0.12.20`, loaded, `injection-succeeded` | Verified before the user's restart on build `8881`; the release-only CLI/plugin version bump does not imply reinstalling this machine |
@@ -86,6 +89,26 @@ Renderer `0.12.14` addressed the build-`7377` refresh loop. It never opens neste
 The historical full-runtime and native-settings-geometry acceptance remains tied to CLI label `0.12.0-dev` and Codex build `7119`. On 2026-09-12, hot-loaded renderer `0.12.16` additionally passed live picker selection on build `8881`; the user explicitly confirmed that selected models can send and that actual model routing is correct. That acceptance does not imply a new settings-geometry, restart, cold-login, or published-release pass.
 
 `v1.0.0` packages the current seven-model renderer `0.12.20` and settings resource v4. It incorporates the build-`8881` picker and user-confirmed routing acceptance from `43379d0`, plus the later settings surface at `6979811` whose native presentation the user confirmed on 2026-09-13. The release preparation changes CLI/plugin version metadata and documentation only; it does not modify the accepted renderer or HTML. The older full-runtime anchor remains historical rather than being silently relabeled as a new exhaustive acceptance pass.
+
+## Current environment and evidence boundary
+
+The following describes the latest adapted host, not an exclusive supported-version list. Read-only bundle inspection on 2026-09-13 confirmed that the installed official app still matches the build used for the recent acceptance.
+
+| Layer | Observed value | Evidence and scope |
+| --- | --- | --- |
+| Codex Desktop application | `26.908.40834`, build `8881` | Official app `Contents/Info.plist`; current picker and native settings acceptance target |
+| Electron dependency | `42.3.0` | Declared in `app.asar` root `package.json`; metadata only, not a runtime `process.versions.electron` measurement |
+| Chromium / Codex Framework | `152.0.7977.83` | Framework `CFBundleShortVersionString`, corroborated by its binary version string; do not substitute the declared Electron dependency for this value |
+| Host architecture | Apple silicon `arm64` | Current source-build and prior live acceptance environment; Intel has no equivalent acceptance evidence |
+| Reproduction-check OS | macOS `27.0`, build `26A428` | Current source-build host only; the package deployment minimum remains macOS 14, not a claim of testing every OS from 14 onward |
+| Reproduction-check compiler | Apple Swift `6.4` | Current source-build toolchain; manifest requires Swift tools 6.0 or later |
+| Installer CLI | `codex-cli 0.154.0` | Version and `codex plugin --help` inspected; installer requires plugin marketplace/list/add/remove commands, not this exact version |
+
+These are tested compatibility baselines, not a version allowlist. CoPicker does not compare Codex Desktop, Electron, or Chromium version numbers against these values to permit execution. It checks actual Inspector capability, expected executable/port ownership, and recognizable official UI/bridge contracts. A version mismatch alone is not a rejection; a missing capability, ambiguous target, or absent official confirmation can still stop an operation safely. Conversely, matching versions do not guarantee the same account catalog, entitlement, feature rollout, or responsive UI state.
+
+Current acceptance covers bounded seven-model selections, inspected reasoning/Fast transitions, the original pointer easing, and the user's independent successful sending and correct model routing on build `8881`. The later v4 native settings presentation was user-confirmed after the manual-restart handoff on 2026-09-13. This is not an exhaustive live model-by-effort matrix, an independently remeasured post-restart geometry pass, a new cold-login/reboot pass, or acceptance on a friend's Mac. Build `7119` and its source anchor remain explicitly historical evidence.
+
+The source-only reproduction procedure and external installation prerequisites are in [installation.md](installation.md#source-only-reproduction-without-installation). Neither the official application bundle nor local reference extracts are needed to compile and run offline tests.
 
 ## Product requirements
 
