@@ -159,7 +159,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 
 | Gate | Evidence |
 | --- | --- |
-| Live-accepted runtime source | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` |
+| Live-accepted runtime source | `c127509ae0a05f50c14757d2a212b79951126f46` |
 | Current package | `v0.99.0`; CLI/plugin `0.99.0` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Renderer | `0.12.8` |

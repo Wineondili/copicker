@@ -16,7 +16,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 | Layer | Current accepted value | Where it is defined |
 | --- | --- | --- |
-| Accepted runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | [accepted-baseline.md](accepted-baseline.md) |
+| Accepted runtime-code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | [accepted-baseline.md](accepted-baseline.md) |
 | Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
 | CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
@@ -25,7 +25,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Settings resource | `ui://copicker/settings/v2.html` | `CopickerMCPProtocol.settingsResourceURI` |
 | Live-accepted Codex | `26.820.60940` build `7119` | [accepted-baseline.md](accepted-baseline.md) |
 
-The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
+The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c127509`.
 
 The public `v0.99.0` pre-release packages the full six-model implementation without changing renderer `0.12.8`. `v0.11.0` remains an immutable historical three-model release.
 

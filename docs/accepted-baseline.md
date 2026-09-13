@@ -13,7 +13,7 @@ When sources disagree, use this precedence:
 Historical evidence remains useful, but it must not silently override a later accepted correction.
 
 <!-- COPICKER_ACCEPTED_BASELINE_V1
-accepted_runtime_commit=c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+accepted_runtime_commit=c127509ae0a05f50c14757d2a212b79951126f46
 accepted_live_cli_version=0.12.0-dev
 published_release_tag=v0.99.0
 published_release_commit=v0.99.0^{commit}
@@ -42,7 +42,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 | Item | Accepted value | Status |
 | --- | --- | --- |
-| Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
+| Runtime-code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
 | Renderer compatibility | `0.12.8` | Current accepted in-memory renderer/settings payload |
 | Settings schema | `1` | Current persisted preference schema |
@@ -55,7 +55,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Installed watcher evidence | `0.12.0-dev`, loaded, `injection-succeeded` | Verified for the accepted Codex PID before the release-only version bump |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
-`v0.99.0` packages the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
+`v0.99.0` packages the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c127509`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
 
 The live acceptance evidence remains tied to CLI label `0.12.0-dev` and Codex build `7119`. The `0.99.0` package passed the complete offline/release-build gate but is not described as a second live installation or restart acceptance.
 

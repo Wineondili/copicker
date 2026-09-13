@@ -9,10 +9,10 @@ This guide covers the current immutable pre-release, its live-accepted runtime a
 | Choice | Ref | Feature set | Publication status |
 | --- | --- | --- | --- |
 | Recommended current pre-release | `v0.99.0` | Six models, settings page, persistence, Apply now, top/left/right placement, no-task selection, final native settings geometry | Published full-feature pre-release |
-| Live-accepted runtime anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Same renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact installed/UI/restart evidence and rollback anchor |
+| Live-accepted runtime anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Same renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact installed/UI/restart evidence and rollback anchor |
 | Historical pre-release | `v0.11.0` | Older Sol/Terra/Luna rail and guarded autostart | Immutable historical pre-release |
 
-Do not install moving `main` when reproducibility matters. Use `v0.99.0` for a normal new installation. The annotated tag resolves the exact release commit through `v0.99.0^{commit}`. Use `c0343d4` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
+Do not install moving `main` when reproducibility matters. Use `v0.99.0` for a normal new installation. The annotated tag resolves the exact release commit through `v0.99.0^{commit}`. Use `c127509` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
 
 ## Compatibility boundary
 
@@ -92,9 +92,9 @@ This pre-release has no attached unsigned/non-notarized executable. GitHub's sta
 Use this only for exact evidence reproduction or rollback. It reports CLI/plugin `0.12.0-dev` but contains the same accepted renderer `0.12.8` behavior packaged by `v0.99.0`:
 
 ```bash
-git clone https://github.com/Wineondili/copicker.git copicker-c0343d4
-cd copicker-c0343d4
-git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+git clone https://github.com/Wineondili/copicker.git copicker-c127509
+cd copicker-c127509
+git checkout --detach c127509ae0a05f50c14757d2a212b79951126f46
 ./script/install.sh
 ```
 
@@ -267,7 +267,7 @@ If the current process must be cleaned before quitting:
 
 `remove` is a live guarded Inspector action. Do not run it without the applicable authorization.
 
-The current packaged rollback point is `v0.99.0`; the exact live-acceptance runtime anchor is `c0343d4`; the historical three-model release is `v0.11.0`.
+The current packaged rollback point is `v0.99.0`; the exact live-acceptance runtime anchor is `c127509`; the historical three-model release is `v0.11.0`.
 
 ## Recover from an interrupted or failed install
 

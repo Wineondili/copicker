@@ -10,7 +10,7 @@ Current versions:
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v2.html` |
 | Renderer fallback | `0.12.8` |
-| Accepted runtime code | `c0343d4` |
+| Accepted runtime code | `c127509` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
 
@@ -214,7 +214,7 @@ Expected responses advertise CoPicker server metadata, the three app-only tools,
 
 ## Live acceptance status
 
-The current settings surface is no longer in a pending visual phase. For runtime commit `c0343d4` on Codex build `7119`:
+The current settings surface is no longer in a pending visual phase. For runtime commit `c127509` on Codex build `7119`:
 
 - sidebar fallback/native deduplication was operational;
 - persistence and Apply-now behavior were operational;

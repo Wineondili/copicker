@@ -98,7 +98,7 @@ historical result: superseded; do not use the 42-pixel inset as a current implem
 
 - Source of truth: bounded `getBoundingClientRect()` and `getComputedStyle()` readings from the running official General settings page, not screenshot estimation or guessed minified utility classes.
 - Exact environment:
-  - runtime source `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb`;
+  - runtime source `c127509ae0a05f50c14757d2a212b79951126f46`;
   - CoPicker CLI/plugin `0.12.0-dev`;
   - renderer compatibility `0.12.8`;
   - Codex desktop `26.820.60940` build `7119`;

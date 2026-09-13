@@ -58,7 +58,7 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
     )
     let rendererVersion = try #require(values["renderer_version"])
 
-    #expect(values["accepted_runtime_commit"] == "c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb")
+    #expect(values["accepted_runtime_commit"] == "c127509ae0a05f50c14757d2a212b79951126f46")
     #expect(values["accepted_live_cli_version"] == "0.12.0-dev")
     #expect(values["published_release_tag"] == "v0.99.0")
     #expect(values["published_release_commit"] == "v0.99.0^{commit}")
