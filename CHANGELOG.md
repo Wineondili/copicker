@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-13 08:52:51 +0100
+
+- Prepared the owner-requested `v1.0.0` stable source release, updating CLI/plugin version metadata and recommended installation instructions. Retained renderer `0.12.20`, settings schema 1, and resource v4 with v3/v2 aliases; the accepted renderer and HTML are unchanged from `cef86ad`.
+- Recorded the user's 2026-09-13 confirmation that the actual settings interface was fully correct following the manual-restart handoff. This supersedes the previously pending native-page presentation gate without inventing new agent measurements, cold-login results, or a cross-version live matrix.
+- Added release notes covering the seven-model picker, no-task selection/refresh-loop fixes, original click/drag easing, version-prefixed labels, Spark Retiring, native initialization, and corrected page background/insets. Preserve all historical tags/releases and source-only distribution with no unsigned/non-notarized prebuilt executable.
+- Passed all 58 offline tests, manifest/syntax/documentation and relative-link checks, release build/version/resources, and read-only compatibility status on Codex build `8881`. Renderer and settings HTML are byte-identical to the user-accepted source. Publishing does not reinstall CoPicker, change saved preferences, reload MCP, or restart Codex; remote branch/tag/Release identity is verified after publication.
+
 ## 2026-09-12 21:35:00 +0100
 
 - Fixed CoPicker native settings background and vertical insets in renderer `0.12.20`. Build `8881` embeds the MCP page from the pane's top and appends a stylesheet that resets body padding; the page now owns its background, 46 px toolbar spacer, and 20 px padded scroll viewport below those reset targets. The parent-controlled fallback disables the extra spacer and uses the actual native surface token. Preserved rail behavior, labels, controls, and preferences.

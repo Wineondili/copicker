@@ -17,8 +17,8 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Layer | Current accepted value | Where it is defined |
 | --- | --- | --- |
 | Accepted runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | [accepted-baseline.md](accepted-baseline.md) |
-| Published GitHub pre-release | `v0.99.0` | Immutable annotated tag/release; `v0.99.0^{commit}` resolves its package commit |
-| CLI and plugin | `0.99.0` | `ProjectInfo.version` and plugin manifest |
+| Stable GitHub release | `v1.0.0` | Immutable annotated tag/release; `v1.0.0^{commit}` resolves its package commit |
+| CLI and plugin | `1.0.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
 | Current renderer | `0.12.20` | `model-rail.js` `VERSION`; native settings surface/insets are owned outside the sandbox reset |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
@@ -28,7 +28,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
 
-The public `v0.99.0` pre-release packages the accepted six-model implementation at renderer `0.12.8`; `v0.11.0` remains an immutable historical three-model release. Compatibility and live-failure history is retained in [accepted-baseline.md](accepted-baseline.md). Current `main` is renderer `0.12.20`, correcting native settings background and scroll insets while preserving the radio-list adaptation, initialization, Spark retirement notice, and version-prefixed rail labels. Model IDs, internal names, catalog aliases, effort cells, and persisted preferences remain unchanged. Live switches and user-reported first-message routing passed on `0.12.16` without a Codex restart. Keep source tests, settings-resource/backend delivery, live interaction, restart, and publication evidence separate.
+The stable `v1.0.0` package contains the seven-model renderer `0.12.20`; `v0.99.0` and `v0.11.0` remain immutable historical releases. Compatibility history is retained in [accepted-baseline.md](accepted-baseline.md). The package preserves the radio-list adaptation, initialization, Spark retirement notice, version-prefixed labels, and corrected native settings surface. Live switches and user-reported routing passed on `0.12.16`; on 2026-09-13 the user confirmed the actual v4 settings interface after the manual-restart handoff. Release metadata does not create a new exhaustive runtime or cold-login pass.
 
 ## Supported development boundary
 
@@ -64,7 +64,7 @@ git rev-parse origin/main
 git remote -v
 ```
 
-Do not use a shallow `--branch v0.99.0` installation checkout for ongoing development. A tag checkout is deliberately detached and suitable for reproducible installation or historical investigation, not for retaining development commits.
+Do not use a shallow `--branch v1.0.0` installation checkout for ongoing development. A tag checkout is deliberately detached and suitable for reproducible installation or historical investigation, not for retaining development commits.
 
 ## Package products and repository layout
 
@@ -177,7 +177,7 @@ The complete normative behavior is in [accepted-baseline.md](accepted-baseline.m
 - Resolve an active task ID only from the unique open trigger's own composer; never fall back to a document-wide or cached task marker.
 - With that exact active task ID, use `thread/settings/update` and require the matching `thread/settings/updated` confirmation.
 - Before the current composer has a task ID, resolve the exact trigger-owned primary menu, the bounded power/non-Power/flat layout, and Model/Effort/Speed flyouts through semantic roles and `aria-controls`; preflight target and rollback leaves, capture two matching official Model/Effort/tier tuples, bind mutations to the original unsent composer, establish Standard only through an observed catalog-resolved Fast-to-Standard transition, and recapture the complete tuple after rollback.
-- Preserve the six-row order and effort matrix. Daybreak and Codex Spark cannot use Fast and must clear it.
+- Preserve the current seven-row order and effort matrix. Daybreak and Codex Spark cannot use Fast and must clear it.
 - Do not proxy build `7377`'s generic Daybreak program checkbox as though it were the `daybreak-blue` Model leaf. Reject the Daybreak row when that program control is present; allow ordinary model commits only while it is explicitly off, and reject them while it is enabled, busy, disabled, or otherwise ambiguous. Treat one exact legacy Daybreak Model leaf as the normal model-backed topology and permit mutation while rechecking that the program control remains absent. If neither exact topology is observable, reject every mutation-bearing selection. Supporting the separate program requires an explicit base-model/effort policy because the official transition may remap current and default model selections.
 - Recognize hidden adapted models without selecting an invisible row; show empty centered `Other` for unsupported models.
 - Preserve top/left/right placement, nested-menu avoidance, no-flicker latching, pointer-gated side restoration, viewport clamping, and the 12-pixel separation/inset contract.

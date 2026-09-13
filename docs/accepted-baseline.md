@@ -15,9 +15,11 @@ Historical evidence remains useful, but it must not silently override a later ac
 <!-- COPICKER_ACCEPTED_BASELINE_V1
 accepted_runtime_commit=c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
 accepted_live_cli_version=0.12.0-dev
-published_release_tag=v0.99.0
-published_release_commit=v0.99.0^{commit}
-cli_version=0.99.0
+published_release_tag=v1.0.0
+published_release_commit=v1.0.0^{commit}
+cli_version=1.0.0
+accepted_settings_source_commit=cef86adf81af0bae970cbd93591cc08c72d28b7e
+accepted_settings_user_confirmation_date=2026-09-13
 renderer_version=0.12.20
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v4.html
@@ -47,7 +49,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Item | Accepted value | Status |
 | --- | --- | --- |
 | Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
-| CLI/plugin release | `0.99.0` | Current source-distributed pre-release package |
+| CLI/plugin release | `1.0.0` | Current source-distributed stable release package |
 | Current renderer | `0.12.20` | Owns the native settings background and scroll insets outside the sandbox body reset; retains accepted rail behavior and labels |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
@@ -56,15 +58,15 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
 | Settings resource | `ui://copicker/settings/v4.html` | Current MCP App document; v3 and v2 are retained as read aliases with the requested URI echoed |
-| Public GitHub release | `v0.99.0` | Full-feature immutable source pre-release; the annotated tag resolves its exact package commit |
+| Public GitHub release | `v1.0.0` | Full-feature immutable stable source release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
 | Current inspected Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; Node inspection works without a Codex restart |
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
-| Current installed watcher | CLI `0.99.0`, renderer/settings `0.12.20`, loaded, `injection-succeeded` | Verified on unchanged Codex PID (omitted), build `8881`; source/release/installed hashes match, and preferences and the LaunchAgent plist are byte-identical |
+| Pre-restart installed watcher | CLI `0.99.0`, renderer/settings `0.12.20`, loaded, `injection-succeeded` | Verified before the user's restart on build `8881`; the release-only CLI/plugin version bump does not imply reinstalling this machine |
 | Current settings backend | v4 resource with v3/v2 read aliases and owned page surface | Fresh-process checks pass; after the authorized configuration refresh, the actual native threadless MCP path also returns the v4 document. Already-rendered page cache is a separate gate |
-| Native v4 presentation | Pending in the existing Codex window | Reopening the entry after refresh and CoPicker-only re-registration still retained the old document without the owned shell; no native visual pass or app restart is claimed |
+| Native v4 presentation | User-confirmed passed on 2026-09-13, source `cef86ad` | After the manual-restart handoff, the user explicitly confirmed the actual interface was fully correct. This supersedes the earlier old-window cache/presentation blocker; no new agent-measured post-restart geometry or cold-login pass is claimed |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
 `v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
@@ -82,6 +84,8 @@ Renderer `0.12.13` recognized both `null` and the observed official `"default"` 
 Renderer `0.12.14` addressed the build-`7377` refresh loop. It never opens nested official controls for idle no-task synchronization, coalesces a duplicate in-flight thread classification without scheduling a same-key retry, ignores proxy-owned Daybreak structural churn when tracking external state, and suppresses selector reinitialization while bounded classification is reading official controls. A successful no-task selection remains confirmed across a same-composer trigger remount. Explicit no-task selection still performs one bounded official-control transaction because the inspected renderer exposes no equivalent public method for its draft/default/prewarm workflow. The separate Daybreak program policy, strict transaction baselines, pointer animation, and release-coordinate commit state machine remain unchanged. On 2026-09-10, the installed watcher confirmed this payload injected into build `8378`; that proves injection, not compatibility with its redesigned picker.
 
 The historical full-runtime and native-settings-geometry acceptance remains tied to CLI label `0.12.0-dev` and Codex build `7119`. On 2026-09-12, hot-loaded renderer `0.12.16` additionally passed live picker selection on build `8881`; the user explicitly confirmed that selected models can send and that actual model routing is correct. That acceptance does not imply a new settings-geometry, restart, cold-login, or published-release pass.
+
+`v1.0.0` packages the current seven-model renderer `0.12.20` and settings resource v4. It incorporates the build-`8881` picker and user-confirmed routing acceptance from `e18ff8f`, plus the later settings surface at `cef86ad` whose native presentation the user confirmed on 2026-09-13. The release preparation changes CLI/plugin version metadata and documentation only; it does not modify the accepted renderer or HTML. The older full-runtime anchor remains historical rather than being silently relabeled as a new exhaustive acceptance pass.
 
 ## Product requirements
 

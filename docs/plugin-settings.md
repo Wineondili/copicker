@@ -6,7 +6,7 @@ Current versions:
 
 | Layer | Value |
 | --- | --- |
-| CLI/plugin release | `0.99.0` |
+| CLI/plugin release | `1.0.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v4.html` (v3 and v2 read aliases retained) |
 | Renderer fallback on current `main` | `0.12.20` |
@@ -14,7 +14,7 @@ Current versions:
 | Accepted runtime code | `c0343d4` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
-| Current native settings validation | `26.908.40834` build `8881`; initialized candidate document displayed and user-tested saving passed |
+| Current native settings validation | Build `8881` inspected; on 2026-09-13 the user confirmed the actual v4 interface after the manual-restart handoff, superseding the old-window presentation blocker |
 
 ## Native initialization fix in 0.12.17
 
@@ -40,7 +40,7 @@ The v4 document owns a full-height shell below the reset targets. It paints the 
 
 Resource v4 distinguishes this layout contract from cached v3 documents. Fresh services still accept v3 and v2 reads and echo the requested URI. The plugin's stdio environment includes `COPICKER_SETTINGS_RESOURCE_URI`, checked against the Swift resource URI by an offline contract, so a resource revision also changes the server configuration rather than replacing files behind an unchanged configuration. Rebuilding/installing alone does not invalidate an already-loaded MCP connection or native page. Global MCP refresh remains separately authorized because it can affect other tasks; a queued refresh is not evidence of new resource delivery until read back.
 
-Delivery verification must cover both the stable local marketplace copy and the actual installed plugin cache: copying `.mcp.json` into the marketplace alone is not proof that the cached package changed. The existing installation workflow re-registers only `copicker@copicker-local`; after this step the installed manifest hash matched source, and the actual native threadless MCP resource path returned v4. Nevertheless, reopening the entry in the existing window still showed the old document. The app's browser-page reload commands were disabled for this native surface. Do not equate service delivery with rendered adoption, repeatedly force-refresh unrelated tools, or terminate task services; a later user-owned restart remains the presentation handoff.
+Delivery verification must cover both the stable local marketplace copy and the actual installed plugin cache: copying `.mcp.json` into the marketplace alone is not proof that the cached package changed. The existing installation workflow re-registers only `copicker@copicker-local`; after this step the installed manifest hash matched source, and the actual native threadless MCP resource path returned v4. Reopening the entry in the old window still showed the old document, and browser-page reload commands were disabled. The user subsequently confirmed the actual interface was fully correct on 2026-09-13 following the manual-restart handoff, closing that presentation blocker. Preserve this distinction between service delivery and rendered adoption; do not repeatedly force-refresh unrelated tools or terminate task services.
 
 ## Package layout
 

@@ -10,9 +10,9 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 | Layer | Current value | Meaning |
 | --- | --- | --- |
-| Latest GitHub release | `v0.99.0` pre-release | Current full-feature, source-distributed package |
+| Latest GitHub release | `v1.0.0` stable | Current full-feature, source-distributed package |
 | Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
-| CLI and plugin version | `0.99.0` | Version reported by the current pre-release package |
+| CLI and plugin version | `1.0.0` | Version reported by the stable release package |
 | Current renderer | `0.12.20` on `main` | Fixes native settings background and vertical insets; retains version-prefixed rail labels and Spark Retiring |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
@@ -20,19 +20,19 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Live-accepted Codex build | `26.820.60940` (`7119`) | Build on which the current UI and interaction baseline was accepted |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present during the accepted installation before the release-only bump |
 
-The current runtime baseline was installed and accepted on Apple silicon with Codex `26.820.60940` build `7119`. The user confirmed that the final CoPicker settings geometry matches the official settings page. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
+The current package targets the verified Codex `26.908.40834` build `8881` picker. Model selection and actual routing were user-confirmed; after the manual-restart handoff, the user confirmed the corrected native settings interface on 2026-09-13. The original full-runtime baseline on Apple silicon with build `7119` remains historical. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-`v0.99.0` packages the accepted full-feature implementation with release metadata; its renderer `0.12.8` remains unchanged from `c0343d4`. Later candidates repaired pointer release and restored its original easing, then addressed the build-`7377` proxy and refresh loop. Renderer `0.12.15` added the redesigned radio-list/strength-slider adapter and Astra. Renderer `0.12.16` additionally tolerates unrelated unselected model radios observed on Codex `26.908.40834` build `8881`. It passed live selection and user-reported sending/model-routing checks without restarting Codex. Persistent installation, restart/cold-login, and publication are separate gates; `v0.99.0` remains the immutable published install ref.
+`v1.0.0` packages renderer `0.12.20`: seven-model selection, no-task refresh-loop fixes, the original click/drag easing, version-prefixed labels, Spark Retiring, native settings initialization, and the corrected background/scroll insets. Its renderer and settings HTML are unchanged from user-accepted source `cef86ad`. `v0.99.0` remains the immutable older six-model pre-release. Installation, user acceptance, cold-login checks, and publication are separate gates.
 
-See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v0.99.0 release notes](docs/releases/v0.99.0.md) for the packaged feature and validation boundary.
+See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v1.0.0 release notes](docs/releases/v1.0.0.md) for the packaged feature and validation boundary.
 
 ## Install on a new Mac
 
-Install the immutable full-feature pre-release tag:
+Install the immutable full-feature stable release tag:
 
 ```bash
 xcode-select --install
-git clone --branch v0.99.0 --depth 1 https://github.com/Wineondili/copicker.git
+git clone --branch v1.0.0 --depth 1 https://github.com/Wineondili/copicker.git
 cd copicker
 ./script/install.sh
 ```
@@ -48,7 +48,7 @@ git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
 
 Run the installer as the logged-in user, never with `sudo`. The official Codex desktop app must be installed at `/Applications/ChatGPT.app`, and the `codex` CLI must be available because the current full-feature installer registers the local settings plugin.
 
-The pre-release is source-distributed. GitHub supplies its standard source archives; no unsigned or non-notarized prebuilt executable is attached. Building on the target Mac avoids shipping a machine-specific native binary.
+The release is source-distributed. GitHub supplies its standard source archives; no unsigned or non-notarized prebuilt executable is attached. Building on the target Mac avoids shipping a machine-specific native binary.
 
 The installer may inject an already-running Codex process when it loads the watcher. It never quits or restarts Codex. For the cleanest first acceptance, run the installer, then quit and reopen Codex yourself.
 
@@ -71,7 +71,7 @@ Full prerequisites, release and runtime-anchor paths, verification, settings mig
 | Space | Toggle Fast when the selected model supports it |
 | Escape or outside click | Close the official picker and CoPicker |
 
-The current candidate supports Astra, Sol, Terra, Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark in a fixed order. Astra is new in `0.12.15` and can be enabled in model visibility settings. On build `8378`, Default displays as `Default`; other unsupported models display centered gray `Other`. Daybreak and Codex Spark do not support Fast in CoPicker. The published `v0.99.0` package retains its original six-model matrix.
+The current release supports Astra, Sol, Terra, Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark in a fixed order. Astra can be enabled in model visibility settings. Default displays as `Default`; unsupported models display centered gray `Other`. Daybreak and Codex Spark do not support Fast in CoPicker. Spark's Retiring notice is informational; actual availability comes from the official catalog. The historical `v0.99.0` package retains its original six-model matrix.
 
 The legacy adapter distinguishes two build-`7377` Daybreak topologies. When Codex exposes the separate Daybreak program checkbox that may remap base-model defaults, CoPicker rejects the Daybreak row and allows ordinary model commits only while that exact control is explicitly off. Enabled, busy, disabled, or otherwise ambiguous program state remains fail-closed. When Codex instead exposes one exact legacy Daybreak Model leaf—as observed live on the current account—renderer `0.12.14` treats it as the normal model-backed topology and permits official model mutations. If neither topology is observable, mutation still fails closed because no bounded signal distinguishes no entitlement from unresolved verified access.
 
@@ -182,7 +182,8 @@ Before changing UI, model behavior, selectors, versions, installation, or live c
 
 ## Documentation map
 
-- [v0.99.0 release notes](docs/releases/v0.99.0.md)
+- [v1.0.0 release notes](docs/releases/v1.0.0.md)
+- [Historical v0.99.0 release notes](docs/releases/v0.99.0.md)
 - [Accepted product and compatibility baseline](docs/accepted-baseline.md)
 - [Install on a new Mac, update, recover, or uninstall](docs/installation.md)
 - [Use the selector and settings](docs/usage.md)

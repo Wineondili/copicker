@@ -1,5 +1,13 @@
 # Design QA
 
+## 2026-09-13 — User acceptance and v1.0.0 release boundary
+
+- Following the manual-restart handoff, the user explicitly reported that the actual CoPicker settings interface was fully correct. This closes the native v4 presentation blocker recorded below for runtime source `cef86adf81af0bae970cbd93591cc08c72d28b7e` and renderer `0.12.20`.
+- This is user-confirmed runtime acceptance, not a new agent-measured post-restart DOM pass. The earlier source, isolated dark/light/narrow checks, native reference measurements, installation hashes, and actual MCP resource delivery remain their own evidence layers. No exhaustive live effort matrix, cold-login/reboot, or cross-version acceptance is added.
+- The v1.0.0 publication changes CLI/plugin distribution metadata and documentation only. Renderer JavaScript and settings HTML remain byte-identical to the accepted source; no new live injection, local reinstallation, or Codex restart is part of publication.
+
+result: native settings presentation user-confirmed passed; prior old-window cache blocker superseded
+
 ## 2026-09-12 — Native settings surface ownership
 
 - User screenshots showed CoPicker's title touching the window top, a darker page background, and missing bottom space. Direct read-only measurements on Codex `26.908.40834` build `8881` confirmed Browser settings uses `--color-surface: #181818`, a 46 CSS px toolbar region, a scroll viewport with 20 px padding, a 768 px content column, and heading `y=66` at a `1440 × 810` window.

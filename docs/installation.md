@@ -1,24 +1,25 @@
 # Installing CoPicker on another Mac
 
-CoPicker `v0.99.0` is source-distributed. Building on the target Mac avoids distributing an unsigned/non-notarized executable and produces a native binary for that machine.
+CoPicker `v1.0.0` is source-distributed. Building on the target Mac avoids distributing an unsigned/non-notarized executable and produces a native binary for that machine.
 
-This guide covers the current immutable pre-release, its live-accepted runtime anchor, and historical rollback. Read [accepted-baseline.md](accepted-baseline.md) before choosing a version.
+This guide covers the current immutable stable release, its acceptance boundaries, and historical rollback. Read [accepted-baseline.md](accepted-baseline.md) before choosing a version.
 
 ## Choose the intended version
 
 | Choice | Ref | Feature set | Publication status |
 | --- | --- | --- | --- |
-| Recommended current pre-release | `v0.99.0` | Six models, settings page, persistence, Apply now, top/left/right placement, no-task selection, final native settings geometry | Published full-feature pre-release |
-| Live-accepted runtime anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Same renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact installed/UI/restart evidence and rollback anchor |
+| Recommended stable release | `v1.0.0` | Seven models, current picker/no-task support, original easing, settings v4 with corrected surface, persistence and placement | Full-feature stable source release |
+| Previous pre-release | `v0.99.0` | Original six-model selector and settings | Immutable historical pre-release; not the current picker adapter |
+| Historical live-accepted runtime anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Original renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact older installed/UI/restart evidence and rollback anchor |
 | Historical pre-release | `v0.11.0` | Older Sol/Terra/Luna rail and guarded autostart | Immutable historical pre-release |
 
-Do not install moving `main` when reproducibility matters. Use `v0.99.0` for a normal new installation. The annotated tag resolves the exact release commit through `v0.99.0^{commit}`. Use `c0343d4` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
+Do not install moving `main` when reproducibility matters. Use `v1.0.0` for a normal new installation. The annotated tag resolves the exact release commit through `v1.0.0^{commit}`. Use `c0343d4` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
 
 ## Compatibility boundary
 
 - Swift package minimum: macOS 14 or later.
 - Live-verified architecture: Apple silicon `arm64`.
-- Full-feature accepted environment: Codex `26.820.60940` build `7119`.
+- Current picker and user-confirmed settings environment: Codex `26.908.40834` build `8881`; historical full-runtime acceptance remains build `7119`.
 - Official app path: `/Applications/ChatGPT.app`.
 - Official bundle identifier: `com.openai.codex`.
 - Build toolchain: Xcode Command Line Tools or Xcode with Swift 6 or later.
@@ -53,15 +54,15 @@ xcode-select --install
 
 If the Codex CLI is unavailable, install or update Codex through its normal supported distribution before installing the full-feature CoPicker baseline. Do not work around the check by copying another machine's native executable.
 
-## Install the current full-feature pre-release
+## Install the current full-feature stable release
 
-Clone the exact `v0.99.0` tag and run the installer:
+Clone the exact `v1.0.0` tag and run the installer:
 
 ```bash
-git clone --branch v0.99.0 --depth 1 \
+git clone --branch v1.0.0 --depth 1 \
   https://github.com/Wineondili/copicker.git \
-  copicker-v0.99.0
-cd copicker-v0.99.0
+  copicker-v1.0.0
+cd copicker-v1.0.0
 git status --short --branch
 ./script/install.sh
 ```
@@ -85,7 +86,7 @@ The full-feature installer:
 
 If Codex is already running, loading the watcher may inject that PID immediately. The installer never quits or restarts Codex. For a clean acceptance boundary, let the installer finish, then quit and reopen Codex yourself.
 
-This pre-release has no attached unsigned/non-notarized executable. GitHub's standard source archives and the pinned clone above are the package; the native executable is built on the target Mac.
+This release has no attached unsigned/non-notarized executable. GitHub's standard source archives and the pinned clone above are the package; the native executable is built on the target Mac.
 
 ## Reproduce the live-accepted runtime anchor
 
@@ -98,7 +99,7 @@ git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
 ./script/install.sh
 ```
 
-The older `v0.11.0` tag remains available as historical three-model source. It is not the recommended installation and does not contain the current six-model settings plugin/fallback.
+The older `v0.11.0` tag remains available as historical three-model source. It is not the recommended installation and does not contain the current seven-model settings plugin/fallback.
 
 ## First start and first acceptance
 
@@ -129,17 +130,17 @@ codex plugin list --json
 lsof -nP -iTCP:9229 -sTCP:LISTEN
 ```
 
-For the `v0.99.0` pre-release, confirm:
+For the `v1.0.0` stable release, confirm:
 
 ```text
-Copicker 0.99.0
+Copicker 1.0.0
 LaunchAgent plist: installed
 LaunchAgent service: loaded
 Installed executable: present
 Installed resource bundle: present
 Last watcher phase: injected
 Last result: injection-succeeded
-Watcher Copicker version: 0.99.0
+Watcher Copicker version: 1.0.0
 ```
 
 When Codex is not running, `waiting-for-codex` is expected. Immediately after install, the asynchronous watcher state may briefly contain an earlier phase; wait several seconds and recheck.
@@ -267,7 +268,7 @@ If the current process must be cleaned before quitting:
 
 `remove` is a live guarded Inspector action. Do not run it without the applicable authorization.
 
-The current packaged rollback point is `v0.99.0`; the exact live-acceptance runtime anchor is `c0343d4`; the historical three-model release is `v0.11.0`.
+The previous packaged rollback point is `v0.99.0`; the historical full-runtime anchor is `c0343d4`; the historical three-model release is `v0.11.0`. These older versions may not support the redesigned current Codex picker; verify the intended Codex build before rolling back.
 
 ## Recover from an interrupted or failed install
 

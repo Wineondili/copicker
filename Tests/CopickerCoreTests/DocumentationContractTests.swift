@@ -60,8 +60,10 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
 
     #expect(values["accepted_runtime_commit"] == "c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb")
     #expect(values["accepted_live_cli_version"] == "0.12.0-dev")
-    #expect(values["published_release_tag"] == "v0.99.0")
-    #expect(values["published_release_commit"] == "v0.99.0^{commit}")
+    #expect(values["published_release_tag"] == "v1.0.0")
+    #expect(values["published_release_commit"] == "v1.0.0^{commit}")
+    #expect(values["accepted_settings_source_commit"] == "cef86adf81af0bae970cbd93591cc08c72d28b7e")
+    #expect(values["accepted_settings_user_confirmation_date"] == "2026-09-13")
     #expect(values["cli_version"] == ProjectInfo.version)
     #expect(plugin["version"] as? String == ProjectInfo.version)
     #expect(rendererVersion == "0.12.20")
@@ -96,6 +98,7 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     let contributing = try documentationText("CONTRIBUTING.md")
     let designQA = try documentationText("design-qa.md")
     let releaseNotes = try documentationText("docs/releases/v0.99.0.md")
+    let currentReleaseNotes = try documentationText("docs/releases/v1.0.0.md")
     let installer = try documentationText("script/install.sh")
 
     let acceptedCommit = try #require(values["accepted_runtime_commit"])
@@ -134,6 +137,11 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     #expect(releaseNotes.contains("Copicker v0.99.0"))
     #expect(releaseNotes.contains("no unsigned or non-notarized prebuilt executable"))
     #expect(releaseNotes.contains("35 offline tests"))
+    #expect(currentReleaseNotes.contains("Copicker v1.0.0"))
+    #expect(currentReleaseNotes.contains("58 offline tests"))
+    #expect(currentReleaseNotes.contains("user-confirmed"))
+    #expect(currentReleaseNotes.contains("no unsigned or non-notarized prebuilt executable"))
+    #expect(currentReleaseNotes.contains("git clone --branch v1.0.0"))
 
     #expect(values["official_settings_toolbar_height_css_px"] == "46")
     #expect(values["official_settings_panel_inset_css_px"] == "20")

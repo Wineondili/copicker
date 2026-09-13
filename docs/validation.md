@@ -165,7 +165,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Gate | Evidence |
 | --- | --- |
 | Live-accepted runtime source | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` |
-| Current package | `v0.99.0`; CLI/plugin `0.99.0` |
+| Current package | `v1.0.0` stable; CLI/plugin `1.0.0`, renderer `0.12.20`, settings v4 |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
@@ -179,14 +179,14 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Native settings interaction | The candidate document reached `ready` in the real native sandbox, displayed seven rows, and loaded preferences; the user manually confirmed successful opening and saving |
 | Fresh installed MCP process | Advertises v4; v4, v3, and v2 reads return the source-exact owned-surface document. The actual native threadless resource path also returned the v4 fix after an authorized configuration refresh; this does not prove an already-rendered old page refreshed |
 | Native surface regression | Build `8881` Browser settings measures background `#181818`, heading `y=66`, viewport `y=46`, and 20 px padding. The old CoPicker document instead had zero body padding under the later sandbox stylesheet. The real-HTML local fixture with that reset now matches the native geometry, retains approximately 20 px bottom space, and avoids duplicate toolbar space in fallback mode |
-| Native v4 presentation | Not yet passed: the existing window keeps an old page instance even after authorized MCP refresh, CoPicker-only re-registration, and user-driven entry reopening. Native surface adoption requires a later user-owned app restart or another supported page recreation; no force-kill or private UI-cache mutation was used |
+| Native v4 presentation | User-confirmed passed on 2026-09-13 after the manual-restart handoff for source `cef86ad`. This supersedes the old-window presentation blocker; no new agent-measured post-restart geometry or cold-login result is claimed |
 | Live-accepted Codex | `26.820.60940` build `7119` |
 | Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |
 | Settings geometry | live official DOM measured; final user response: completely identical |
 | Inspector | closed after bounded work; no idle listener |
-| Public runtime release | `v0.99.0` full-feature source pre-release; no prebuilt executable attached |
+| Public runtime release | `v1.0.0` full-feature stable source release; no prebuilt executable attached |
 
 The accepted watcher, UI, and Inspector evidence applies specifically to Codex `26.820.60940` build `7119` and runtime source `c0343d4`; none of those rows is live evidence for the statically inspected build `7377`. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
 
