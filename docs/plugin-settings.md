@@ -11,7 +11,7 @@ Current versions:
 | MCP App resource | `ui://copicker/settings/v4.html` (v3 and v2 read aliases retained) |
 | Renderer fallback on current `main` | `0.12.20` |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
-| Accepted runtime code | `c0343d4` |
+| Accepted runtime code | `c127509` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
 | Current native settings validation | Build `8881` inspected; on 2026-09-13 the user confirmed the actual v4 interface after the manual-restart handoff, superseding the old-window presentation blocker |
@@ -250,7 +250,7 @@ Expected responses advertise CoPicker server metadata, the three app-only tools,
 
 ## Live acceptance status
 
-The current settings surface is no longer in a pending visual phase. For runtime commit `c0343d4` on Codex build `7119`:
+The current settings surface is no longer in a pending visual phase. For runtime commit `c127509` on Codex build `7119`:
 
 - sidebar fallback/native deduplication was operational;
 - persistence and Apply-now behavior were operational;

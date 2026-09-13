@@ -1,5 +1,7 @@
 # CoPicker
 
+Source-sharing privacy guidance and the one-time history-cleanup notice are in [docs/source-sharing.md](docs/source-sharing.md). Use a fresh clone after the 2026-09-13 cleanup; do not merge older history back into this repository.
+
 CoPicker is a local macOS companion for the official Codex desktop app. It adds a compact model, reasoning-effort, and Fast-tier rail beside Codex's first-level model picker, plus a persistent CoPicker page under **Settings → Integrations**.
 
 CoPicker does **not** modify, unpack into, replace, or re-sign `/Applications/ChatGPT.app`. A guarded local injector briefly enables Electron's loopback Node Inspector, installs a versioned renderer hook through `webContents.executeJavaScript`, and closes the Inspector immediately. The official OpenAI bundle, signature, permissions, Keychain access groups, App Groups, and update path remain unchanged.
@@ -11,7 +13,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Layer | Current value | Meaning |
 | --- | --- | --- |
 | Latest GitHub release | `v1.0.0` stable | Current full-feature, source-distributed package |
-| Accepted full-feature runtime code | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
+| Accepted full-feature runtime code | `c127509ae0a05f50c14757d2a212b79951126f46` | Accepted six-model, persistent-settings, placement, and native-geometry baseline |
 | CLI and plugin version | `1.0.0` | Version reported by the stable release package |
 | Current renderer | `0.12.20` on `main` | Fixes native settings background and vertical insets; retains version-prefixed rail labels and Spark Retiring |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
@@ -22,7 +24,7 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 The current package targets the verified Codex `26.908.40834` build `8881` picker. Model selection and actual routing were user-confirmed; after the manual-restart handoff, the user confirmed the corrected native settings interface on 2026-09-13. The original full-runtime baseline on Apple silicon with build `7119` remains historical. Private Codex DOM, Electron, plugin, and app-server behavior remain version-sensitive, so a later Codex build must be checked independently.
 
-`v1.0.0` packages renderer `0.12.20`: seven-model selection, no-task refresh-loop fixes, the original click/drag easing, version-prefixed labels, Spark Retiring, native settings initialization, and the corrected background/scroll insets. Its renderer and settings HTML are unchanged from user-accepted source `cef86ad`. `v0.99.0` remains the immutable older six-model pre-release. Installation, user acceptance, cold-login checks, and publication are separate gates.
+`v1.0.0` packages renderer `0.12.20`: seven-model selection, no-task refresh-loop fixes, the original click/drag easing, version-prefixed labels, Spark Retiring, native settings initialization, and the corrected background/scroll insets. Its renderer and settings HTML are unchanged from user-accepted source `6979811`. `v0.99.0` remains the immutable older six-model pre-release. Installation, user acceptance, cold-login checks, and publication are separate gates.
 
 See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v1.0.0 release notes](docs/releases/v1.0.0.md) for the packaged feature and validation boundary.
 
@@ -40,9 +42,9 @@ cd copicker
 For forensic comparison or rollback to the exact code that was installed during live acceptance, use the runtime anchor instead:
 
 ```bash
-git clone https://github.com/Wineondili/copicker.git copicker-c0343d4
-cd copicker-c0343d4
-git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+git clone https://github.com/Wineondili/copicker.git copicker-c127509
+cd copicker-c127509
+git checkout --detach c127509ae0a05f50c14757d2a212b79951126f46
 ./script/install.sh
 ```
 

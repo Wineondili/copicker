@@ -10,10 +10,10 @@ This guide covers the current immutable stable release, its acceptance boundarie
 | --- | --- | --- | --- |
 | Recommended stable release | `v1.0.0` | Seven models, current picker/no-task support, original easing, settings v4 with corrected surface, persistence and placement | Full-feature stable source release |
 | Previous pre-release | `v0.99.0` | Original six-model selector and settings | Immutable historical pre-release; not the current picker adapter |
-| Historical live-accepted runtime anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Original renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact older installed/UI/restart evidence and rollback anchor |
+| Historical live-accepted runtime anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Original renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact older installed/UI/restart evidence and rollback anchor |
 | Historical pre-release | `v0.11.0` | Older Sol/Terra/Luna rail and guarded autostart | Immutable historical pre-release |
 
-Do not install moving `main` when reproducibility matters. Use `v1.0.0` for a normal new installation. The annotated tag resolves the exact release commit through `v1.0.0^{commit}`. Use `c0343d4` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
+Do not install moving `main` when reproducibility matters. Use `v1.0.0` for a normal new installation. The annotated tag resolves the exact release commit through `v1.0.0^{commit}`. Use `c127509` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
 
 ## Compatibility boundary
 
@@ -93,9 +93,9 @@ This release has no attached unsigned/non-notarized executable. GitHub's standar
 Use this only for exact evidence reproduction or rollback. It reports CLI/plugin `0.12.0-dev` but contains the same accepted renderer `0.12.8` behavior packaged by `v0.99.0`:
 
 ```bash
-git clone https://github.com/Wineondili/copicker.git copicker-c0343d4
-cd copicker-c0343d4
-git checkout --detach c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+git clone https://github.com/Wineondili/copicker.git copicker-c127509
+cd copicker-c127509
+git checkout --detach c127509ae0a05f50c14757d2a212b79951126f46
 ./script/install.sh
 ```
 
@@ -268,7 +268,7 @@ If the current process must be cleaned before quitting:
 
 `remove` is a live guarded Inspector action. Do not run it without the applicable authorization.
 
-The previous packaged rollback point is `v0.99.0`; the historical full-runtime anchor is `c0343d4`; the historical three-model release is `v0.11.0`. These older versions may not support the redesigned current Codex picker; verify the intended Codex build before rolling back.
+The previous packaged rollback point is `v0.99.0`; the historical full-runtime anchor is `c127509`; the historical three-model release is `v0.11.0`. These older versions may not support the redesigned current Codex picker; verify the intended Codex build before rolling back.
 
 ## Recover from an interrupted or failed install
 

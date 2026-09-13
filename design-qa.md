@@ -2,7 +2,7 @@
 
 ## 2026-09-13 — User acceptance and v1.0.0 release boundary
 
-- Following the manual-restart handoff, the user explicitly reported that the actual CoPicker settings interface was fully correct. This closes the native v4 presentation blocker recorded below for runtime source `cef86adf81af0bae970cbd93591cc08c72d28b7e` and renderer `0.12.20`.
+- Following the manual-restart handoff, the user explicitly reported that the actual CoPicker settings interface was fully correct. This closes the native v4 presentation blocker recorded below for runtime source `6979811f4797ae9630f1b23fd0d5eee0551de68d` and renderer `0.12.20`.
 - This is user-confirmed runtime acceptance, not a new agent-measured post-restart DOM pass. The earlier source, isolated dark/light/narrow checks, native reference measurements, installation hashes, and actual MCP resource delivery remain their own evidence layers. No exhaustive live effort matrix, cold-login/reboot, or cross-version acceptance is added.
 - The v1.0.0 publication changes CLI/plugin distribution metadata and documentation only. Renderer JavaScript and settings HTML remain byte-identical to the accepted source; no new live injection, local reinstallation, or Codex restart is part of publication.
 
@@ -226,7 +226,7 @@ historical result: superseded; do not use the 42-pixel inset as a current implem
 
 - Source of truth: bounded `getBoundingClientRect()` and `getComputedStyle()` readings from the running official General settings page, not screenshot estimation or guessed minified utility classes.
 - Exact environment:
-  - runtime source `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb`;
+  - runtime source `c127509ae0a05f50c14757d2a212b79951126f46`;
   - CoPicker CLI/plugin `0.12.0-dev`;
   - renderer compatibility `0.12.8`;
   - Codex desktop `26.820.60940` build `7119`;

@@ -13,12 +13,12 @@ When sources disagree, use this precedence:
 Historical evidence remains useful, but it must not silently override a later accepted correction.
 
 <!-- COPICKER_ACCEPTED_BASELINE_V1
-accepted_runtime_commit=c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb
+accepted_runtime_commit=c127509ae0a05f50c14757d2a212b79951126f46
 accepted_live_cli_version=0.12.0-dev
 published_release_tag=v1.0.0
 published_release_commit=v1.0.0^{commit}
 cli_version=1.0.0
-accepted_settings_source_commit=cef86adf81af0bae970cbd93591cc08c72d28b7e
+accepted_settings_source_commit=6979811f4797ae9630f1b23fd0d5eee0551de68d
 accepted_settings_user_confirmation_date=2026-09-13
 renderer_version=0.12.20
 settings_schema_version=1
@@ -48,7 +48,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 | Item | Accepted value | Status |
 | --- | --- | --- |
-| Runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | Installed, live-reviewed, and user-accepted |
+| Runtime-code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Installed, live-reviewed, and user-accepted |
 | CLI/plugin release | `1.0.0` | Current source-distributed stable release package |
 | Current renderer | `0.12.20` | Owns the native settings background and scroll insets outside the sandbox body reset; retains accepted rail behavior and labels |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
@@ -66,10 +66,10 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Architecture | `arm64` | Live verified |
 | Pre-restart installed watcher | CLI `0.99.0`, renderer/settings `0.12.20`, loaded, `injection-succeeded` | Verified before the user's restart on build `8881`; the release-only CLI/plugin version bump does not imply reinstalling this machine |
 | Current settings backend | v4 resource with v3/v2 read aliases and owned page surface | Fresh-process checks pass; after the authorized configuration refresh, the actual native threadless MCP path also returns the v4 document. Already-rendered page cache is a separate gate |
-| Native v4 presentation | User-confirmed passed on 2026-09-13, source `cef86ad` | After the manual-restart handoff, the user explicitly confirmed the actual interface was fully correct. This supersedes the earlier old-window cache/presentation blocker; no new agent-measured post-restart geometry or cold-login pass is claimed |
+| Native v4 presentation | User-confirmed passed on 2026-09-13, source `6979811` | After the manual-restart handoff, the user explicitly confirmed the actual interface was fully correct. This supersedes the earlier old-window cache/presentation blocker; no new agent-measured post-restart geometry or cold-login pass is claimed |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
-`v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c0343d4`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
+`v0.99.0` packages renderer `0.12.8`, including the complete six-model, persistent-settings, placement-latching, no-task-selection, and native-settings-geometry source. Its renderer behavior is unchanged from the live-accepted runtime at `c127509`; the release preparation changes distribution metadata, tests, and documentation only. The exact release commit is intentionally resolved through the immutable annotated tag expression `v0.99.0^{commit}` instead of attempting to embed a commit's own hash inside itself.
 
 Renderer `0.12.9` was deliberately installed and the user confirmed that a continuous rapid drag commits the release cell without pausing. The same live pass confirmed that selection on a new unsent task still did not update the official composer trigger. Read-only inspection of the then-observed legacy/alternate picker branch showed one compatibility break: its menu item component rendered a `div[role="menuitem"][data-list-navigation-item="true"]`, while the proxy still required `button[data-list-navigation-item]` and therefore failed before invoking the official new-thread draft-setting callbacks.
 
@@ -85,7 +85,7 @@ Renderer `0.12.14` addressed the build-`7377` refresh loop. It never opens neste
 
 The historical full-runtime and native-settings-geometry acceptance remains tied to CLI label `0.12.0-dev` and Codex build `7119`. On 2026-09-12, hot-loaded renderer `0.12.16` additionally passed live picker selection on build `8881`; the user explicitly confirmed that selected models can send and that actual model routing is correct. That acceptance does not imply a new settings-geometry, restart, cold-login, or published-release pass.
 
-`v1.0.0` packages the current seven-model renderer `0.12.20` and settings resource v4. It incorporates the build-`8881` picker and user-confirmed routing acceptance from `e18ff8f`, plus the later settings surface at `cef86ad` whose native presentation the user confirmed on 2026-09-13. The release preparation changes CLI/plugin version metadata and documentation only; it does not modify the accepted renderer or HTML. The older full-runtime anchor remains historical rather than being silently relabeled as a new exhaustive acceptance pass.
+`v1.0.0` packages the current seven-model renderer `0.12.20` and settings resource v4. It incorporates the build-`8881` picker and user-confirmed routing acceptance from `43379d0`, plus the later settings surface at `6979811` whose native presentation the user confirmed on 2026-09-13. The release preparation changes CLI/plugin version metadata and documentation only; it does not modify the accepted renderer or HTML. The older full-runtime anchor remains historical rather than being silently relabeled as a new exhaustive acceptance pass.
 
 ## Product requirements
 
@@ -313,6 +313,8 @@ The screenshot-derived 42-pixel iframe top inset is explicitly superseded. It pl
 Historical QA records may retain the 42-pixel pass to explain the iteration, but must label it superseded and must not present it as current acceptance.
 
 ## Change and acceptance protocol
+
+The owner-authorized privacy maintenance on 2026-09-13 rewrote historical commits and reissued affected tags. Current source references below and in companion guides use the rewritten IDs; runtime contents and acceptance meaning are unchanged. See [source-sharing.md](source-sharing.md) before publishing or reusing an older clone.
 
 Any change to a requirement, model matrix, geometry, settings behavior, selector, version, installation path, or safety boundary must:
 

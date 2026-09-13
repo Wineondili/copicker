@@ -16,7 +16,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 
 | Layer | Current accepted value | Where it is defined |
 | --- | --- | --- |
-| Accepted runtime-code anchor | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` | [accepted-baseline.md](accepted-baseline.md) |
+| Accepted runtime-code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | [accepted-baseline.md](accepted-baseline.md) |
 | Stable GitHub release | `v1.0.0` | Immutable annotated tag/release; `v1.0.0^{commit}` resolves its package commit |
 | CLI and plugin | `1.0.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
@@ -26,7 +26,7 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Settings resource | `ui://copicker/settings/v4.html` | `CopickerMCPProtocol.settingsResourceURI`; v3 and v2 remain read aliases |
 | Live-accepted Codex | `26.820.60940` build `7119` | [accepted-baseline.md](accepted-baseline.md) |
 
-The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c0343d4`.
+The accepted runtime commit is older than the release metadata and documentation closure. That is intentional: documentation-only and version-only commits do not become runtime acceptance anchors. A later behavioral source change must earn its own build, live compatibility, interaction, settings, restart, and Inspector-closure evidence before replacing `c127509`.
 
 The stable `v1.0.0` package contains the seven-model renderer `0.12.20`; `v0.99.0` and `v0.11.0` remain immutable historical releases. Compatibility history is retained in [accepted-baseline.md](accepted-baseline.md). The package preserves the radio-list adaptation, initialization, Spark retirement notice, version-prefixed labels, and corrected native settings surface. Live switches and user-reported routing passed on `0.12.16`; on 2026-09-13 the user confirmed the actual v4 settings interface after the manual-restart handoff. Release metadata does not create a new exhaustive runtime or cold-login pass.
 

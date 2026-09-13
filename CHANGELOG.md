@@ -1,8 +1,14 @@
 # Changelog
 
+## 2026-09-13 09:32:11 +0100
+
+- Per owner authorization, sanitized personal machine paths, local artifact references, concrete process identifiers, and personal preference snapshots throughout public history and release snapshots. Runtime source and normal authorship remain unchanged; no app, account, or installed preferences are modified.
+- Repaired current documentation/test references to rewritten commit IDs and added a public-documentation privacy regression test. Documented the source-sharing checklist and the requirement to replace or carefully clean old clones before pushing again.
+- Existing release names are retained as explicitly reissued privacy-cleaned snapshots. Cached old commit views and third-party copies remain a separate removal boundary; private recovery material is stored outside the repository.
+
 ## 2026-09-13 08:52:51 +0100
 
-- Prepared the owner-requested `v1.0.0` stable source release, updating CLI/plugin version metadata and recommended installation instructions. Retained renderer `0.12.20`, settings schema 1, and resource v4 with v3/v2 aliases; the accepted renderer and HTML are unchanged from `cef86ad`.
+- Prepared the owner-requested `v1.0.0` stable source release, updating CLI/plugin version metadata and recommended installation instructions. Retained renderer `0.12.20`, settings schema 1, and resource v4 with v3/v2 aliases; the accepted renderer and HTML are unchanged from `6979811`.
 - Recorded the user's 2026-09-13 confirmation that the actual settings interface was fully correct following the manual-restart handoff. This supersedes the previously pending native-page presentation gate without inventing new agent measurements, cold-login results, or a cross-version live matrix.
 - Added release notes covering the seven-model picker, no-task selection/refresh-loop fixes, original click/drag easing, version-prefixed labels, Spark Retiring, native initialization, and corrected page background/insets. Preserve all historical tags/releases and source-only distribution with no unsigned/non-notarized prebuilt executable.
 - Passed all 58 offline tests, manifest/syntax/documentation and relative-link checks, release build/version/resources, and read-only compatibility status on Codex build `8881`. Renderer and settings HTML are byte-identical to the user-accepted source. Publishing does not reinstall CoPicker, change saved preferences, reload MCP, or restart Codex; remote branch/tag/Release identity is verified after publication.
@@ -107,13 +113,13 @@
 ## 2026-08-28 02:22:41 +0800
 
 - Promoted the CLI and local plugin from `0.12.0-dev` to the full-feature `0.99.0` public pre-release while retaining renderer compatibility `0.12.8`, settings schema `1`, and settings resource `ui://copicker/settings/v2.html`.
-- Made immutable tag `v0.99.0` the recommended new-machine installation ref, retained `c0343d4` as the exact live-acceptance/rollback anchor, and kept `v0.11.0` as an immutable historical three-model release.
+- Made immutable tag `v0.99.0` the recommended new-machine installation ref, retained `c127509` as the exact live-acceptance/rollback anchor, and kept `v0.11.0` as an immutable historical three-model release.
 - Added dedicated `v0.99.0` release notes and expanded documentation contracts for release identity, source-only distribution, accepted-live versus release-build evidence, installation, rollback, and the absence of unsigned/non-notarized prebuilt assets.
 - Passed all 35 offline tests, SwiftPM manifest loading, JavaScript and shell syntax checks, 57 relative-document links, whitespace validation, and the production build; verified the `arm64` release executable reports `Copicker 0.99.0`, contains both bundled renderer resources, and completes read-only Codex `7119` status without signaling or opening Inspector.
 
 ## 2026-08-28 02:04:43 +0800
 
-- Closed the public documentation around one accepted product baseline, separating the immutable `v0.11.0` three-model pre-release from the full-feature runtime at `c0343d4`, CLI/plugin `0.12.0-dev`, renderer `0.12.8`, settings schema `1`, and Codex `26.820.60940` build `7119`.
+- Closed the public documentation around one accepted product baseline, separating the immutable `v0.11.0` three-model pre-release from the full-feature runtime at `c127509`, CLI/plugin `0.12.0-dev`, renderer `0.12.8`, settings schema `1`, and Codex `26.820.60940` build `7119`.
 - Rewrote the README, new-machine installation, usage, settings, and development guides; added architecture, validation, accepted-requirement, and contribution documents covering exact model behavior, placement, persistence, safety, rollback, live-effect boundaries, cross-device evidence, and future collaboration.
 - Marked the screenshot-derived 42-pixel settings inset as historical and superseded, preserving the final live DOM measurements and user acceptance as the current visual authority.
 - Added offline documentation contracts that tie published install refs, version layers, requirement IDs, native settings measurements, source geometry, plugin metadata, and superseded assumptions to the implementation; all 35 tests, syntax checks, manifest loading, link validation, whitespace validation, and the production build passed without installing, injecting, or restarting Codex.

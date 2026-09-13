@@ -65,6 +65,7 @@ swift test
 
 ## Change discipline
 
+- Before sharing source or publishing, inspect tracked files and the intended archive for personal paths, credentials, logs, screenshots, and extracted third-party application code. Passing build tests alone is not a privacy audit. Follow `docs/source-sharing.md`; keep recovery bundles outside the repository.
 - Work in small, coherent commits.
 - Update `CHANGELOG.md` with a timestamp including seconds and timezone for every committed change batch.
 - Keep implementation details and comments in English.

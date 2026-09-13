@@ -164,7 +164,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 
 | Gate | Evidence |
 | --- | --- |
-| Live-accepted runtime source | `c0343d4d76e4094cd99ba9ff7fe0fb71fc3edbbb` |
+| Live-accepted runtime source | `c127509ae0a05f50c14757d2a212b79951126f46` |
 | Current package | `v1.0.0` stable; CLI/plugin `1.0.0`, renderer `0.12.20`, settings v4 |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
@@ -179,7 +179,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Native settings interaction | The candidate document reached `ready` in the real native sandbox, displayed seven rows, and loaded preferences; the user manually confirmed successful opening and saving |
 | Fresh installed MCP process | Advertises v4; v4, v3, and v2 reads return the source-exact owned-surface document. The actual native threadless resource path also returned the v4 fix after an authorized configuration refresh; this does not prove an already-rendered old page refreshed |
 | Native surface regression | Build `8881` Browser settings measures background `#181818`, heading `y=66`, viewport `y=46`, and 20 px padding. The old CoPicker document instead had zero body padding under the later sandbox stylesheet. The real-HTML local fixture with that reset now matches the native geometry, retains approximately 20 px bottom space, and avoids duplicate toolbar space in fallback mode |
-| Native v4 presentation | User-confirmed passed on 2026-09-13 after the manual-restart handoff for source `cef86ad`. This supersedes the old-window presentation blocker; no new agent-measured post-restart geometry or cold-login result is claimed |
+| Native v4 presentation | User-confirmed passed on 2026-09-13 after the manual-restart handoff for source `6979811`. This supersedes the old-window presentation blocker; no new agent-measured post-restart geometry or cold-login result is claimed |
 | Live-accepted Codex | `26.820.60940` build `7119` |
 | Diagnosed Codex | `26.825.51511` build `7377`; bundle inspection plus bounded live read-only picker probes |
 | Architecture | Apple silicon `arm64` |
@@ -188,7 +188,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Inspector | closed after bounded work; no idle listener |
 | Public runtime release | `v1.0.0` full-feature stable source release; no prebuilt executable attached |
 
-The accepted watcher, UI, and Inspector evidence applies specifically to Codex `26.820.60940` build `7119` and runtime source `c0343d4`; none of those rows is live evidence for the statically inspected build `7377`. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
+The accepted watcher, UI, and Inspector evidence applies specifically to Codex `26.820.60940` build `7119` and runtime source `c127509`; none of those rows is live evidence for the statically inspected build `7377`. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
 
 The 2026-09-12 build-`8881` picker acceptance is newer and specific: official checked model, reasoning effort, Fast state, and confirmed transaction state were inspected after bounded no-task selections; a trusted pointer click kept the native picker open and showed intermediate easing. The user then independently confirmed that selections send successfully using the expected model. This does not claim an exhaustive live effort matrix, a new native-settings-geometry pass, or restart/cold-login acceptance. The settings browser check used the actual shipped HTML and an in-memory mock bridge at `127.0.0.1`, with a `1280 × 720` viewport, seven rows, no horizontal overflow, no blank/error overlay, and no console warnings/errors. Its Apply success is deliberately mock-only; offline MCP tests separately verify Astra persistence and revision handling.
 
