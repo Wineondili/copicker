@@ -8,13 +8,21 @@ Current versions:
 | --- | --- |
 | CLI/plugin release | `1.0.0` |
 | Settings schema | `1` |
-| MCP App resource | `ui://copicker/settings/v4.html` (v3 and v2 read aliases retained) |
-| Renderer fallback on current `main` | `0.12.20` |
+| MCP App resource | `ui://copicker/settings/v5.html` (v4, v3, and v2 read aliases retained) |
+| Renderer fallback on current `main` | `0.12.21` |
 | Renderer fallback in `v0.99.0` | `0.12.8` |
 | Accepted runtime code | `c127509` |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Accepted Codex | `26.820.60940` build `7119` |
 | Current native settings validation | Build `8881` inspected; on 2026-09-13 the user confirmed the actual v4 interface after the manual-restart handoff, superseding the old-window presentation blocker |
+
+## Eight-model refresh in 0.12.21
+
+The current settings/rail/preview order is 6-Astra, 6-Sol, 6-Luna, 5.6-Sol, 5.6-Terra, 5.6-Luna, Daybreak, GPT-5.5, with 6/6/5/6/6/5/6/4 efforts. Only Daybreak is non-Fast. GPT-5.5 carries the owner's requested Retiring notice; Spark has no switch or rail row. New keys `sol-6` and `luna-6` never replace the old generation keys. New rows are opt-in and defaults remain unchanged.
+
+Schema-1 decoding removes the exact retired Spark key without rewriting disk or resetting unrelated settings. A formerly Spark-only configuration uses the existing default rows; unknown keys and genuinely empty configurations still fail validation. Resource v5 and the plugin environment revision distinguish the new document from cached v4. Older URI reads are served by the new backend, but old processes must still be refreshed through the normal authorized install/reconnect flow. This source update does not claim installation or native-page acceptance.
+
+The following sections retain historical implementation and acceptance evidence; the Spark notice and seven-row matrix below are superseded by this refresh.
 
 ## Native initialization fix in 0.12.17
 

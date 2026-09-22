@@ -50,7 +50,7 @@
       display: block;
       flex: 0 0 auto;
       width: 339.75px;
-      height: 262.75px;
+      height: calc(134.75px + (var(--row-count) - 3) * 32px);
       color-scheme: dark;
       --popover: rgb(44, 44, 44);
       --border: #444448;
@@ -63,7 +63,7 @@
       --daybreak-label: #70b9ff;
       --row-h: 48px;
       --row-gap: 16px;
-      --row-count: 7;
+      --row-count: 8;
       --thumb-size: 56px;
       --stage-w: 388px;
       --model-column-w: 190px;
@@ -98,7 +98,7 @@
     }
 
     .labels {
-      height: 432px;
+      height: calc(var(--row-count) * 48px + (var(--row-count) - 1) * 16px);
       margin-top: 34px;
       display: grid;
       grid-template-rows: repeat(var(--row-count), var(--row-h));
@@ -240,7 +240,7 @@
     .stage {
       position: relative;
       width: var(--stage-w);
-      height: 432px;
+      height: calc(var(--row-count) * 48px + (var(--row-count) - 1) * 16px);
       cursor: pointer;
       touch-action: none;
       outline: none;
@@ -391,6 +391,24 @@
           supportsFast: true,
         },
         {
+          id: "sol-6",
+          name: "6-Sol",
+          displayLabel: "6-Sol",
+          dots: [1, 2, 3, 4, 5, 6],
+          colors: ["#FBE1E5", "#F7C6CC"],
+          textColors: ["#f1c0c9", "#edb7c1"],
+          supportsFast: true,
+        },
+        {
+          id: "luna-6",
+          name: "6-Luna",
+          displayLabel: "6-Luna",
+          dots: [1, 2, 3, 4, 5],
+          colors: ["#EEF9F1", "#DDF3E4"],
+          textColors: ["#c1e2cb", "#b7dcc3"],
+          supportsFast: true,
+        },
+        {
           id: "sol",
           name: "Sol",
           displayLabel: "5.6-Sol",
@@ -428,20 +446,12 @@
         {
           id: "gpt-5.5",
           name: "GPT-5.5",
+          lifecycle: "retiring",
+          lifecycleNote: "Retiring — remains selectable while available in the official catalog.",
           dots: [1, 2, 3, 4],
           colors: ["#E3EDFF", "#CADCFF"],
           textColors: ["#bad0f4", "#a9c3ee"],
           supportsFast: true,
-        },
-        {
-          id: "gpt-5.3-codex-spark",
-          name: "Codex Spark",
-          lifecycle: "retiring",
-          lifecycleNote: "Retiring — announced by Tibo on 2026-09-11 for the following week; exact date not announced.",
-          dots: [1, 2, 3, 4],
-          colors: ["#F0E7FF", "#E0D1FA"],
-          textColors: ["#d4c0f2", "#c8afea"],
-          supportsFast: false,
         },
       ];
 
@@ -452,7 +462,8 @@
       const ROW_HEIGHT = 48;
       const ROW_GAP = 16;
       const STAGE_WIDTH = 388;
-      const STAGE_HEIGHT = 432;
+      const STAGE_HEIGHT = ROWS.length * ROW_HEIGHT + (ROWS.length - 1) * ROW_GAP;
+      document.querySelector(".rail-host").style.setProperty("--row-count", ROWS.length);
       const LEFT_PADDING = 34;
       const USABLE_WIDTH = 320;
       const START_INSET = 6;

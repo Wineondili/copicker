@@ -15,10 +15,10 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 | Latest GitHub release | `v1.0.0` stable | Current full-feature, source-distributed package |
 | Historical full-runtime code | `c127509ae0a05f50c14757d2a212b79951126f46` | Older six-model acceptance and rollback anchor, not the current picker adapter |
 | CLI and plugin version | `1.0.0` | Version reported by the stable release package |
-| Current renderer | `0.12.20` on `main` | Fixes native settings background and vertical insets; retains version-prefixed rail labels and Spark Retiring |
+| Current renderer | `0.12.21` on `main` | Adds 6-Sol/6-Luna, removes Spark, and marks GPT-5.5 Retiring; not yet live-accepted |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
-| MCP settings resource | `ui://copicker/settings/v4.html` | Sandbox-safe native settings surface; v3 and v2 remain read aliases |
+| MCP settings resource | `ui://copicker/settings/v5.html` | Eight-model native settings surface; v4, v3, and v2 remain read aliases |
 | Current adapted Codex Desktop | `26.908.40834` (build `8881`) | Picker selection/routing and later native settings presentation user-confirmed |
 | Electron dependency declared by Codex | `42.3.0` | Read from the official app's package metadata; not a fresh runtime version probe |
 | Bundled Chromium framework | `152.0.7977.83` | Read from Codex Framework metadata and corroborated by its binary version string |
@@ -80,7 +80,7 @@ Full prerequisites, release and runtime-anchor paths, verification, settings mig
 | Space | Toggle Fast when the selected model supports it |
 | Escape or outside click | Close the official picker and CoPicker |
 
-The current release supports Astra, Sol, Terra, Luna, Daybreak Blue, GPT-5.5, and GPT-5.3 Codex Spark in a fixed order. Astra can be enabled in model visibility settings. Default displays as `Default`; unsupported models display centered gray `Other`. Daybreak and Codex Spark do not support Fast in CoPicker. Spark's Retiring notice is informational; actual availability comes from the official catalog. The historical `v0.99.0` package retains its original six-model matrix.
+Current `main` supports 6-Astra, 6-Sol, 6-Luna, 5.6-Sol, 5.6-Terra, 5.6-Luna, Daybreak, and GPT-5.5 in that order. New 6-Sol/6-Luna rows are available in visibility settings and share their 5.6 counterparts' colors. Default displays as `Default`; unsupported models display centered gray `Other`. Only Daybreak is non-Fast. GPT-5.5 is marked `Retiring` without an automatic cutoff. Spark is removed, with a read-only migration for older saved visibility. Existing visibility and the default 5.6 Sol/Terra/Luna set are preserved. The published `v1.0.0` remains the older seven-model package; this model refresh has not been released or live-accepted.
 
 The legacy adapter distinguishes two build-`7377` Daybreak topologies. When Codex exposes the separate Daybreak program checkbox that may remap base-model defaults, CoPicker rejects the Daybreak row and allows ordinary model commits only while that exact control is explicitly off. Enabled, busy, disabled, or otherwise ambiguous program state remains fail-closed. When Codex instead exposes one exact legacy Daybreak Model leaf—as observed live on the current account—renderer `0.12.14` treats it as the normal model-backed topology and permits official model mutations. If neither topology is observable, mutation still fails closed because no bounded signal distinguishes no entitlement from unresolved verified access.
 
@@ -97,7 +97,7 @@ Open **Settings → Integrations → CoPicker**. The entry appears below the bui
 Settings include:
 
 - enable or disable CoPicker;
-- show or hide each of the seven adapted models, while retaining at least one;
+- show or hide each of the eight adapted models on `main`, while retaining at least one;
 - prefer top, left, or right placement;
 - follow Codex, follow macOS, or force light or dark appearance.
 
@@ -211,6 +211,6 @@ Before changing UI, model behavior, selectors, versions, installation, or live c
 - Model availability still depends on the signed-in account's official `model/list` catalog. Enabling a row does not grant model access.
 - Daybreak Blue may require Codex Trusted Access for Cyber and required network access.
 - On Codex build `7377`, Daybreak needs a product decision about which normal base model and effort the separate program should retain or select; current `main` fails closed instead of guessing.
-- Codex Spark may require an eligible ChatGPT Pro subscription.
+- The new GPT-6 Sol/Luna rows have catalog and offline evidence, not renewed live sending acceptance.
 - The repository does not currently include a cross-version macOS/Codex CI matrix.
 - The repository has no general open-source license. Public visibility alone does not grant redistribution or derivative-work rights.

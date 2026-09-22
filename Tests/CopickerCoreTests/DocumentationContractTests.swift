@@ -66,7 +66,7 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
     #expect(values["accepted_settings_user_confirmation_date"] == "2026-09-13")
     #expect(values["cli_version"] == ProjectInfo.version)
     #expect(plugin["version"] as? String == ProjectInfo.version)
-    #expect(rendererVersion == "0.12.20")
+    #expect(rendererVersion == "0.12.21")
     #expect(renderer.contains("const VERSION = \"\(rendererVersion)\""))
     #expect(values["settings_schema_version"] == String(CopickerSettings.currentSchemaVersion))
     #expect(values["settings_resource_uri"] == CopickerMCPProtocol.settingsResourceURI)

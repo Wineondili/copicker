@@ -102,8 +102,8 @@ struct CopickerMCPProtocolTests {
 
     @Test
     func settingsResourceRevisionRetainsTheLegacyReadAlias() throws {
-        #expect(CopickerMCPProtocol.settingsResourceURI == "ui://copicker/settings/v4.html")
-        for uri in [CopickerMCPProtocol.settingsResourceURI, "ui://copicker/settings/v3.html", "ui://copicker/settings/v2.html"] {
+        #expect(CopickerMCPProtocol.settingsResourceURI == "ui://copicker/settings/v5.html")
+        for uri in [CopickerMCPProtocol.settingsResourceURI, "ui://copicker/settings/v4.html", "ui://copicker/settings/v3.html", "ui://copicker/settings/v2.html"] {
             let response = try send(method: "resources/read", params: ["uri": uri])
             let result = try dictionary(response["result"])
             let contents = try array(result["contents"]).map { try dictionary($0) }
@@ -142,6 +142,27 @@ struct CopickerMCPProtocolTests {
         )
         let repeatedSnapshot = try dictionary(repeated["structuredContent"])
         #expect(repeatedSnapshot["revision"] as? Int == 1)
+        #expect(try settingsStore.read().revision == 1)
+    }
+
+    @Test
+    func newGenerationKeysSaveWhileRetiredKeyIsRejected() throws {
+        var arguments: [String: Any] = [
+            "expectedRevision": 0, "enabled": true,
+            "visibleModels": ["luna-6", "sol-6"],
+            "preferredPlacement": "top", "appearance": "dark",
+        ]
+        let saved = try callTool(CopickerMCPProtocol.settingsSaveToolName, arguments: arguments)
+        let snapshot = try dictionary(saved["structuredContent"])
+        #expect(snapshot["visibleModels"] as? [String] == ["sol-6", "luna-6"])
+        arguments["expectedRevision"] = 1
+        arguments["visibleModels"] = ["gpt-5.3-codex-spark"]
+        let rejected = try send(method: "tools/call", params: [
+            "name": CopickerMCPProtocol.settingsSaveToolName, "arguments": arguments,
+        ])
+        #expect(rejected["error"] is [String: Any])
+        #expect(rejected["result"] == nil)
+        #expect(try settingsStore.read().visibleModels == [.sol6, .luna6])
         #expect(try settingsStore.read().revision == 1)
     }
 

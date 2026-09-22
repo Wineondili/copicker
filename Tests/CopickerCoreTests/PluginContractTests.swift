@@ -1,4 +1,5 @@
 import Foundation
+import JavaScriptCore
 import Testing
 @testable import CopickerCore
 
@@ -145,9 +146,11 @@ func settingsShellHasNoExternalNetworkDependency() throws {
     #expect(settingsHTML.contains("copicker/errorCode"))
     #expect(settingsHTML.contains("GPT-5.5"))
     #expect(settingsHTML.contains("Daybreak Blue"))
-    #expect(settingsHTML.contains("GPT-5.3 Codex Spark"))
+    #expect(!settingsHTML.contains("GPT-5.3 Codex Spark"))
+    #expect(settingsHTML.contains("GPT-6 Sol"))
+    #expect(settingsHTML.contains("GPT-6 Luna"))
     #expect(settingsHTML.contains("Codex Trusted Access for Cyber"))
-    #expect(settingsHTML.contains("Pro 5x / 20x"))
+    #expect(!settingsHTML.contains("Pro 5x / 20x"))
     #expect(settingsHTML.contains("至少保留一个模型"))
     #expect(settingsHTML.contains("跟随 Codex"))
     #expect(settingsHTML.contains("跟随系统"))
@@ -202,7 +205,7 @@ func settingsModelRowsMatchThePersistedModelContract() throws {
         #expect(row.contains("<h3>\(model.displayName)</h3>"))
         #expect(row.contains("name=\"visible-model\" value=\"\(model.rawValue)\""))
         let efforts = model.effortLabels.joined(separator: " · ")
-        let fastNotice = [.daybreakBlue, .codexSpark].contains(model) ? " · 不支持 Fast" : ""
+        let fastNotice = model == .daybreakBlue ? " · 不支持 Fast" : ""
         #expect(row.contains("<p class=\"model-efforts\">\(efforts)\(fastNotice)</p>"))
         if let lifecycle = model.lifecycleLabel {
             #expect(row.contains("data-model-lifecycle=\"retiring\">\(lifecycle)</span>"))
@@ -215,15 +218,47 @@ func settingsModelRowsMatchThePersistedModelContract() throws {
 }
 
 @Test
-func retiringSparkKeepsItsRailIdentityAndEffortCells() throws {
+func newModelRowsKeepGenerationIdentityAndMatchingFamilyColors() throws {
     let root = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     for path in ["Sources/CopickerCLI/Resources/model-rail.js", "tools/model-rail-preview.html"] {
         let source = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
-        let start = try #require(source.range(of: "id: \"gpt-5.3-codex-spark\"")?.lowerBound)
-        let end = try #require(source.range(of: "supportsFast: false", range: start..<source.endIndex)?.upperBound)
+        let regex = try NSRegularExpression(pattern: #"const (?:ALL_ROWS|ROWS) = (\[[\s\S]*?\n\s*\]);"#)
+        let match = try #require(regex.firstMatch(in: source, range: NSRange(source.startIndex..., in: source)))
+        let range = try #require(Range(match.range(at: 1), in: source))
+        let context = try #require(JSContext())
+        let json = try #require(context.evaluateScript("JSON.stringify(\(source[range]))")?.toString())
+        let rows = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]])
+        let ids = rows.compactMap { $0["id"] as? String }
+        #expect(ids == CopickerModel.allCases.map(\.rawValue))
+        #expect(Set(rows.compactMap { $0["name"] as? String }).count == rows.count)
+        for (newID, oldID, count) in [("sol-6", "sol", 6), ("luna-6", "luna", 5)] {
+            let new = try #require(rows.first { $0["id"] as? String == newID })
+            let old = try #require(rows.first { $0["id"] as? String == oldID })
+            #expect(new["colors"] as? [String] == old["colors"] as? [String])
+            #expect(new["textColors"] as? [String] == old["textColors"] as? [String])
+            #expect(new["dots"] as? [Int] == Array(1...count))
+            #expect(new["supportsFast"] as? Bool == true)
+            if path.hasSuffix(".js") {
+                let aliases = try #require(new["catalogDisplayNames"] as? [String])
+                #expect(aliases.count == 2)
+                #expect(Set(aliases).isDisjoint(with: Set(old["catalogDisplayNames"] as? [String] ?? [])))
+            }
+        }
+    }
+}
+
+@Test
+func retiringGPT55KeepsItsRailIdentityAndEffortCells() throws {
+    let root = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    for path in ["Sources/CopickerCLI/Resources/model-rail.js", "tools/model-rail-preview.html"] {
+        let source = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
+        #expect(!source.contains("gpt-5.3-codex-spark"))
+        let start = try #require(source.range(of: "id: \"gpt-5.5\"")?.lowerBound)
+        let end = try #require(source.range(of: "supportsFast: true", range: start..<source.endIndex)?.upperBound)
         let row = String(source[start..<end])
-        #expect(row.contains("name: \"Codex Spark\""))
+        #expect(row.contains("name: \"GPT-5.5\""))
         #expect(row.contains("lifecycle: \"retiring\""))
         #expect(row.contains("dots: [1, 2, 3, 4]"))
         #expect(source.contains("badge.textContent = \"Retiring\""))
@@ -238,6 +273,8 @@ func versionedRailLabelsRemainSeparateFromModelIdentity() throws {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     let labels = [
         (id: "astra", name: "Astra", label: "6-Astra"),
+        (id: "sol-6", name: "6-Sol", label: "6-Sol"),
+        (id: "luna-6", name: "6-Luna", label: "6-Luna"),
         (id: "sol", name: "Sol", label: "5.6-Sol"),
         (id: "terra", name: "Terra", label: "5.6-Terra"),
         (id: "luna", name: "Luna", label: "5.6-Luna"),

@@ -20,9 +20,9 @@ published_release_commit=v1.0.0^{commit}
 cli_version=1.0.0
 accepted_settings_source_commit=6979811f4797ae9630f1b23fd0d5eee0551de68d
 accepted_settings_user_confirmation_date=2026-09-13
-renderer_version=0.12.20
+renderer_version=0.12.21
 settings_schema_version=1
-settings_resource_uri=ui://copicker/settings/v4.html
+settings_resource_uri=ui://copicker/settings/v5.html
 marketplace_name=copicker-local
 plugin_id=copicker@copicker-local
 accepted_codex_version=26.820.60940
@@ -53,14 +53,14 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | --- | --- | --- |
 | Historical full-runtime code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Older installed, live-reviewed, and user-accepted six-model code |
 | CLI/plugin release | `1.0.0` | Current source-distributed stable release package |
-| Current renderer | `0.12.20` | Owns the native settings background and scroll insets outside the sandbox body reset; retains accepted rail behavior and labels |
+| Current renderer | `0.12.21` | Eight-model catalog refresh; GPT-6 Sol/Luna added, Spark removed, GPT-5.5 Retiring; live installation/acceptance pending |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
 | Renderer `0.12.9` live interaction | Rapid pointer release passed; new-unsent-task selection failed | User-observed result; the two outcomes must not be reversed |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
-| Settings resource | `ui://copicker/settings/v4.html` | Current MCP App document; v3 and v2 are retained as read aliases with the requested URI echoed |
+| Settings resource | `ui://copicker/settings/v5.html` | Eight-row MCP App document; v4, v3, and v2 remain read aliases with the requested URI echoed |
 | Public GitHub release | `v1.0.0` | Full-feature immutable stable source release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
@@ -68,7 +68,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Official bundle | `/Applications/ChatGPT.app`, `com.openai.codex` | Read-only status verified |
 | Architecture | `arm64` | Live verified |
 | Pre-restart installed watcher | CLI `0.99.0`, renderer/settings `0.12.20`, loaded, `injection-succeeded` | Verified before the user's restart on build `8881`; the release-only CLI/plugin version bump does not imply reinstalling this machine |
-| Current settings backend | v4 resource with v3/v2 read aliases and owned page surface | Fresh-process checks pass; after the authorized configuration refresh, the actual native threadless MCP path also returns the v4 document. Already-rendered page cache is a separate gate |
+| Last live-verified settings backend | v4 resource with v3/v2 read aliases and owned page surface | Historical fresh-process/native delivery checks passed; current source v5 still requires separate installation and live verification |
 | Native v4 presentation | User-confirmed passed on 2026-09-13, source `6979811` | After the manual-restart handoff, the user explicitly confirmed the actual interface was fully correct. This supersedes the earlier old-window cache/presentation blocker; no new agent-measured post-restart geometry or cold-login pass is claimed |
 | Inspector idle state | no listener on `127.0.0.1:9229` | Verified after inspection/injection |
 
@@ -143,6 +143,14 @@ Luna deliberately retains five displayed efforts: the build-`8881` native streng
 - **CP-SEL-007 — New unsent task path.** When the currently open trigger's composer has no task identifier, an idle CoPicker never opens nested official controls merely to synchronize its display; an unconfirmed initial state may remain `Other`. Only an explicit CoPicker selection starts one bounded proxy transaction against the exact official Model, Effort, and Speed controls owned by that trigger. The transaction resolves the current power layout's active panel or the exact non-Power three-flyout Work layout and binds each portalled flyout through semantic menu roles plus `aria-controls`, excludes exactly one leading Daybreak-program row only when explicitly labeled, requires exact visible model-label equality against the complete paginated hidden-inclusive `model/list` catalog, excludes hidden targets, validates effort/tier ordering, and treats an absent, false, or ambiguous compact Fast control as unknown instead of Standard. When responsive layout hides the compact trigger's selected-model text, flat-effort validation derives the current catalog entry only from one exact Model row owned by the same primary surface. It waits up to three seconds for the roughly two-second compact Ultra warning to release Codex's intentionally inert Advanced control. Before a target mutation, it preflights the target Model leaf and captures two identical, restorable current snapshots from the exact checked Model leaf, trigger effort, and checked Speed leaf, including the Speed leaf's index, option count, and semantic signature; a hidden current model or missing/restoration-ineligible control aborts. Every subsequent click remains bound to the same composer while it has no task ID. The selected model is confirmed from exact trigger text or, when responsive layout removes that text, from the exact checked target Model leaf. A checked Fast control confirms Fast. An initially checked Standard leaf does not: build `7377` may visually fall back to Standard while retaining an unsupported raw tier, so an unconfirmed initial Standard displays `Other`; a Standard commit first observes a catalog-resolved Fast transition and then the checked Standard leaf. This deliberately establishes normalized Standard as the rollback baseline; the unknowable hidden raw tier cannot be recreated. If that transition is unavailable, the request fails before target mutation. The requested tier is established on the current model before Model/Effort mutation and reapplied on the target. A partial failure restores Model, Effort, and the captured tier index and then recaptures all three; an initially ambiguous Standard reports `restored-normalized`, while a failed or unrepresentable rollback invalidates confirmation rather than reusing stale state. Before selecting a model-backed non-Fast target, CoPicker clears the current tier through the current official model. If the chosen combination cannot return to compact power view, CoPicker leaves the official picker in Advanced rather than activating Reset. A successful result remains confirmed through same-composer trigger remounts, while a trusted official change invalidates it. Proxy-owned classification mutations never schedule another classification pass. It does not adopt a retained background task ID, invent a task ID, or write raw config keys.
 - **CP-SEL-008 — Normal compaction.** A model or effort change may cause the same compaction as the equivalent official Codex action. CoPicker must not label that as its own defect.
 
+### September 22 model refresh (renderer 0.12.21)
+
+The owner requested removal of GPT-5.3 Codex Spark, a `Retiring` notice for GPT-5.5, and separate GPT-6 Sol/Luna rows sharing the corresponding 5.6 colors. The local official catalog cache refreshed on 2026-09-22 exposes `GPT-6-Sol` with six efforts and `GPT-6-Luna` with five, both with Fast; Spark is absent. This is catalog evidence, not a fresh live picker or sending acceptance. GPT-5.5's notice follows the owner's requested lifecycle designation; no exact shutdown date or independently verified announcement is claimed.
+
+New rows use distinct preference keys `sol-6` and `luna-6`; existing `sol` and `luna` still mean GPT-5.6. Catalog display aliases are generation-specific and actual model/tier IDs remain resolved at runtime. New rows are opt-in under existing preferences; the default 5.6 Sol/Terra/Luna set is unchanged. Settings resource v5 distinguishes the eight-row document from cached v4 pages. No host-version allowlist or new host compatibility acceptance is introduced.
+
+Reading schema-1 settings removes only the retired Spark key in memory, preserving revision, enablement, placement, appearance, and remaining model choices. A Spark-only list falls back to the existing default three rows. Reads never rewrite disk; unknown keys and an originally empty list still fail validation. The retired key is not offered by the UI or accepted by new MCP save requests.
+
 ### Supported model matrix
 
 The selectable and rendered order is fixed.
@@ -150,23 +158,24 @@ The selectable and rendered order is fixed.
 | Order | Persisted key | Official names matched | Rail label | Efforts | Fast | Fill gradient | Dark label gradient |
 | ---: | --- | --- | --- | --- | --- | --- | --- |
 | 0 | `astra` | `GPT-6-Astra`, `GPT-6 Astra` | `6-Astra` | low, medium, high, xhigh, max, ultra | Yes | `#E3F8F8 → #C6ECEC` | `#bfe7e7 → #a9d9d9` |
-| 1 | `sol` | `GPT-5.6-Sol`, `GPT-5.6 Sol` | `5.6-Sol` | low, medium, high, xhigh, max, ultra | Yes | `#FBE1E5 → #F7C6CC` | `#f1c0c9 → #edb7c1` |
-| 2 | `terra` | `GPT-5.6-Terra`, `GPT-5.6 Terra` | `5.6-Terra` | low, medium, high, xhigh, max, ultra | Yes | `#FFF1CF → #FFE6B8` | `#f0d69b → #ebcd90` |
-| 3 | `luna` | `GPT-5.6-Luna`, `GPT-5.6 Luna` | `5.6-Luna` | low, medium, high, xhigh, max | Yes | `#EEF9F1 → #DDF3E4` | `#c1e2cb → #b7dcc3` |
-| 4 | `daybreak-blue` | `Daybreak Blue`, `GPT Daybreak Blue` | `Daybreak` | low, medium, high, xhigh, max, ultra | No | `#DDEEFF → #C2E0FF` | `#afd2f2 → #9bc5eb` |
-| 5 | `gpt-5.5` | `GPT-5.5` | `GPT-5.5` | low, medium, high, xhigh | Yes | `#E3EDFF → #CADCFF` | `#bad0f4 → #a9c3ee` |
-| 6 | `gpt-5.3-codex-spark` | `GPT-5.3 Codex Spark`, `GPT-5.3-Codex-Spark` | `Codex Spark` | low, medium, high, xhigh | No | `#F0E7FF → #E0D1FA` | `#d4c0f2 → #c8afea` |
+| 1 | `sol-6` | `GPT-6-Sol`, `GPT-6 Sol` | `6-Sol` | low, medium, high, xhigh, max, ultra | Yes | `#FBE1E5 → #F7C6CC` | `#f1c0c9 → #edb7c1` |
+| 2 | `luna-6` | `GPT-6-Luna`, `GPT-6 Luna` | `6-Luna` | low, medium, high, xhigh, max | Yes | `#EEF9F1 → #DDF3E4` | `#c1e2cb → #b7dcc3` |
+| 3 | `sol` | `GPT-5.6-Sol`, `GPT-5.6 Sol` | `5.6-Sol` | low, medium, high, xhigh, max, ultra | Yes | `#FBE1E5 → #F7C6CC` | `#f1c0c9 → #edb7c1` |
+| 4 | `terra` | `GPT-5.6-Terra`, `GPT-5.6 Terra` | `5.6-Terra` | low, medium, high, xhigh, max, ultra | Yes | `#FFF1CF → #FFE6B8` | `#f0d69b → #ebcd90` |
+| 5 | `luna` | `GPT-5.6-Luna`, `GPT-5.6 Luna` | `5.6-Luna` | low, medium, high, xhigh, max | Yes | `#EEF9F1 → #DDF3E4` | `#c1e2cb → #b7dcc3` |
+| 6 | `daybreak-blue` | `Daybreak Blue`, `GPT Daybreak Blue` | `Daybreak` | low, medium, high, xhigh, max, ultra | No | `#DDEEFF → #C2E0FF` | `#afd2f2 → #9bc5eb` |
+| 7 | `gpt-5.5` | `GPT-5.5` | `GPT-5.5` (Retiring) | low, medium, high, xhigh | Yes | `#E3EDFF → #CADCFF` | `#bad0f4 → #a9c3ee` |
 
 - **CP-MOD-001 — At least one visible row.** Settings may hide any adapted row but must retain at least one.
 - **CP-MOD-002 — Recognition is wider than visibility.** An adapted model hidden from settings is still recognized from the official trigger; no rail cell is active until a visible cell is selected.
 - **CP-MOD-003 — Unsupported state.** GPT-5.4, GPT-5.4 Mini, and every other unadapted model show centered gray `Other`; no rail fill, thumb, effort label, or Fast indicator is active.
-- **CP-MOD-004 — Non-Fast rows.** Daybreak and Codex Spark clear Fast when selected, cannot toggle it, and do not preserve a prior Fast state when leaving and returning.
+- **CP-MOD-004 — Non-Fast rows.** Daybreak clears Fast when selected, cannot toggle it, and does not preserve a prior Fast state when leaving and returning. Spark is no longer a supported row.
 - **CP-MOD-005 — Daybreak presentation.** The rail omits `Blue`; `Daybreak` uses theme-adaptive blue (`#70b9ff` dark, `#176fbd` light).
-- **CP-MOD-006 — Access notices.** Daybreak may require Codex Trusted Access for Cyber and necessary network access. Codex Spark may require an eligible ChatGPT Pro subscription. Settings do not grant either entitlement.
+- **CP-MOD-006 — Access notices.** Daybreak may require Codex Trusted Access for Cyber and necessary network access. Settings do not grant model entitlements.
 - **CP-MOD-007 — Current-build Daybreak boundary.** In Codex build `7377`, the separate Daybreak program path removes `gpt-daybreak-blue-latest` from the official Model submenu and exposes a `menuitemcheckbox` that may remap both the current and configured default base model. Renderer `0.12.14` does not activate that broader program control without an accepted base-model/effort policy. When the control is present, the Daybreak row is rejected; ordinary model commits are allowed only while the exact control is explicitly off and are rejected while it is enabled, busy, disabled, or otherwise ambiguous. When Codex instead exposes one exact legacy Daybreak Model leaf, it is treated as the normal model-backed topology and mutation is allowed while the absence of a program control is rechecked across the transaction. When neither exact topology is observable, mutation fails closed because no bounded signal separates no entitlement from unresolved verified access. `thread/settings/update` alone cannot express build `7377`'s separate program state.
-- **CP-MOD-008 — Spark retirement notice.** Display `Retiring` for Codex Spark in settings, the rail, and its standalone preview. [Tibo's original post](https://x.com/thsottiaux/status/2098300998968357218), published 2026-09-11 and directly verified on X, announced retirement for the following week without an exact day. This is an announced future retirement, not proof of current unavailability: the inspected `model/list` still exposed Spark with null `upgrade`/`upgradeInfo`. Keep its ID, four effort cells, non-Fast behavior, visibility preference, and normal catalog checks unchanged. The rail badge occupies unused space after Spark's last cell and must not change host geometry, overlap its thumb, or capture pointer input. Do not infer a precise shutdown date or disable the row automatically from the announcement.
+- **CP-MOD-008 — Model lifecycle.** Remove Spark from selectable rows, settings, and the active standalone preview. Keep its old preference key only for migration. Display `Retiring` for GPT-5.5 in those three surfaces, preserving its four efforts, Fast support, visibility setting, and official-catalog checks without a scheduled cutoff. The badge occupies unused space beyond the last thumb without changing geometry or intercepting input. This supersedes the historical Spark retirement annotation shipped in `v1.0.0`.
 
-- **CP-MOD-009 — Version-prefixed rail labels.** Display the first four models as `6-Astra`, `5.6-Sol`, `5.6-Terra`, and `5.6-Luna` in rail rows, moving status, recognized-but-hidden status, accessibility labels, and the standalone preview. Keep these display labels separate from internal names, official catalog aliases, persisted keys, and machine-readable selection attributes. Settings retain full official model names. Apply the existing long-label column rule to displayed text, so a visible Terra or Luna uses the established 339.75 CSS px host width; do not shrink the font or change stage/effort spacing to fit the new text.
+- **CP-MOD-009 — Version-prefixed rail labels.** Display `6-Astra`, `6-Sol`, `6-Luna`, `5.6-Sol`, `5.6-Terra`, and `5.6-Luna` in that order before Daybreak and GPT-5.5. Keep aliases, preference keys, and machine-readable names unambiguous across generations. New and old Sol share both fill and text gradients; new and old Luna do likewise. Settings retain full official model names. Preserve the existing long-label column rule and all cell dimensions/easing; host height grows by the existing 32 CSS px per additional visible row.
 
 ### Placement, avoidance, and animation
 

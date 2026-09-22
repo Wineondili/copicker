@@ -1,6 +1,6 @@
 # Using CoPicker
 
-This guide covers the stable `v1.0.0` release with renderer `0.12.20` and settings resource v4. It includes the build-`8881` picker, native settings initialization, Spark lifecycle notice, version-prefixed rail labels, and the corrected native settings background and scroll insets. Model routing was user-confirmed in the earlier picker pass; the user confirmed the actual settings interface on 2026-09-13 after the manual-restart handoff. The older `v0.99.0` renderer `0.12.8` and runtime anchor `c127509` remain historical. Installation, user acceptance, cold login, and publication remain separate gates. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
+This guide describes current `main`: renderer `0.12.21`, settings resource v5, and eight adapted models. GPT-6 Sol/Luna are added, Spark is removed, and GPT-5.5 is marked Retiring. The published `v1.0.0` still contains the older seven-model renderer `0.12.20` and resource v4. Earlier model routing and native settings acceptance on build `8881` do not establish live acceptance for these new rows. Installation, user acceptance, cold login, and publication remain separate gates. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
 
 On builds `8378` and `8881`, an explicit selection uses the official model radio row, model-specific reasoning slider, and Fast checkbox. Idle synchronization reads the already-mounted checked state without opening flyouts. Default appears as `Default` and has no active rail cell. Astra is available in CoPicker's model visibility settings, with six reasoning levels and catalog-resolved Fast; existing visibility preferences are preserved. Luna retains the five levels exposed by build `8881`'s native picker. An unrelated unselected native model does not disable supported rows; an unknown selected model still fails closed. The three-flyout constraints below describe the legacy build-`7377` fallback.
 
@@ -53,20 +53,21 @@ The row order is fixed. Settings may hide rows but must retain at least one.
 | Row | Efforts | Fast | Notes |
 | --- | --- | --- | --- |
 | GPT-6 Astra | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `6-Astra` |
+| GPT-6 Sol | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `6-Sol`; same colors as 5.6-Sol |
+| GPT-6 Luna | Light, Medium, High, Extra High, Max | Yes | Rail label `6-Luna`; same colors as 5.6-Luna; no Ultra cell |
 | GPT-5.6 Sol | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `5.6-Sol` |
 | GPT-5.6 Terra | Light, Medium, High, Extra High, Max, Ultra | Yes | Rail label `5.6-Terra` |
 | GPT-5.6 Luna | Light, Medium, High, Extra High, Max | Yes | Rail label `5.6-Luna`; no Ultra cell |
 | Daybreak Blue | Light, Medium, High, Extra High, Max, Ultra | No | Rail label `Daybreak`; theme-adaptive blue |
-| GPT-5.5 | Light, Medium, High, Extra High | Yes | No Max or Ultra |
-| GPT-5.3 Codex Spark | Light, Medium, High, Extra High | No | Rail label `Codex Spark`; `Retiring` notice; no Max or Ultra |
+| GPT-5.5 | Light, Medium, High, Extra High | Yes | `Retiring`; no Max or Ultra |
 
-`Retiring` reflects [Tibo's 2026-09-11 announcement](https://x.com/thsottiaux/status/2098300998968357218) that GPT-5.3-Codex-Spark would retire the following week. No exact day was announced. The badge is informational: it does not remove the row, change saved visibility, or prevent selection while the official catalog and controls still permit it. CoPicker does not convert this notice into a scheduled local cutoff.
+GPT-5.5's `Retiring` notice follows the owner's 2026-09-22 request. It is informational and does not prevent selection while the official catalog and controls still permit it; no exact cutoff date is assumed. Spark is no longer a supported row. Reading an older preference file removes only Spark in memory; if it was the only visible model, the existing default 5.6 Sol/Terra/Luna set is used. Other preferences and revisions remain intact, and reading does not rewrite the file. Enable the new 6-Sol/6-Luna rows explicitly in settings; older generation keys are not repurposed.
 
-Daybreak and Codex Spark clear Fast when selected. Space and pointer Fast toggles are disabled on those rows. Returning to a Fast-capable row remains on the normal tier until Fast is explicitly enabled again.
+Daybreak clears Fast when selected. Space and pointer Fast toggles are disabled on that row. Returning to a Fast-capable row remains on the normal tier until Fast is explicitly enabled again.
 
 For renderer `0.12.14` on Codex build `7377`, a separate Daybreak program checkbox and a normal legacy Daybreak Model leaf are different topologies. When the separate program control is present, CoPicker rejects the Daybreak row and permits ordinary model commits only while the exact program is explicitly off. When one exact legacy Daybreak Model leaf is present—as observed on the current account—it follows the normal model-backed selection route. If neither exact topology is observable, mutation fails closed because the renderer cannot distinguish no entitlement from unresolved verified access. Supporting the separate program still requires a base-model/effort policy.
 
-Daybreak Blue may require approved Codex Trusted Access for Cyber and the network access required by that model. Codex Spark may require an eligible ChatGPT Pro subscription. Enabling a row in CoPicker does not grant account access.
+Daybreak Blue may require approved Codex Trusted Access for Cyber and the network access required by that model. Enabling a row in CoPicker does not grant account access.
 
 Model IDs, effort availability/order, and the service-tier ID/order named `Fast` are resolved from the current account's official Codex `model/list` catalog. CoPicker stores no account-specific model or tier ID.
 

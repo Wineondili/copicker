@@ -1,8 +1,9 @@
 import Foundation
 
 public struct CopickerMCPProtocol {
-    public static let settingsResourceURI = "ui://copicker/settings/v4.html"
+    public static let settingsResourceURI = "ui://copicker/settings/v5.html"
     private static let legacySettingsResourceURIs = [
+        "ui://copicker/settings/v4.html",
         "ui://copicker/settings/v3.html",
         "ui://copicker/settings/v2.html",
     ]

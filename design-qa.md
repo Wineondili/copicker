@@ -1,5 +1,12 @@
 # Design QA
 
+## 2026-09-22 — Eight-model refresh, isolated preview QA
+
+- Renderer `0.12.21` and settings resource v5 add 6-Sol/6-Luna, remove Spark, and move Retiring to GPT-5.5 (CP-MOD-004/008/009). New and old Sol have identical fill/text gradients; new and old Luna likewise. Row/cell spacing, typography, pointer easing, and release-coordinate commitment are unchanged. The standalone preview now derives stage and host height from its eight rows instead of retaining seven-row constants.
+- Browser plugin unavailable: used the existing Playwright CLI with a loopback-only fixture. Rail flow: load the actual single-HTML preview, click all 44 model/effort cells, drag 6-Sol to Ultra, and toggle Fast. All preview commitments matched; computed fill gradients matched each family. Screenshots were inspected; the 1000 × 720 and 390 × 650 layouts retained the 339.75 × 294.75 CSS px host, with no narrow horizontal overflow or badge/thumb overlap.
+- Settings flow: load the shipped HTML in an iframe with an in-memory MCP mock, complete initialization, then click both visible new-model switch labels. Mock saves advanced revisions and retained independent 5.6 rows. All eight rows rendered, only GPT-5.5 had Retiring, and 1000 × 900 / 390 × 800 layouts had no horizontal overflow. No blank/error surface, page exception, or relevant console warning/error was observed. Mock saves are not real preference or native-host acceptance.
+- Screenshots, fixtures, and logs remain outside tracked source. No live Codex interaction, injection, install, MCP refresh, model request, real settings write, restart, or cold-login validation was performed. Earlier native acceptance below remains historical evidence, not an acceptance of these new model rows.
+
 ## 2026-09-13 — User acceptance and v1.0.0 release boundary
 
 - Following the manual-restart handoff, the user explicitly reported that the actual CoPicker settings interface was fully correct. This closes the native v4 presentation blocker recorded below for runtime source `6979811f4797ae9630f1b23fd0d5eee0551de68d` and renderer `0.12.20`.

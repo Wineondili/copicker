@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.12.20";
+  const VERSION = "0.12.21";
   const GLOBAL_KEY = "__CODEX_MODEL_RAIL__";
   const SETTINGS_GLOBAL_KEY = "__COPICKER_SETTINGS_INTEGRATION__";
   const LEGACY_HOST_ID = "codex-model-rail-host";
@@ -132,6 +132,28 @@
       supportsFast: true,
     },
     {
+      id: "sol-6",
+      name: "6-Sol",
+      displayLabel: "6-Sol",
+      catalogDisplayName: "GPT-6-Sol",
+      catalogDisplayNames: ["GPT-6-Sol", "GPT-6 Sol"],
+      dots: [1, 2, 3, 4, 5, 6],
+      colors: ["#FBE1E5", "#F7C6CC"],
+      textColors: ["#f1c0c9", "#edb7c1"],
+      supportsFast: true,
+    },
+    {
+      id: "luna-6",
+      name: "6-Luna",
+      displayLabel: "6-Luna",
+      catalogDisplayName: "GPT-6-Luna",
+      catalogDisplayNames: ["GPT-6-Luna", "GPT-6 Luna"],
+      dots: [1, 2, 3, 4, 5],
+      colors: ["#EEF9F1", "#DDF3E4"],
+      textColors: ["#c1e2cb", "#b7dcc3"],
+      supportsFast: true,
+    },
+    {
       id: "sol",
       name: "Sol",
       displayLabel: "5.6-Sol",
@@ -177,24 +199,14 @@
     {
       id: "gpt-5.5",
       name: "GPT-5.5",
+      lifecycle: "retiring",
+      lifecycleNote: "Retiring — remains selectable while available in the official catalog.",
       catalogDisplayName: "GPT-5.5",
       catalogDisplayNames: ["GPT-5.5"],
       dots: [1, 2, 3, 4],
       colors: ["#E3EDFF", "#CADCFF"],
       textColors: ["#bad0f4", "#a9c3ee"],
       supportsFast: true,
-    },
-    {
-      id: "gpt-5.3-codex-spark",
-      name: "Codex Spark",
-      lifecycle: "retiring",
-      lifecycleNote: "Retiring — announced by Tibo on 2026-09-11 for the following week; exact date not announced.",
-      catalogDisplayName: "GPT-5.3 Codex Spark",
-      catalogDisplayNames: ["GPT-5.3 Codex Spark", "GPT-5.3-Codex-Spark"],
-      dots: [1, 2, 3, 4],
-      colors: ["#F0E7FF", "#E0D1FA"],
-      textColors: ["#d4c0f2", "#c8afea"],
-      supportsFast: false,
     },
   ];
 

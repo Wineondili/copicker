@@ -20,10 +20,10 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Stable GitHub release | `v1.0.0` | Immutable annotated tag/release; `v1.0.0^{commit}` resolves its package commit |
 | CLI and plugin | `1.0.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
-| Current renderer | `0.12.20` | `model-rail.js` `VERSION`; native settings surface/insets are owned outside the sandbox reset |
+| Current renderer | `0.12.21` | Eight-model refresh; original geometry/easing preserved |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
 | Settings schema | `1` | `CopickerSettings.currentSchemaVersion` |
-| Settings resource | `ui://copicker/settings/v4.html` | `CopickerMCPProtocol.settingsResourceURI`; v3 and v2 remain read aliases |
+| Settings resource | `ui://copicker/settings/v5.html` | `CopickerMCPProtocol.settingsResourceURI`; v4, v3, and v2 remain read aliases |
 | Current adapted Codex | `26.908.40834` build `8881` | Picker/routing and later settings presentation user-confirmed |
 | Host engine metadata | Electron dependency `42.3.0`; Chromium framework `152.0.7977.83` | [Evidence and non-blocking version policy](accepted-baseline.md#current-environment-and-evidence-boundary) |
 | Historical full-runtime Codex | `26.820.60940` build `7119` | Earlier complete runtime/restart evidence only |
@@ -179,7 +179,7 @@ The complete normative behavior is in [accepted-baseline.md](accepted-baseline.m
 - Resolve an active task ID only from the unique open trigger's own composer; never fall back to a document-wide or cached task marker.
 - With that exact active task ID, use `thread/settings/update` and require the matching `thread/settings/updated` confirmation.
 - Before the current composer has a task ID, resolve the exact trigger-owned primary menu, the bounded power/non-Power/flat layout, and Model/Effort/Speed flyouts through semantic roles and `aria-controls`; preflight target and rollback leaves, capture two matching official Model/Effort/tier tuples, bind mutations to the original unsent composer, establish Standard only through an observed catalog-resolved Fast-to-Standard transition, and recapture the complete tuple after rollback.
-- Preserve the current seven-row order and effort matrix. Daybreak and Codex Spark cannot use Fast and must clear it.
+- Preserve the current eight-row order and effort matrix. Daybreak cannot use Fast and must clear it. Sol/Luna generations must have distinct catalog aliases and preference keys while sharing their family colors. Spark survives only as a retired-key migration, never as a selectable row.
 - Do not proxy build `7377`'s generic Daybreak program checkbox as though it were the `daybreak-blue` Model leaf. Reject the Daybreak row when that program control is present; allow ordinary model commits only while it is explicitly off, and reject them while it is enabled, busy, disabled, or otherwise ambiguous. Treat one exact legacy Daybreak Model leaf as the normal model-backed topology and permit mutation while rechecking that the program control remains absent. If neither exact topology is observable, reject every mutation-bearing selection. Supporting the separate program requires an explicit base-model/effort policy because the official transition may remap current and default model selections.
 - Recognize hidden adapted models without selecting an invisible row; show empty centered `Other` for unsupported models.
 - Preserve top/left/right placement, nested-menu avoidance, no-flicker latching, pointer-gated side restoration, viewport clamping, and the 12-pixel separation/inset contract.

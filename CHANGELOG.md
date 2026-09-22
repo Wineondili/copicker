@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-22 22:47:05 +0100
+
+- Added distinct GPT-6 Sol/Luna rows with six/five catalog-backed efforts and Fast support; kept the same fill/text colors as their 5.6 counterparts and preserved existing visibility defaults. Removed Spark from the active rail/settings/preview and marked GPT-5.5 Retiring without changing its availability checks or four-effort/Fast behavior.
+- Migrated only the retired Spark preference key on read, preserving other preferences and revisions without a disk write; Spark-only visibility falls back to the existing defaults. Unknown/empty configurations remain rejected. New MCP saves accept both generation-specific keys and reject the retired key.
+- Advanced renderer/app-info to `0.12.21` and settings resource to v5 with v4/v3/v2 read aliases; synchronized plugin metadata, documentation, and regression coverage. CLI/plugin distribution remains `1.0.0`; no Release or tag changed.
+- Verified the Debug build, all 63 offline tests, and isolated Playwright rail/settings flows, including all 44 preview cells, drag/Fast, shared gradients, and desktop/narrow layouts with mock-only preference saves. No installation, injection, actual model request, Codex restart, MCP refresh, push, or live acceptance was performed.
+
 ## 2026-09-13 10:03:49 +0100
 
 - Clarified the current Codex Desktop `26.908.40834` build `8881` picker/routing and native-settings acceptance, explicitly labeling build `7119` and its full-runtime source anchor historical. Corrected the README settings count to seven models.

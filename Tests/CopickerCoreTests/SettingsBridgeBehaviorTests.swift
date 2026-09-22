@@ -27,7 +27,7 @@ private func settingsBridgeContext(legacy: Bool = false) throws -> JSContext {
         });
         return elements.get(key);
       }
-      const models = ['astra','sol','terra','luna','daybreak-blue','gpt-5.5','gpt-5.3-codex-spark'];
+      const models = ['astra','sol-6','luna-6','sol','terra','luna','daybreak-blue','gpt-5.5'];
       const snapshot = {schemaVersion:1,revision:0,enabled:true,visibleModels:['sol','terra','luna'],preferredPlacement:'top',appearance:'dark'};
       const parent = {postMessage(message){messages.push(message);}};
       const document = {

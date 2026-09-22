@@ -700,6 +700,26 @@
             </div>
             <div class="setting-row model-row">
               <div class="setting-copy">
+                <h3>GPT-6 Sol</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="sol-6" aria-label="显示 GPT-6 Sol" />
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              </label>
+            </div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
+                <h3>GPT-6 Luna</h3>
+                <p class="model-efforts">Light · Medium · High · Extra High · Max</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="visible-model" value="luna-6" aria-label="显示 GPT-6 Luna" />
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              </label>
+            </div>
+            <div class="setting-row model-row">
+              <div class="setting-copy">
                 <h3>GPT-5.6 Sol</h3>
                 <p class="model-efforts">Light · Medium · High · Extra High · Max · Ultra</p>
               </div>
@@ -741,26 +761,15 @@
             </div>
             <div class="setting-row model-row">
               <div class="setting-copy">
-                <h3>GPT-5.5</h3>
+                <div class="model-heading">
+                  <h3>GPT-5.5</h3>
+                  <span class="model-lifecycle" data-model-lifecycle="retiring">Retiring</span>
+                </div>
                 <p class="model-efforts">Light · Medium · High · Extra High</p>
+                <p class="model-warning">即将退役；官方仍提供此模型时可继续选择，不按预设日期自动禁用。</p>
               </div>
               <label class="switch">
                 <input type="checkbox" name="visible-model" value="gpt-5.5" aria-label="显示 GPT-5.5" />
-                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
-              </label>
-            </div>
-            <div class="setting-row model-row">
-              <div class="setting-copy">
-                <div class="model-heading">
-                  <h3>GPT-5.3 Codex Spark</h3>
-                  <span class="model-lifecycle" data-model-lifecycle="retiring">Retiring</span>
-                </div>
-                <p class="model-efforts">Light · Medium · High · Extra High · 不支持 Fast</p>
-                <p class="model-warning">Tibo（@thsottiaux）于 2026-09-11 宣布将于次周退役；未公布确切日期。官方仍提供此模型时可继续选择。</p>
-                <p class="model-warning">可能需要 ChatGPT Pro 订阅（Pro 5x / 20x）；未出现在当前账户的官方模型列表时无法切换。</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" name="visible-model" value="gpt-5.3-codex-spark" aria-label="显示 GPT-5.3 Codex Spark" />
                 <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
               </label>
             </div>
@@ -819,12 +828,13 @@
         const APPLY_TOOL = "copicker_settings_apply";
         const MODEL_IDS = [
           "astra",
+          "sol-6",
+          "luna-6",
           "sol",
           "terra",
           "luna",
           "daybreak-blue",
           "gpt-5.5",
-          "gpt-5.3-codex-spark",
         ];
         const PLACEMENTS = ["top", "left", "right"];
         const APPEARANCES = ["codex", "system", "light", "dark"];
@@ -942,7 +952,7 @@
               let result;
               try {
                 result = await rpc("ui/initialize", {
-                  appInfo: { name: "CoPicker", version: "0.12.20" },
+                  appInfo: { name: "CoPicker", version: "0.12.21" },
                   appCapabilities: { availableDisplayModes: ["inline"] },
                   protocolVersion: UI_PROTOCOL_VERSIONS[0],
                 }, INITIALIZE_TIMEOUT_MS);
