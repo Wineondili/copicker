@@ -12,14 +12,15 @@ CoPicker has independent release, CLI/plugin, renderer, settings-schema, and set
 
 | Layer | Current value | Meaning |
 | --- | --- | --- |
-| Latest GitHub release | `v1.0.0` stable | Current full-feature, source-distributed package |
+| Latest GitHub release | `v1.1.0` stable | Current full-feature, source-distributed package |
 | Historical full-runtime code | `c127509ae0a05f50c14757d2a212b79951126f46` | Older six-model acceptance and rollback anchor, not the current picker adapter |
-| CLI and plugin version | `1.0.0` | Version reported by the stable release package |
-| Current renderer | `0.12.21` on `main` | Adds 6-Sol/6-Luna, removes Spark, and marks GPT-5.5 Retiring; not yet live-accepted |
+| CLI and plugin version | `1.1.0` | Version reported by the stable release package |
+| Current renderer | `0.12.21` on `main` | Adds 6-Sol/6-Luna, removes Spark, and marks GPT-5.5 Retiring; user-confirmed testing completed on 2026-09-24 |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Version of `settings.json` |
 | MCP settings resource | `ui://copicker/settings/v5.html` | Eight-model native settings surface; v4, v3, and v2 remain read aliases |
 | Current adapted Codex Desktop | `26.908.40834` (build `8881`) | Picker selection/routing and later native settings presentation user-confirmed |
+| Latest installed host for the model refresh | `26.915.31945` (build `9922`) | Installation/injection verified September 22; user confirmed testing completed September 24 |
 | Electron dependency declared by Codex | `42.3.0` | Read from the official app's package metadata; not a fresh runtime version probe |
 | Bundled Chromium framework | `152.0.7977.83` | Read from Codex Framework metadata and corroborated by its binary version string |
 | Historical full-runtime Codex build | `26.820.60940` (`7119`) | Earlier complete runtime/restart acceptance, not the current supported-version label |
@@ -31,15 +32,17 @@ These are tested compatibility baselines, not a version allowlist. A different C
 
 `v1.0.0` packages renderer `0.12.20`: seven-model selection, no-task refresh-loop fixes, the original click/drag easing, version-prefixed labels, Spark Retiring, native settings initialization, and the corrected background/scroll insets. Its renderer and settings HTML are unchanged from user-accepted source `6979811`. `v0.99.0` remains the immutable older six-model pre-release. Installation, user acceptance, cold-login checks, and publication are separate gates.
 
-See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v1.0.0 release notes](docs/releases/v1.0.0.md) for the packaged feature and validation boundary.
+See [the accepted baseline](docs/accepted-baseline.md) for the complete requirement IDs, model matrix, geometry, live DOM measurements, compatibility anchors, acceptance evidence, and superseded assumptions. See [the v1.1.0 release notes](docs/releases/v1.1.0.md) for the packaged feature and validation boundary.
 
 ## Install on a new Mac
+
+`v1.1.0` packages the eight-model update from `53f6027`. Installation and fresh v5 resource delivery were verified on Codex `26.915.31945` build `9922`; after the settings-loading/restart handoff, the user confirmed testing completed on 2026-09-24. This supplements the older build-8881 baseline above without inventing a new engine measurement, exhaustive live matrix, or cold-login pass. Release preparation does not change the accepted renderer/HTML or reinstall the local copy.
 
 Install the immutable full-feature stable release tag:
 
 ```bash
 xcode-select --install
-git clone --branch v1.0.0 --depth 1 https://github.com/Wineondili/copicker.git
+git clone --branch v1.1.0 --depth 1 https://github.com/Wineondili/copicker.git
 cd copicker
 ./script/install.sh
 ```
@@ -80,7 +83,7 @@ Full prerequisites, release and runtime-anchor paths, verification, settings mig
 | Space | Toggle Fast when the selected model supports it |
 | Escape or outside click | Close the official picker and CoPicker |
 
-Current `main` supports 6-Astra, 6-Sol, 6-Luna, 5.6-Sol, 5.6-Terra, 5.6-Luna, Daybreak, and GPT-5.5 in that order. New 6-Sol/6-Luna rows are available in visibility settings and share their 5.6 counterparts' colors. Default displays as `Default`; unsupported models display centered gray `Other`. Only Daybreak is non-Fast. GPT-5.5 is marked `Retiring` without an automatic cutoff. Spark is removed, with a read-only migration for older saved visibility. Existing visibility and the default 5.6 Sol/Terra/Luna set are preserved. The published `v1.0.0` remains the older seven-model package; this model refresh has not been released or live-accepted.
+Current `main` supports 6-Astra, 6-Sol, 6-Luna, 5.6-Sol, 5.6-Terra, 5.6-Luna, Daybreak, and GPT-5.5 in that order. New 6-Sol/6-Luna rows are available in visibility settings and share their 5.6 counterparts' colors. Default displays as `Default`; unsupported models display centered gray `Other`. Only Daybreak is non-Fast. GPT-5.5 is marked `Retiring` without an automatic cutoff. Spark is removed, with a read-only migration for older saved visibility. Existing visibility and the default 5.6 Sol/Terra/Luna set are preserved. The published `v1.0.0` remains the older seven-model package; the eight-model update is packaged in v1.1.0 after the user confirmed testing completed on 2026-09-24.
 
 The legacy adapter distinguishes two build-`7377` Daybreak topologies. When Codex exposes the separate Daybreak program checkbox that may remap base-model defaults, CoPicker rejects the Daybreak row and allows ordinary model commits only while that exact control is explicitly off. Enabled, busy, disabled, or otherwise ambiguous program state remains fail-closed. When Codex instead exposes one exact legacy Daybreak Model leaf—as observed live on the current account—renderer `0.12.14` treats it as the normal model-backed topology and permits official model mutations. If neither topology is observable, mutation still fails closed because no bounded signal distinguishes no entitlement from unresolved verified access.
 
@@ -191,7 +194,7 @@ Before changing UI, model behavior, selectors, versions, installation, or live c
 
 ## Documentation map
 
-- [v1.0.0 release notes](docs/releases/v1.0.0.md)
+- [v1.1.0 release notes](docs/releases/v1.1.0.md)
 - [Historical v0.99.0 release notes](docs/releases/v0.99.0.md)
 - [Accepted product and compatibility baseline](docs/accepted-baseline.md)
 - [Install on a new Mac, update, recover, or uninstall](docs/installation.md)
@@ -211,6 +214,6 @@ Before changing UI, model behavior, selectors, versions, installation, or live c
 - Model availability still depends on the signed-in account's official `model/list` catalog. Enabling a row does not grant model access.
 - Daybreak Blue may require Codex Trusted Access for Cyber and required network access.
 - On Codex build `7377`, Daybreak needs a product decision about which normal base model and effort the separate program should retain or select; current `main` fails closed instead of guessing.
-- The new GPT-6 Sol/Luna rows have catalog and offline evidence, not renewed live sending acceptance.
+- The user confirmed testing of the eight-model update; no exhaustive live effort/routing matrix or cross-version guarantee is claimed.
 - The repository does not currently include a cross-version macOS/Codex CI matrix.
 - The repository has no general open-source license. Public visibility alone does not grant redistribution or derivative-work rights.

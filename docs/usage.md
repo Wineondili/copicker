@@ -1,6 +1,8 @@
 # Using CoPicker
 
-This guide describes current `main`: renderer `0.12.21`, settings resource v5, and eight adapted models. GPT-6 Sol/Luna are added, Spark is removed, and GPT-5.5 is marked Retiring. The published `v1.0.0` still contains the older seven-model renderer `0.12.20` and resource v4. Earlier model routing and native settings acceptance on build `8881` do not establish live acceptance for these new rows. Installation, user acceptance, cold login, and publication remain separate gates. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
+Current stable package: `v1.1.0`, renderer `0.12.21`, settings v5. The user confirmed testing of the installed eight-model update completed on 2026-09-24. This supersedes the pre-release acceptance caveat in the September 22 context below; it does not imply an exhaustive live matrix or new cold-login evidence.
+
+GPT-6 Sol/Luna are added, Spark is removed, and GPT-5.5 is marked Retiring. Historical `v1.0.0` contains the older seven-model renderer `0.12.20` and resource v4. Installation, user acceptance, cold login, and publication remain separate gates. See [accepted-baseline.md](accepted-baseline.md) for exact requirements and historical results.
 
 On builds `8378` and `8881`, an explicit selection uses the official model radio row, model-specific reasoning slider, and Fast checkbox. Idle synchronization reads the already-mounted checked state without opening flyouts. Default appears as `Default` and has no active rail cell. Astra is available in CoPicker's model visibility settings, with six reasoning levels and catalog-resolved Fast; existing visibility preferences are preserved. Luna retains the five levels exposed by build `8881`'s native picker. An unrelated unselected native model does not disable supported rows; an unknown selected model still fails closed. The three-flyout constraints below describe the legacy build-`7377` fallback.
 

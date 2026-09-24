@@ -3,5 +3,5 @@ import Testing
 
 @Test func projectMetadataIsAvailable() {
     #expect(ProjectInfo.name == "Copicker")
-    #expect(ProjectInfo.version == "1.0.0")
+    #expect(ProjectInfo.version == "1.1.0")
 }

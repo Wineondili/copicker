@@ -6,6 +6,8 @@ The current product contract is [accepted-baseline.md](accepted-baseline.md). De
 
 ## Validation layers
 
+Latest user acceptance (2026-09-24): after installation of `53f6027` and the native settings load-error/manual-restart handoff, the user reported testing completed and authorized `v1.1.0`. Installation checks on build `9922` had confirmed matching executable/resources/plugin cache, fresh eight-model v5 MCP delivery, injection success, unchanged saved settings, and Inspector closure. Release preparation preserves the accepted renderer/HTML. A new independently observed restart, exhaustive live effort/routing matrix, and cold login remain outside this claim.
+
 | Layer | What it proves | What it does not prove |
 | --- | --- | --- |
 | Git/ref check | Exact source identity and clean ownership | Buildability or runtime behavior |
@@ -171,7 +173,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Gate | Evidence |
 | --- | --- |
 | Live-accepted runtime source | `c127509ae0a05f50c14757d2a212b79951126f46` |
-| Current package | `v1.0.0` stable; CLI/plugin `1.0.0`, renderer `0.12.20`, settings v4 |
+| Current package | `v1.1.0` stable; CLI/plugin `1.1.0`, renderer `0.12.21`, settings v5 |
 | Live-accepted CLI label | `0.12.0-dev` |
 | Live-accepted/published renderer | `0.12.8` |
 | Renderer `0.12.9` focused live result | Rapid pointer release passed; new-unsent-task official trigger update failed |
@@ -192,7 +194,7 @@ For the accepted build, the official values are recorded in [accepted-baseline.m
 | Installed watcher | loaded; `injection-succeeded`; current/last PID matched |
 | Settings geometry | live official DOM measured; final user response: completely identical |
 | Inspector | closed after bounded work; no idle listener |
-| Public runtime release | `v1.0.0` full-feature stable source release; no prebuilt executable attached |
+| Public runtime release | `v1.1.0` full-feature stable source release; no prebuilt executable attached |
 
 The accepted watcher, UI, and Inspector evidence applies specifically to Codex `26.820.60940` build `7119` and runtime source `c127509`; none of those rows is live evidence for the statically inspected build `7377`. The `0.99.0` distribution bump changes version metadata, tests, and documentation but not renderer behavior; its offline/release-build proof is separate from the earlier live install/restart proof. Neither result must be generalized to an untested desktop update.
 

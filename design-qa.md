@@ -1,5 +1,10 @@
 # Design QA
 
+## 2026-09-24 — User acceptance and v1.1.0 release boundary
+
+- The user confirmed testing completed after the eight-model installation and native settings load-error/manual-restart handoff, then explicitly authorized `v1.1.0`. This supersedes the September 22 pending user-acceptance status. No unobserved restart action, exhaustive live routing/effort matrix, or cold-login pass is inferred.
+- Renderer `0.12.21` and the v5 settings HTML are unchanged from installed source `53f6027`. The release changes distribution version metadata, tests, and documentation only; publication does not reinstall, inject, refresh MCP, or restart Codex.
+
 ## 2026-09-22 — Eight-model refresh, isolated preview QA
 
 - Renderer `0.12.21` and settings resource v5 add 6-Sol/6-Luna, remove Spark, and move Retiring to GPT-5.5 (CP-MOD-004/008/009). New and old Sol have identical fill/text gradients; new and old Luna likewise. Row/cell spacing, typography, pointer easing, and release-coordinate commitment are unchanged. The standalone preview now derives stage and host height from its eight rows instead of retaining seven-row constants.

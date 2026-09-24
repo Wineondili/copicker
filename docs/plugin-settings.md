@@ -6,7 +6,7 @@ Current versions:
 
 | Layer | Value |
 | --- | --- |
-| CLI/plugin release | `1.0.0` |
+| CLI/plugin release | `1.1.0` |
 | Settings schema | `1` |
 | MCP App resource | `ui://copicker/settings/v5.html` (v4, v3, and v2 read aliases retained) |
 | Renderer fallback on current `main` | `0.12.21` |
@@ -17,6 +17,8 @@ Current versions:
 | Current native settings validation | Build `8881` inspected; on 2026-09-13 the user confirmed the actual v4 interface after the manual-restart handoff, superseding the old-window presentation blocker |
 
 ## Eight-model refresh in 0.12.21
+
+Acceptance update, 2026-09-24: the user confirmed testing completed after the source-matched installation and subsequent native-loading/restart handoff. `v1.1.0` packages the same renderer and v5 HTML. The earlier source-only and loading-failure statements below are retained as chronological evidence, not the latest user-acceptance status. Publication does not reinstall the local plugin or refresh existing MCP connections.
 
 The current settings/rail/preview order is 6-Astra, 6-Sol, 6-Luna, 5.6-Sol, 5.6-Terra, 5.6-Luna, Daybreak, GPT-5.5, with 6/6/5/6/6/5/6/4 efforts. Only Daybreak is non-Fast. GPT-5.5 carries the owner's requested Retiring notice; Spark has no switch or rail row. New keys `sol-6` and `luna-6` never replace the old generation keys. New rows are opt-in and defaults remain unchanged.
 

@@ -17,8 +17,8 @@ CoPicker has several independent version layers. Never collapse them into a sing
 | Layer | Current accepted value | Where it is defined |
 | --- | --- | --- |
 | Historical full-runtime code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Older six-model acceptance; [accepted-baseline.md](accepted-baseline.md) |
-| Stable GitHub release | `v1.0.0` | Immutable annotated tag/release; `v1.0.0^{commit}` resolves its package commit |
-| CLI and plugin | `1.0.0` | `ProjectInfo.version` and plugin manifest |
+| Stable GitHub release | `v1.1.0` | Immutable annotated tag/release; `v1.1.0^{commit}` resolves its package commit |
+| CLI and plugin | `1.1.0` | `ProjectInfo.version` and plugin manifest |
 | Live-accepted CLI label | `0.12.0-dev` | Earlier installed label for the unchanged accepted runtime behavior |
 | Current renderer | `0.12.21` | Eight-model refresh; original geometry/easing preserved |
 | Renderer in `v0.99.0` | `0.12.8` | Immutable annotated release source |
@@ -33,6 +33,8 @@ The accepted runtime commit is older than the release metadata and documentation
 The stable `v1.0.0` package contains the seven-model renderer `0.12.20`; `v0.99.0` and `v0.11.0` remain immutable historical releases. Compatibility history is retained in [accepted-baseline.md](accepted-baseline.md). The package preserves the radio-list adaptation, initialization, Spark retirement notice, version-prefixed labels, and corrected native settings surface. Live switches and user-reported routing passed on `0.12.16`; on 2026-09-13 the user confirmed the actual v4 settings interface after the manual-restart handoff. Release metadata does not create a new exhaustive runtime or cold-login pass.
 
 ## Supported development boundary
+
+`v1.1.0` packages the eight-model source from `53f6027`, with user-confirmed testing completion on 2026-09-24. The prior paragraph describes historical `v1.0.0` evidence. Keep distribution metadata changes separate from the unchanged renderer `0.12.21` and settings v5, and do not convert user acceptance into an unobserved cold-login or exhaustive live matrix.
 
 - macOS 14 or later is the Swift package deployment target.
 - Apple silicon `arm64` is the currently live-verified architecture.
@@ -66,7 +68,7 @@ git rev-parse origin/main
 git remote -v
 ```
 
-Do not use a shallow `--branch v1.0.0` installation checkout for ongoing development. A tag checkout is deliberately detached and suitable for reproducible installation or historical investigation, not for retaining development commits.
+Do not use a shallow `--branch v1.1.0` installation checkout for ongoing development. A tag checkout is deliberately detached and suitable for reproducible installation or historical investigation, not for retaining development commits.
 
 ## Package products and repository layout
 

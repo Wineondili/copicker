@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-24 23:38:11 +0100
+
+- Prepared the owner-authorized `v1.1.0` stable source release and synchronized CLI/plugin version metadata, install instructions, release notes, and documentation contracts. Retained renderer `0.12.21`, schema 1, and resource v5 with v4/v3/v2 aliases; renderer/HTML match installed source `53f6027`.
+- Recorded the user's confirmation that testing completed following installation and the native settings loading/restart handoff. Kept user acceptance separate from an independently observed restart, exhaustive live routing matrix, and cold-login proof.
+- Validated 63 offline tests, Release build/version/resources, source syntax, public-content checks, and the intended source archive. Publication does not modify the official app, reinstall the local copy, write preferences, refresh MCP, or restart Codex. Historical tags/releases remain unchanged.
+
 ## 2026-09-22 22:47:05 +0100
 
 - Added distinct GPT-6 Sol/Luna rows with six/five catalog-backed efforts and Fast support; kept the same fill/text colors as their 5.6 counterparts and preserved existing visibility defaults. Removed Spark from the active rail/settings/preview and marked GPT-5.5 Retiring without changing its availability checks or four-effort/Fast behavior.

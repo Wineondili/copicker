@@ -1,6 +1,6 @@
 # Installing CoPicker on another Mac
 
-CoPicker `v1.0.0` is source-distributed. Building on the target Mac avoids distributing an unsigned/non-notarized executable and produces a native binary for that machine.
+CoPicker `v1.1.0` is source-distributed. Building on the target Mac avoids distributing an unsigned/non-notarized executable and produces a native binary for that machine.
 
 This guide covers the current immutable stable release, its acceptance boundaries, and historical rollback. Read [accepted-baseline.md](accepted-baseline.md) before choosing a version.
 
@@ -8,12 +8,12 @@ This guide covers the current immutable stable release, its acceptance boundarie
 
 | Choice | Ref | Feature set | Publication status |
 | --- | --- | --- | --- |
-| Recommended stable release | `v1.0.0` | Seven models, current picker/no-task support, original easing, settings v4 with corrected surface, persistence and placement | Full-feature stable source release |
+| Recommended stable release | `v1.1.0` | Eight models, 6-Sol/6-Luna, Spark removal, GPT-5.5 Retiring, settings v5 with corrected surface, persistence and placement | Full-feature stable source release |
 | Previous pre-release | `v0.99.0` | Original six-model selector and settings | Immutable historical pre-release; not the current picker adapter |
 | Historical live-accepted runtime anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Original renderer behavior, with the earlier `0.12.0-dev` CLI label | Exact older installed/UI/restart evidence and rollback anchor |
 | Historical pre-release | `v0.11.0` | Older Sol/Terra/Luna rail and guarded autostart | Immutable historical pre-release |
 
-Do not install moving `main` when reproducibility matters. Use `v1.0.0` for a normal new installation. The annotated tag resolves the exact release commit through `v1.0.0^{commit}`. Use `c127509` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
+Do not install moving `main` when reproducibility matters. Use `v1.1.0` for a normal new installation. The annotated tag resolves the exact release commit through `v1.1.0^{commit}`. Use `c127509` only when reproducing the original live-acceptance environment or rolling back for diagnosis.
 
 ## Compatibility boundary
 
@@ -81,13 +81,13 @@ If the Codex CLI is unavailable, install or update Codex through its normal supp
 
 ## Install the current full-feature stable release
 
-Clone the exact `v1.0.0` tag and run the installer:
+Clone the exact `v1.1.0` tag and run the installer:
 
 ```bash
-git clone --branch v1.0.0 --depth 1 \
+git clone --branch v1.1.0 --depth 1 \
   https://github.com/Wineondili/copicker.git \
-  copicker-v1.0.0
-cd copicker-v1.0.0
+  copicker-v1.1.0
+cd copicker-v1.1.0
 git status --short --branch
 ./script/install.sh
 ```
@@ -155,17 +155,17 @@ codex plugin list --json
 lsof -nP -iTCP:9229 -sTCP:LISTEN
 ```
 
-For the `v1.0.0` stable release, confirm:
+For the `v1.1.0` stable release, confirm:
 
 ```text
-Copicker 1.0.0
+Copicker 1.1.0
 LaunchAgent plist: installed
 LaunchAgent service: loaded
 Installed executable: present
 Installed resource bundle: present
 Last watcher phase: injected
 Last result: injection-succeeded
-Watcher Copicker version: 1.0.0
+Watcher Copicker version: 1.1.0
 ```
 
 When Codex is not running, `waiting-for-codex` is expected. Immediately after install, the asynchronous watcher state may briefly contain an earlier phase; wait several seconds and recheck.

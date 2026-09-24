@@ -60,10 +60,12 @@ func acceptedDocumentationVersionLayersMatchSourceContracts() throws {
 
     #expect(values["accepted_runtime_commit"] == "c127509ae0a05f50c14757d2a212b79951126f46")
     #expect(values["accepted_live_cli_version"] == "0.12.0-dev")
-    #expect(values["published_release_tag"] == "v1.0.0")
-    #expect(values["published_release_commit"] == "v1.0.0^{commit}")
+    #expect(values["published_release_tag"] == "v1.1.0")
+    #expect(values["published_release_commit"] == "v1.1.0^{commit}")
     #expect(values["accepted_settings_source_commit"] == "6979811f4797ae9630f1b23fd0d5eee0551de68d")
     #expect(values["accepted_settings_user_confirmation_date"] == "2026-09-13")
+    #expect(values["accepted_model_refresh_source_commit"] == "53f602755fed115ee808124f0f0d8fa161145dd0")
+    #expect(values["accepted_model_refresh_user_confirmation_date"] == "2026-09-24")
     #expect(values["cli_version"] == ProjectInfo.version)
     #expect(plugin["version"] as? String == ProjectInfo.version)
     #expect(rendererVersion == "0.12.21")
@@ -101,7 +103,7 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     let contributing = try documentationText("CONTRIBUTING.md")
     let designQA = try documentationText("design-qa.md")
     let releaseNotes = try documentationText("docs/releases/v0.99.0.md")
-    let currentReleaseNotes = try documentationText("docs/releases/v1.0.0.md")
+    let currentReleaseNotes = try documentationText("docs/releases/v1.1.0.md")
     let installer = try documentationText("script/install.sh")
 
     let acceptedCommit = try #require(values["accepted_runtime_commit"])
@@ -140,11 +142,11 @@ func publicGuidesAnchorInstallBehaviorAndAcceptedMeasurements() throws {
     #expect(releaseNotes.contains("Copicker v0.99.0"))
     #expect(releaseNotes.contains("no unsigned or non-notarized prebuilt executable"))
     #expect(releaseNotes.contains("35 offline tests"))
-    #expect(currentReleaseNotes.contains("Copicker v1.0.0"))
-    #expect(currentReleaseNotes.contains("58 offline tests"))
+    #expect(currentReleaseNotes.contains("Copicker v1.1.0"))
+    #expect(currentReleaseNotes.contains("63 offline tests"))
     #expect(currentReleaseNotes.contains("user-confirmed"))
     #expect(currentReleaseNotes.contains("no unsigned or non-notarized prebuilt executable"))
-    #expect(currentReleaseNotes.contains("git clone --branch v1.0.0"))
+    #expect(currentReleaseNotes.contains("git clone --branch v1.1.0"))
 
     for document in [readme, installation, baseline] {
         #expect(document.contains("26.908.40834"))

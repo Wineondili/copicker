@@ -15,11 +15,13 @@ Historical evidence remains useful, but it must not silently override a later ac
 <!-- COPICKER_ACCEPTED_BASELINE_V1
 accepted_runtime_commit=c127509ae0a05f50c14757d2a212b79951126f46
 accepted_live_cli_version=0.12.0-dev
-published_release_tag=v1.0.0
-published_release_commit=v1.0.0^{commit}
-cli_version=1.0.0
+published_release_tag=v1.1.0
+published_release_commit=v1.1.0^{commit}
+cli_version=1.1.0
 accepted_settings_source_commit=6979811f4797ae9630f1b23fd0d5eee0551de68d
 accepted_settings_user_confirmation_date=2026-09-13
+accepted_model_refresh_source_commit=53f602755fed115ee808124f0f0d8fa161145dd0
+accepted_model_refresh_user_confirmation_date=2026-09-24
 renderer_version=0.12.21
 settings_schema_version=1
 settings_resource_uri=ui://copicker/settings/v5.html
@@ -49,11 +51,13 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 
 ## Version and acceptance status
 
+Latest update acceptance: source `53f6027` was installed on 2026-09-22 with source-matched files, eight-model/v5 fresh MCP delivery, successful watcher injection on Codex `26.915.31945` build `9922`, unchanged saved preferences, and closed Inspector. After reporting a native-page loading error and receiving a manual-restart recommendation, the user confirmed testing completed on 2026-09-24 and authorized `v1.1.0`. This supersedes the pending user-acceptance status of the September 22 refresh, but does not assert that a restart was independently observed or that every live effort/routing combination or cold login was tested. Earlier host/engine measurements and source anchors below retain their original evidence scope. The release metadata bump leaves renderer `0.12.21` and settings v5 HTML byte-identical to `53f6027`.
+
 | Item | Accepted value | Status |
 | --- | --- | --- |
 | Historical full-runtime code anchor | `c127509ae0a05f50c14757d2a212b79951126f46` | Older installed, live-reviewed, and user-accepted six-model code |
-| CLI/plugin release | `1.0.0` | Current source-distributed stable release package |
-| Current renderer | `0.12.21` | Eight-model catalog refresh; GPT-6 Sol/Luna added, Spark removed, GPT-5.5 Retiring; live installation/acceptance pending |
+| CLI/plugin release | `1.1.0` | Current source-distributed stable release package |
+| Current renderer | `0.12.21` | Eight-model catalog refresh; GPT-6 Sol/Luna added, Spark removed, GPT-5.5 Retiring; installed on build 9922; user confirmed testing completed on 2026-09-24 |
 | Renderer `0.12.16` native settings result | Native entry opened a blank/loading surface after restart despite a current seven-model backend | User-reported failure; missing UI initialization was confirmed in the native sandbox |
 | Renderer `0.12.13` live result | Model/Effort/Speed menus flashed repeatedly; Daybreak and Codex Spark could leave the renderer unresponsive | User-observed strict failure; installed payload matched source and watcher injection succeeded |
 | Renderer `0.12.12` live result | Injected and visible, but model selection had no effect | User-observed strict failure; probes confirmed `serviceTier: "default"`, exact `legacy-model` Daybreak topology, `Other`, and `switchState: error` |
@@ -61,7 +65,7 @@ official_settings_heading_bottom_to_group_title_css_px=41.5
 | Renderer in `v0.99.0` | `0.12.8` | Immutable published source pre-release payload |
 | Settings schema | `1` | Current persisted preference schema |
 | Settings resource | `ui://copicker/settings/v5.html` | Eight-row MCP App document; v4, v3, and v2 remain read aliases with the requested URI echoed |
-| Public GitHub release | `v1.0.0` | Full-feature immutable stable source release; the annotated tag resolves its exact package commit |
+| Public GitHub release | `v1.1.0` | Full-feature immutable stable source release; the annotated tag resolves its exact package commit |
 | Live-accepted CLI label | `0.12.0-dev` | Version string present when the unchanged runtime behavior was installed and accepted |
 | Historical full-runtime Codex desktop | `26.820.60940` build `7119` | Exact build for the older complete runtime/settings geometry acceptance |
 | Current adapted Codex desktop | `26.908.40834` build `8881` | Model-picker interaction and user-reported first-message routing accepted; later native v4 settings presentation user-confirmed |
